@@ -143,7 +143,7 @@ namespace DALightmapper
             calculateInverseMatrix();
         }
 
-        public bool isUVOnThisTriangle(Vector2 coord)
+        public bool uvIsOnThisTriangle(Vector2 coord)
         {
             Vector2 convertedCoord = convertToTextureBasis(coord);
             //If the points are >= 0 and add up to <= 1 then its on the triangle.

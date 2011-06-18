@@ -84,7 +84,7 @@ namespace DALightmapper
         private void btn_Stop_Click(object sender, EventArgs e)
         {
             currentJob = lb_Files.Items.Count + 1;
-            Lightmapper.finished = true;
+            Lightmapper.abort = true;
             btn_Start.Enabled = true;
             btn_Stop.Enabled = false;
             btn_Add.Enabled = true;
@@ -108,8 +108,8 @@ namespace DALightmapper
                 {
                     //Enable the stop button so the user can stop the lightmapping process
                     btn_Stop.Enabled = true;
-                    Lightmapper.level = e.level;
-                    new Thread(Lightmapper.runLightmaps).Start();
+                    ThreadStart starter = delegate { Lightmapper.runLightmaps(e.level); };
+                    new Thread(starter).Start();
                 }
                 else
                     doneLightMapping(new FinishedLightMappingEventArgs("Did not render light maps, IO was aborted.\n"));

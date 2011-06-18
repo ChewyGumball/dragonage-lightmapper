@@ -11,7 +11,7 @@ namespace DALightmapper
     {
         String _name;
         Triangle[] _tris;
-        Patch[] _patches;
+        Patch[,] _patches;
 
         public Triangle[] tris
         {
@@ -29,16 +29,35 @@ namespace DALightmapper
             _tris = triangles;
         }
 
-        public void generatePatches()
+        //Make patches for a lightmap with dimensions [width,height]
+        public void generatePatches(int width, int height)
         {
-            //Do stuff
-        }
+            _patches = new Patch[width,height];
+            //For each pixel
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    Vector2 uvCoords = new Vector2(i / width, j / height);
 
-        public Vector3 uvTo3d(Vector2 uvCoords)
-        {
-            Vector3 d3coords = new Vector3();
-            //doStuff
-            return d3coords;
+                    //See if this uv is on any triangle in the mesh
+                    foreach (Triangle t in tris)
+                    { 
+                        if (t.uvIsOnThisTriangle(uvCoords))
+                        {
+                              //                        uv        Position            normal     emmision             reflection              incident        exident
+                            _patches[i, j] = new Patch(uvCoords, t.uvTo3d(uvCoords), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f), new Vector3(), new Vector3());
+                            break;
+                        }
+                    }
+
+                    //if the uv coords were not on a triangle, make an inactive patch
+                    if (_patches[i, j] == null)
+                    {
+                        _patches[i, j] = new Patch();
+                    }
+                }
+            }
         }
     }
 }
