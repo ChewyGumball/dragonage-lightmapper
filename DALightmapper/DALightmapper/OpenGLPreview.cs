@@ -131,14 +131,23 @@ namespace DALightmapper
         {
             int width = glControl1.Width;
             int height = glControl1.Height;
+            Vector3 cameraPos = new Vector3(0,10,10);
+            Vector3 origin = new Vector3();
+            Vector3 up = new Vector3(0,1,0);
 
             Triangle[] tris = meshes[currentMeshIndex].tris;
 
+            GL.Viewport(0, 0, Width, Height);
+
+            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1, 1, 64);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            GL.Frustum(-1000, 1000, -1000, 1000, 1, 1000);
+            GL.LoadMatrix(ref perpective);
+
+            Matrix4 lookat = Matrix4.LookAt(cameraPos, origin, up);
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
+            GL.LoadMatrix(ref lookat);
             
             GL.Viewport(0, 0, width, height);
 
@@ -146,16 +155,20 @@ namespace DALightmapper
             GL.Color3(Color.White);
             GL.LineWidth(0.5f);
 
-            GL.Clear(ClearBufferMask.ColorBufferBit);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
+            GL.Enable(EnableCap.DepthTest);
             GL.Begin(BeginMode.Triangles);
             for (int i = 0; i < tris.Length; i++)
             {
-                GL.Vertex3(tris[i].x.X * 100, tris[i].x.Y * 100, tris[i].x.Z * 100);
-                GL.Vertex3(tris[i].y.X * 100, tris[i].y.Y * 100, tris[i].y.Z * 100);
-                GL.Vertex3(tris[i].z.X * 100, tris[i].z.Y * 100, tris[i].z.Z * 100);
+                double cosine = Math.Abs(Vector3.Dot(Vector3.Normalize(origin - cameraPos), tris[i].normal));
+                GL.Color3(cosine, cosine, cosine);
+                GL.Vertex3(tris[i].x.X, tris[i].x.Y, tris[i].x.Z);
+                GL.Vertex3(tris[i].y.X, tris[i].y.Y, tris[i].y.Z);
+                GL.Vertex3(tris[i].z.X, tris[i].z.Y, tris[i].z.Z);
             }
             GL.End();
+            GL.Disable(EnableCap.DepthTest);
             glControl1.SwapBuffers();
         }
 
