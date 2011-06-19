@@ -20,7 +20,7 @@ namespace DALightmapper
         Vector2[] lightMapInverseMatrix;
         float determinant;
 
-        bool isLightmapped;
+        public bool isLightmapped {get; private set;} 
 
         public Vector3 x
         {

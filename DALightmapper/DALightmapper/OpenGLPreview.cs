@@ -9,6 +9,7 @@ using System.Text;
 using System.Windows.Forms;
 
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using Bioware.Files;
 
 namespace DALightmapper
@@ -17,7 +18,6 @@ namespace DALightmapper
     enum Showing {UV, Model, Lightmap};
     public partial class OpenGLPreview : Form
     {
-
         int currentMeshIndex;
         Mesh[] meshes;
 
@@ -30,7 +30,7 @@ namespace DALightmapper
             setButtons(false);
         }
 
-        private void setButtons(Boolean b)
+        private void setButtons(bool b)
         {
             btn_show3D.Enabled = b;
             btn_showUV.Enabled = b;
@@ -98,20 +98,101 @@ namespace DALightmapper
         //Draws the UV map of the current mesh
         private void displayUV()
         {
-            //TODO
+            int width = glControl1.Width;
+            int height = glControl1.Height;
+
+            Triangle[] tris = meshes[currentMeshIndex].tris;
+
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Ortho(0, width, 0, height, -1, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.Viewport(0, 0, width, height);
+
+            GL.ClearColor(Color.Black);
+            GL.Color3(Color.White);
+            GL.LineWidth(0.5f);
+
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.Begin(BeginMode.Triangles);
+            for (int i = 0; i < tris.Length; i++)
+            {
+                GL.Vertex2(tris[i].u.X * width, tris[i].u.Y * height);
+                GL.Vertex2(tris[i].v.X * width, tris[i].v.Y * height);
+                GL.Vertex2(tris[i].w.X * width, tris[i].w.Y * height);
+            }
+            GL.End();
+            glControl1.SwapBuffers();
         }
 
         //Draws a 3d view of the current mesh 
         private void display3D()
         {
+            int width = glControl1.Width;
+            int height = glControl1.Height;
 
-            //TODO
+            Triangle[] tris = meshes[currentMeshIndex].tris;
+
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Frustum(-1000, 1000, -1000, 1000, 1, 1000);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            
+            GL.Viewport(0, 0, width, height);
+
+            GL.ClearColor(Color.Black);
+            GL.Color3(Color.White);
+            GL.LineWidth(0.5f);
+
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.Begin(BeginMode.Triangles);
+            for (int i = 0; i < tris.Length; i++)
+            {
+                GL.Vertex3(tris[i].x.X * 100, tris[i].x.Y * 100, tris[i].x.Z * 100);
+                GL.Vertex3(tris[i].y.X * 100, tris[i].y.Y * 100, tris[i].y.Z * 100);
+                GL.Vertex3(tris[i].z.X * 100, tris[i].z.Y * 100, tris[i].z.Z * 100);
+            }
+            GL.End();
+            glControl1.SwapBuffers();
         }
 
         //Draws the Lightmap UV of the current mesh
         private void displayLightmap()
         {
-            //TODO
+            int width = glControl1.Width;
+            int height = glControl1.Height;
+
+            Triangle[] tris = meshes[currentMeshIndex].tris;
+
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Ortho(0, width, 0, height, -1, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.Viewport(0, 0, width, height);
+
+
+            GL.ClearColor(Color.Black);
+            GL.Color3(Color.White);
+            GL.LineWidth(0.5f);
+
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.Begin(BeginMode.Triangles);
+            for (int i = 0; i < tris.Length; i++)
+            {
+                if (tris[i].isLightmapped)
+                {
+                    GL.Vertex2(tris[i].a.X * width, tris[i].a.Y * height);
+                    GL.Vertex2(tris[i].b.X * width, tris[i].b.Y * height);
+                    GL.Vertex2(tris[i].c.X * width, tris[i].c.Y * height);
+                }
+            }
+            GL.End();
+            glControl1.SwapBuffers();
         }
 
         private void btn_showUV_Click(object sender, EventArgs e)
