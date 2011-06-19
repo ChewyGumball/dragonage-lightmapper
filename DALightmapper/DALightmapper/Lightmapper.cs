@@ -189,7 +189,7 @@ namespace DALightmapper
                 }
             }
         }
-        s
+        
         //Used to find ratios between 2 vectors (component wise)
         private static Vector3 ratio(Vector3 a, Vector3 b)
         {

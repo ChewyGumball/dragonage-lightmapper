@@ -20,9 +20,13 @@ namespace DALightmapper
         BiowareMesh[] meshes;
         TextureTarget[] targets;
 
+        OpenGLPreview oglPreviewWindow;
+
         public MainWindow()
         {
-            InitializeComponent(); stream = new StatusStream(tb_Status);
+            InitializeComponent(); 
+            stream = new StatusStream(tb_Status);
+            oglPreviewWindow = new OpenGLPreview();
 
             //Add testing files
             //lb_Jobs.Items.Add("C:\\Users\\Ben\\Desktop\\testing\\header.gff");
@@ -183,6 +187,11 @@ namespace DALightmapper
                     lb_Files.SelectedIndex = selection;
                 }
             }
+        }
+
+        private void previewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            oglPreviewWindow.Show();
         }
     }
 }
