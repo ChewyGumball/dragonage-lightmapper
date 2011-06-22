@@ -12,8 +12,6 @@ namespace DALightmapper
         public Vector2 uvCoords { get; set; }
 
         public Boolean isActive { get; set; }
-        public Vector3 incidentLight { get; set; }
-        public Vector3 excidentLight { get; private set; }
         public Vector3 emmission { get; private set; }
         public Vector3 reflectance { get; private set; }
 
@@ -25,21 +23,14 @@ namespace DALightmapper
         {
             isActive = false;
         }
-        public Patch(Vector2 uv, Vector3 pos, Vector3 norm, Vector3 emm, Vector3 refl, Vector3 incident, Vector3 excident)
+        public Patch(Vector2 uv, Vector3 pos, Vector3 norm, Vector3 emm, Vector3 refl)
         {
             uvCoords = uv;
-            incidentLight = incident;
-            excidentLight = excident;
             emmission = emm;
             reflectance = refl;
             normal = norm;
             position = pos;
             isActive = true;
-        }
-
-        public void updatePatch(int textureID)
-        {
-
         }
     }
 }

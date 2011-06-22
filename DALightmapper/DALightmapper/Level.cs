@@ -434,8 +434,10 @@ namespace DALightmapper
             //Create the models
             for (int i = 0; i < modelHierarchies.Count; i++)
             {
-                realModels[i] = modelHierarchies[i].mesh.toModel();
+                realModels[i] = modelHierarchies[i].mesh.toModel();                
             }
+
+            generatePatches(realModels);
 
             //Go through the hierarchies
             for(int i = 0;i<modelHierarchies.Count;i++)
@@ -463,6 +465,21 @@ namespace DALightmapper
                 }
             }
         }
+
+        //Generates patches for each base mesh
+        // Should either intelligently size lightmaps based on area or read in from files somewhere
+        private void generatePatches(Model[] models)
+        {
+            //TEMPORARY!!!!! 
+            foreach (Model model in models)
+            {
+                foreach (Mesh mesh in model.meshes)
+                {
+                    mesh.generatePatches(128, 128);
+                }
+            }
+        }
+
         private void setStructDefinitions()
         {
             for (int i = 0; i < headerFile.structs.Length; i++)

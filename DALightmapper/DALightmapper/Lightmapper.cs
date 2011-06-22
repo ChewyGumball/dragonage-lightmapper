@@ -30,65 +30,54 @@ namespace DALightmapper
 
     static class Lightmapper
     {
-        static bool _abort;  //Used to abort the lightmapping process prematurely
-        static Dictionary<String, int> _textures = new Dictionary<string, int>();
-
-        //Holds the vector arrays representing a texture - use vectors as they are easier to work with than a OpenGL texture
-        //  They are converted into textures after the mapping process is completed or aborted
-        static List<LightMap> _maps = new List<LightMap>();
-
-        //Holds the points which need to have a hemicube rendering because their neighbouring pixels are too dissimilar
-        static List<Vector2> pointsToBeRendered = new List<Vector2>();
-
-        public static bool abort
-        {
-            get { return _abort; }
-            set { _abort = value; }
-        }
-        public static List<LightMap> maps
-        {
-            get { return _maps; }
-        }
-
+        public static bool abort { get; set; }
 
         //Event to signal asynchronous lightmapping has finished
         public delegate void FinishedLightMappingEventHandler(FinishedLightMappingEventArgs args);
         public static event FinishedLightMappingEventHandler FinishedLightMapping;
 
-        //public static LightMapPreviewForm lightMapPreviewForm;
-
         // Runs the light map process
         public static void runLightmaps(Level level)
         {
-            //Make patches
-            List<Patch> patches = new List<Patch>();
-            //Make lightmaps
 
-            //Make PVS
+            PatchInstance[] patches;
+            PatchInstance[][] visibleSets;
+            int[][] coefficients;
+            LightMap[] maps;
+
+            //Make the lightmaps and patch instances
+            makeLightmaps(level.lightmapModels, out maps, out patches);
+
+            //Make visible set for each patch
+            visibleSets = new PatchInstance[patches.Length][];
+            coefficients = new int[patches.Length][];
+            for (int i = 0; i < patches.Length; i++)
+            {
+                visibleSets[i] = makeVisibleSet(level.lightmapModels, patches[i], patches);
+                coefficients[i] = calculateCoefficients(patches[i], visibleSets[i]);
+            }
 
             //Initialize the loop counter so message can say how many bounces were rendered
             int currentBounce = 0;
-            int stride;
 
             //Start the lightmapping process off by just rendering light sources
             renderLights(); //THIS NEEDS TO BE CHANGED!!!!
-
 
             //Do some lightmapping
             for(abort = false; currentBounce < Settings.numBounces; currentBounce ++)
             {
                 //Find patch with highest exident light
-                Patch highest = patches[0];
-                foreach (Patch p in patches)
+                int highestIndex = 0;
+
+                for (int i = 1; i < patches.Length; i++)
                 {
-                    if(p.excidentLight.Length > highest.excidentLight.Length)
+                    if (patches[i].excidentLight.Length > patches[highestIndex].excidentLight.Length)
                     {
-                        highest = p;
+                        highestIndex = i;
                     }
                 }
-
                 //Propogate it's light
-                propogate(highest);
+                propogate(patches[highestIndex],visibleSets[highestIndex],coefficients[highestIndex]);
             }
             
             
@@ -104,12 +93,73 @@ namespace DALightmapper
             }
         }
 
-        //Propogates light from a to a's pvs
-        private static void propogate(Patch a)
+        //Makes lightmaps for the input model instances
+        private static void makeLightmaps(ModelInstance[] models, out LightMap[] maps, out PatchInstance[] patches)
+        {
+            List<PatchInstance> patchList = new List<PatchInstance>();
+            List<LightMap> lightmapList = new List<LightMap>();
+            //Make lightmaps
+            foreach (ModelInstance m in models)
+            {
+                //for each mesh in the model instance
+                for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                {
+                    //Make the lightmap
+                    LightMap temp = new LightMap(m, i);
+                    //For each patch instance in the lightmap
+                    foreach (PatchInstance p in temp.patches)
+                    {
+                        //If its an active patch add it to the list of patches, otherwise ignore
+                        if (p.isActive)
+                        {
+                            patchList.Add(p);
+                        }
+                    }
+                    //Add the lightmap to the list of lightmaps
+                    lightmapList.Add(temp);
+                }
+            }
+
+            maps = lightmapList.ToArray();
+            patches = patchList.ToArray();
+        }
+
+        //Makes a list of visible sets for each patch based on the input models
+        private static PatchInstance[] makeVisibleSet(ModelInstance[] models, PatchInstance patch, PatchInstance[] patchList)
+        {
+            List<PatchInstance> visiblePatches = new List<PatchInstance>();
+
+            foreach (PatchInstance p in patchList)
+            {
+                //Ignore the patch we are making the set for
+                if(p != patch)
+                {
+                    //Do simple facing test, < 0 means the direction to the patch is on the right side of the patch
+                    Vector3 vectorToPatch = p.position - patch.position;
+                    if (Vector3.Dot(patch.normal, vectorToPatch) > 0)
+                    {
+                        //Do complicated test, go through all the models and see if something is in the way
+
+                        //First do bounding sphere check
+
+                        //Then do triangle by triangle
+                    }
+                }
+            }
+            return visiblePatches.ToArray();
+        }
+
+        private static int[] calculateCoefficients(PatchInstance patch, PatchInstance[] visibleSet)
+        {
+            return new int[visibleSet.Length];
+        }
+
+        //Propogates light from a to a's visible set
+        private static void propogate(PatchInstance a, PatchInstance[] visibleSet, int[] coefficients)
         {
         }
 
-        //Initializes pixels to the colour received only from visible lights to start the light mapping process
+        //Initializes patches to the colour received only from visible lights to start the light mapping process
         private static void renderLights()
         {
             
@@ -126,8 +176,8 @@ namespace DALightmapper
             int length, width, tempY, tempX;
             Vector3 a, b, c, d, ratioVector;
 
-            length = l.lightMap.GetLength(0);
-            width = l.lightMap.GetLength(1);
+            length = l.width;
+            width = l.height;
 
             for (int x = halfStride; x < length - halfStride; x += stride)
             {
@@ -136,34 +186,34 @@ namespace DALightmapper
                     //If the x is in bounds calculate the row pixels
                     if (x < length)
                     {
-                        tempY = y - halfStride;
+                        //tempY = y - halfStride;
 
-                        a = l.lightMap[x + halfStride, tempY].incidentLight;
-                        b = l.lightMap[x - halfStride, tempY].incidentLight;
+                        //a = l.lightmap[x + halfstride, tempy].incidentlight;
+                        //b = l.lightMap[x - halfStride, tempY].incidentLight;
 
-                        ratioVector = ratio(a, b);
+                        //ratioVector = ratio(a, b);
 
-                        if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
-                            lock (pointsToBeRendered)
-                                pointsToBeRendered.Add(new Vector2(x, tempY));
-                        else
-                            l.lightMap[x, tempY].incidentLight = 0.5f * (a + b);
+                        //if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
+                        //    lock (pointsToBeRendered)
+                        //        pointsToBeRendered.Add(new Vector2(x, tempY));
+                        //else
+                        //    l.lightMap[x, tempY].incidentLight = 0.5f * (a + b);
                     }
                     //if the y is in bounds calculate the column pixels
                     if (y < width)
                     {
-                        tempX = x - halfStride;
+                        //tempX = x - halfStride;
 
-                        a = l.lightMap[tempX, y + halfStride].incidentLight;
-                        b = l.lightMap[tempX, y - halfStride].incidentLight;
+                        //a = l.lightMap[tempX, y + halfStride].incidentLight;
+                        //b = l.lightMap[tempX, y - halfStride].incidentLight;
 
-                        ratioVector = ratio(a, b);
+                        //ratioVector = ratio(a, b);
 
-                        if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
-                            lock (pointsToBeRendered)
-                                pointsToBeRendered.Add(new Vector2(tempX, y));
-                        else
-                            l.lightMap[tempX, y].incidentLight = 0.5f * (a + b);
+                        //if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
+                        //    lock (pointsToBeRendered)
+                        //        pointsToBeRendered.Add(new Vector2(tempX, y));
+                        //else
+                        //    l.lightMap[tempX, y].incidentLight = 0.5f * (a + b);
                     }
                 }
             }
@@ -174,18 +224,18 @@ namespace DALightmapper
                 for (int y = halfStride; y < width - halfStride; y += stride)
                 {
 
-                    a = l.lightMap[x, y + halfStride].incidentLight;
-                    b = l.lightMap[x, y - halfStride].incidentLight;
-                    c = l.lightMap[x + halfStride, y].incidentLight;
-                    d = l.lightMap[x - halfStride, y].incidentLight;
+                    //a = l.lightMap[x, y + halfStride].incidentLight;
+                    //b = l.lightMap[x, y - halfStride].incidentLight;
+                    //c = l.lightMap[x + halfStride, y].incidentLight;
+                    //d = l.lightMap[x - halfStride, y].incidentLight;
 
-                    ratioVector = ratio(a, b, c, d);
+                    //ratioVector = ratio(a, b, c, d);
 
-                    if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
-                        lock (pointsToBeRendered)
-                            pointsToBeRendered.Add(new Vector2(x, y));
-                    else
-                        l.lightMap[x, y].incidentLight = 0.25f * (a + b + c + d);
+                    //if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
+                    //    lock (pointsToBeRendered)
+                    //        pointsToBeRendered.Add(new Vector2(x, y));
+                    //else
+                    //    l.lightMap[x, y].incidentLight = 0.25f * (a + b + c + d);
                 }
             }
         }
@@ -228,29 +278,5 @@ namespace DALightmapper
             return new Vector3(Math.Min(pair1.X, pair2.X), Math.Min(pair1.Y, pair2.Y), Math.Min(pair1.Z, pair2.Z));
         }
 
-        //Returns the textureID for the input texture file name, making a new one if needed
-        public static int addTexture(String name)
-        {
-            // load texture data and store it
-            Bitmap bmp = new Bitmap(name);
-            return addTexture(bmp, name);
-        }
-        public static int addTexture(Bitmap bmp, String name)
-        {
-            if (!_textures.ContainsKey(name))
-            {
-                int id = GL.GenTexture();
-                _textures.Add(name, id);
-            }
-
-            GL.BindTexture(TextureTarget.Texture2D, _textures[name]);
-
-            BitmapData bmp_data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, bmp_data.Width, bmp_data.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, bmp_data.Scan0);
-            bmp.UnlockBits(bmp_data);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-            return _textures[name];
-        }
     }
 }

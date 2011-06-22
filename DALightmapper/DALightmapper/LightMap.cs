@@ -12,26 +12,30 @@ namespace DALightmapper
 {
     class LightMap
     {
-        BiowareModel _model;
-        MeshChunk _meshChunk;
-        Patch[,] _lightMap;
-        int _textureID;
+        public int width { get; private set; }
+        public int height { get; private set; }
+        public PatchInstance[,] patches { get; private set; }
+        public ModelInstance model { get; private set; }
+        public Mesh mesh { get; private set; }
 
-        int _dimension;
-
-        public BiowareModel model { get { return _model; } }
-        public MeshChunk meshChunk { get { return _meshChunk; } }
-        public Patch[,] lightMap { get { return _lightMap; } }
-        public int textureID { get { return _textureID; } set { _textureID = value; } }
-        public int dimension { get { return _dimension; } }
-
-        public LightMap(BiowareModel m, MeshChunk mc)
+        public LightMap(ModelInstance mi, int meshIndex)
         {
-            _model = m;
-            _meshChunk = mc;
-            _dimension = (int)(Math.Sqrt(mc.area) * Settings.pixelsPerUnit);
-            _dimension = (int)Math.Pow(2,Math.Ceiling(Math.Log(dimension,2)));
-            _lightMap = new Patch[dimension,dimension];
+            model = mi;
+            mesh = mi.baseModel.meshes[meshIndex];
+            Patch[,] meshPatches = mesh.patches;
+
+            width = meshPatches.GetLength(0);
+            height = meshPatches.GetLength(1);
+
+            patches = new PatchInstance[width,height];
+
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    patches[i, j] = new PatchInstance(meshPatches[i, j], model.position, model.rotation);
+                }
+            }
         }
     }
 }
