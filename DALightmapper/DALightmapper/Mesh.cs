@@ -12,12 +12,8 @@ namespace DALightmapper
         String _name;
         Triangle[] _tris;
         public Patch[,] patches { get; private set; }
-
-        public Triangle[] tris
-        {
-            get { return _tris; }
-        }
-
+        public BoundingBox bounds { get; private set; }
+        
         public Triangle this[int i]
         {
             get{ return _tris[i];}
@@ -27,6 +23,30 @@ namespace DALightmapper
         {
             _name = name;
             _tris = triangles;
+
+            //make the bounding box
+            float minX = triangles[0].x.X;
+            float minY = triangles[0].x.Y;
+            float minZ = triangles[0].x.Z;
+            float maxX = triangles[0].x.X;
+            float maxY = triangles[0].x.Y;
+            float maxZ = triangles[0].x.Z;
+
+            for (int i = 0; i < triangles.Length; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    minX = Math.Min(triangles[i][j].X, minX);
+                    minY = Math.Min(triangles[i][j].Y, minY);
+                    minZ = Math.Min(triangles[i][j].Z, minZ);
+
+                    maxX = Math.Max(triangles[i][j].X, maxX);
+                    maxY = Math.Max(triangles[i][j].Y, maxY);
+                    maxZ = Math.Max(triangles[i][j].Z, maxZ);
+                }
+            }
+
+            bounds = new BoundingBox(new Vector3(maxX, maxY, maxZ), new Vector3(minX, minY, minZ));
         }
 
         //Make patches for a lightmap with dimensions [width,height]
@@ -41,7 +61,7 @@ namespace DALightmapper
                     Vector2 uvCoords = new Vector2(i / width, j / height);
 
                     //See if this uv is on any triangle in the mesh
-                    foreach (Triangle t in tris)
+                    foreach (Triangle t in _tris)
                     { 
                         if (t.uvIsOnThisTriangle(uvCoords))
                         {
@@ -58,6 +78,11 @@ namespace DALightmapper
                     }
                 }
             }
+        }
+
+        public int getNumTris()
+        {
+            return _tris.Length();
         }
     }
 }

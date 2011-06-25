@@ -128,21 +128,51 @@ namespace DALightmapper
         private static PatchInstance[] makeVisibleSet(ModelInstance[] models, PatchInstance patch, PatchInstance[] patchList)
         {
             List<PatchInstance> visiblePatches = new List<PatchInstance>();
+            List<ModelInstance> intersectionTests = new List<ModelInstance>();
 
             foreach (PatchInstance p in patchList)
             {
                 //Ignore the patch we are making the set for
                 if(p != patch)
                 {
-                    //Do simple facing test, < 0 means the direction to the patch is on the right side of the patch
+                    bool visible = true;
+                    intersectionTests.Clear();
+                    //Do simple facing test, < 0 means the direction to the patch is on the side of the patch we want
                     Vector3 vectorToPatch = p.position - patch.position;
                     if (Vector3.Dot(patch.normal, vectorToPatch) > 0)
                     {
                         //Do complicated test, go through all the models and see if something is in the way
 
-                        //First do bounding sphere check
-
+                        //First do bounding box check
+                        foreach (ModelInstance model in models)
+                        {
+                            foreach (BoundingBox bounds in model.bounds)
+                            {
+                                if (bounds.containsLine(patch.position, p.position) || bounds.lineIntersects(patch.position, p.position))
+                                {
+                                    intersectionTests.Add(model);
+                                }
+                            }
+                        }
                         //Then do triangle by triangle
+                        for (int a = 0;a < intersectionTests.Count && visible; a++) 
+                        {
+                            ModelInstance model = intersectionTests[a];
+                            for (int i = 0; i < model.getNumMeshes() && visible; i++)
+                            {
+                                for (int j = 0; j < model.baseModel.meshes[i].getNumTris() && visible; j++)
+                                {
+                                    if (model.getTri(i, j).lineIntersects(patch.position, p.position))
+                                    {
+                                        visible = false;
+                                    }
+                                }
+                            }
+                        }
+                        if (visible)
+                        {
+                            visiblePatches.Add(p);
+                        }
                     }
                 }
             }

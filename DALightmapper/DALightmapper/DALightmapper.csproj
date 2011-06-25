@@ -51,6 +51,7 @@
     <Compile Include="AmbientLight.cs" />
     <Compile Include="BiowareFile.cs" />
     <Compile Include="BiowareStruct.cs" />
+    <Compile Include="BoundingBox.cs" />
     <Compile Include="ERF.cs" />
     <Compile Include="GenericList.cs" />
     <Compile Include="GFF.cs" />

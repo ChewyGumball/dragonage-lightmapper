@@ -1,4 +1,5 @@
-﻿using OpenTK;
+﻿using System;
+using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
@@ -110,7 +111,10 @@ namespace DALightmapper
             set { _chunk = value; }
         }
 
-
+        public Vector3 this[int i]
+        {
+            get { return _mVerts[i]; }
+        }
         uint id
         {
             get { return textureID; }
@@ -165,6 +169,64 @@ namespace DALightmapper
             return Vector3.Add(directionVector, x);
         }
 
+        public bool lineIntersects(Vector3 start, Vector3 end)
+        {
+            //Find intersection of line and plane containing triangle
+            float denominator = Vector3.Dot(normal, end - start);
+
+            //If the denominator is 0 then it is parallel
+            if (denominator == 0)
+            {
+                return false;
+            }
+            else
+            {
+                float numerator = Vector3.Dot(normal, x - start);
+                float param = numerator / denominator;
+
+                //The triangle is past the end or before the start
+                if (param > 1 || param < 0)
+                {
+                    return false;
+                }
+                else
+                {
+                    //Find coefficients of triangle vectors to get to that point
+
+                    Vector3 a = y - x;
+                    Vector3 b = z - x;
+                    Vector3 intersection = start + param * (end - start);
+
+                    float adota = Vector3.Dot(a,a);
+                    float bdotb = Vector3.Dot(b,b);
+                    float adotb = Vector3.Dot(a,b);
+                    float intdota = Vector3.Dot(intersection,a);
+                    float intdotb = Vector3.Dot(intersection,b);
+
+                    float denominator2 = (adotb * adotb) - (adota * bdotb);
+
+                    //This is a degenerate triangle
+                    if (denominator2 == 0)
+                    {
+                        return false;
+                    }
+                    else
+                    {
+                        //Find the combination of vectors to get the intersection point
+                        float u = ((adotb * intdota) - (adota * intdotb)) / denominator2;
+                        float t = ((adotb * intdotb) - (bdotb * intdota)) / denominator2;
+                        float sum = t + u;
+                        
+                        //if the sum of the parameters is not between 0 and 1 then outside the triangle
+                        if (sum > 1 || sum < 0)
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
         private Vector2 convertToTextureBasis(Vector2 coord){
             
             //Find vector from origin to input point
@@ -197,5 +259,7 @@ namespace DALightmapper
             _normal = Vector3.Cross(Vector3.Subtract(y, x), Vector3.Subtract(z, x));
             _normal.Normalize();
         }
+
+
     }
 }
