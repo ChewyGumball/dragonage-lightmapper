@@ -101,7 +101,7 @@ namespace DALightmapper
             int width = glControl1.Width;
             int height = glControl1.Height;
 
-            Triangle[] tris = meshes[currentMeshIndex].tris;
+            Mesh tris = meshes[currentMeshIndex];
 
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -116,7 +116,7 @@ namespace DALightmapper
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.Length; i++)
+            for (int i = 0; i < tris.getNumTris(); i++)
             {
                 GL.Vertex2(tris[i].u.X * width, tris[i].u.Y * height);
                 GL.Vertex2(tris[i].v.X * width, tris[i].v.Y * height);
@@ -135,7 +135,7 @@ namespace DALightmapper
             Vector3 origin = new Vector3();
             Vector3 up = new Vector3(0,1,0);
 
-            Triangle[] tris = meshes[currentMeshIndex].tris;
+            Mesh tris = meshes[currentMeshIndex];
 
             GL.Viewport(0, 0, Width, Height);
 
@@ -159,7 +159,7 @@ namespace DALightmapper
             GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
             GL.Enable(EnableCap.DepthTest);
             GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.Length; i++)
+            for (int i = 0; i < tris.getNumTris(); i++)
             {
                 double cosine = Math.Abs(Vector3.Dot(Vector3.Normalize(origin - cameraPos), tris[i].normal));
                 GL.Color3(cosine, cosine, cosine);
@@ -178,7 +178,7 @@ namespace DALightmapper
             int width = glControl1.Width;
             int height = glControl1.Height;
 
-            Triangle[] tris = meshes[currentMeshIndex].tris;
+            Mesh tris = meshes[currentMeshIndex];
 
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -195,7 +195,7 @@ namespace DALightmapper
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.Length; i++)
+            for (int i = 0; i < tris.getNumTris(); i++)
             {
                 if (tris[i].isLightmapped)
                 {

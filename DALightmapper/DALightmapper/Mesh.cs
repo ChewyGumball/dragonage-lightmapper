@@ -82,7 +82,7 @@ namespace DALightmapper
 
         public int getNumTris()
         {
-            return _tris.Length();
+            return _tris.Length;
         }
     }
 }
