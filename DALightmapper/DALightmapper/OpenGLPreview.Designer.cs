@@ -51,6 +51,10 @@
             this.glControl1.Size = new System.Drawing.Size(512, 512);
             this.glControl1.TabIndex = 0;
             this.glControl1.VSync = false;
+            this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
+            this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
+            this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
+            this.glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
             // 
             // btn_choose
             // 
@@ -178,6 +182,8 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "OpenGLPreview";
             this.Text = "OpenGLPreview";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OpenGLPreview_FormClosing);
+            this.Load += new System.EventHandler(this.OpenGLPreview_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

@@ -23,6 +23,12 @@ namespace DALightmapper
 
         Showing currentlyShowing = Showing.UV;
 
+        bool mouseDown = false;
+        Point mouseOrigin;
+        Vector3 cameraPos = new Vector3(0, 10, 10);
+        Vector3 origin = new Vector3();
+        Vector3 up = new Vector3(0, 1, 0);
+        Vector3 colour = Vector3.Normalize(new Vector3(0, -10, -10));
 
         public OpenGLPreview()
         {
@@ -131,11 +137,6 @@ namespace DALightmapper
         {
             int width = glControl1.Width;
             int height = glControl1.Height;
-            Vector3 cameraPos = new Vector3(0,10,10);
-            Vector3 origin = new Vector3();
-            Vector3 up = new Vector3(0,1,0);
-
-            Mesh tris = meshes[currentMeshIndex];
 
             GL.Viewport(0, 0, Width, Height);
 
@@ -144,32 +145,15 @@ namespace DALightmapper
             GL.LoadIdentity();
             GL.LoadMatrix(ref perpective);
 
-            Matrix4 lookat = Matrix4.LookAt(cameraPos, origin, up);
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            GL.LoadMatrix(ref lookat);
-            
+            setCamera();
+
             GL.Viewport(0, 0, width, height);
 
             GL.ClearColor(Color.Black);
             GL.Color3(Color.White);
             GL.LineWidth(0.5f);
 
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
-            GL.Enable(EnableCap.DepthTest);
-            GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.getNumTris(); i++)
-            {
-                double cosine = Math.Abs(Vector3.Dot(Vector3.Normalize(origin - cameraPos), tris[i].normal));
-                GL.Color3(cosine, cosine, cosine);
-                GL.Vertex3(tris[i].x.X, tris[i].x.Y, tris[i].x.Z);
-                GL.Vertex3(tris[i].y.X, tris[i].y.Y, tris[i].y.Z);
-                GL.Vertex3(tris[i].z.X, tris[i].z.Y, tris[i].z.Z);
-            }
-            GL.End();
-            GL.Disable(EnableCap.DepthTest);
-            glControl1.SwapBuffers();
+            redraw();
         }
 
         //Draws the Lightmap UV of the current mesh
@@ -205,6 +189,34 @@ namespace DALightmapper
                 }
             }
             GL.End();
+            glControl1.SwapBuffers();
+        }
+
+        private void setCamera()
+        {
+            Matrix4 lookat = Matrix4.LookAt(cameraPos, origin, up);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.LoadMatrix(ref lookat);
+        }
+
+        private void redraw()
+        {
+            Mesh tris = meshes[currentMeshIndex];
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
+            GL.Enable(EnableCap.DepthTest);
+            GL.Begin(BeginMode.Triangles);
+            for (int i = 0; i < tris.getNumTris(); i++)
+            {
+                double cosine = Math.Abs(Vector3.Dot(colour, tris[i].normal));
+                GL.Color3(cosine, cosine, cosine);
+                GL.Vertex3(tris[i].x.X, tris[i].x.Y, tris[i].x.Z);
+                GL.Vertex3(tris[i].y.X, tris[i].y.Y, tris[i].y.Z);
+                GL.Vertex3(tris[i].z.X, tris[i].z.Y, tris[i].z.Z);
+            }
+            GL.End();
+            GL.Disable(EnableCap.DepthTest);
             glControl1.SwapBuffers();
         }
 
@@ -260,6 +272,43 @@ namespace DALightmapper
                     lbl_progressStatus.Text = "Unknown currently showing status...?" + currentlyShowing; break;
 
             }
+        }
+
+        private void glControl1_MouseDown(object sender, MouseEventArgs e)
+        {
+            mouseDown = true;
+            mouseOrigin = e.Location;
+        }
+
+        private void glControl1_MouseUp(object sender, MouseEventArgs e)
+        {
+            mouseDown = false;
+        }
+
+        private void glControl1_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (mouseDown)
+            {
+                origin += new Vector3(-(e.X - mouseOrigin.X) / 10, -(e.Y - mouseOrigin.Y) / 10, 0);
+                mouseOrigin = e.Location;
+                setCamera();
+                redraw();
+            }
+        }
+
+        private void OpenGLPreview_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+        }
+
+        void glControl1_MouseWheel(object sender, MouseEventArgs e)
+        {
+        }
+
+        private void OpenGLPreview_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
