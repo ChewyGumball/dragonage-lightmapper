@@ -12,7 +12,7 @@ namespace DALightmapper
         public static bool useTrueAttenuation = true;   //Whether to use d^-2 or a more linear fall off specified per light for lighting
 
         //--Housekeeping Variables--//
-        public static Verbosity verboseStatus = Verbosity.Sparse;   //The level of verbosity messages are checked against for display
+        public static Verbosity verboseStatus = Verbosity.Low;   //The level of verbosity messages are checked against for display
         public static Boolean cleanUpTempFiles = true;  //Whether to clean up the temp files created
 
         //--Light Mapping Variables--//

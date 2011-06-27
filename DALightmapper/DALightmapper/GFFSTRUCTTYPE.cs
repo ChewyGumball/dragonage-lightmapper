@@ -26,6 +26,7 @@
         TRN_AREA_INFO = 1413694803, //Terrain sector data
         MMH_NODE_STRUCT = 1701080942,  //Node in an mmh file
         MMH_MSH_STRUCT = 1751675757,    //Info about mesh chunks in mmh files
+        LVL_GROUP = 542134855,  //Grouping of objects in a level
         UNKNOWN = 1073741825//UNKNOWN
 
     }

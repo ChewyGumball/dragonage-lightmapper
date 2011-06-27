@@ -124,6 +124,7 @@ namespace Bioware.Structs
         public MeshChunk(Triangle[] triangles)
         {
             _tris = triangles;
+            _usesTwoTexCoords = triangles[0].isLightmapped;
             for (int i = 0; i < _tris.Length; i++)
             {
                 _area += 0.5 * Vector3.Cross(tris[i].y - tris[i].x, tris[i].z - tris[i].x).Length;

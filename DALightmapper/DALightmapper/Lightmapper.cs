@@ -47,6 +47,7 @@ namespace DALightmapper
 
             //Make the lightmaps and patch instances
             makeLightmaps(level.lightmapModels, out maps, out patches);
+            System.Console.WriteLine("There are {0} patches in {1} lightmaps.", patches.Length, maps.Length);
 
             //Make visible set for each patch
             visibleSets = new PatchInstance[patches.Length][];
@@ -64,7 +65,7 @@ namespace DALightmapper
             renderLights(); //THIS NEEDS TO BE CHANGED!!!!
 
             //Do some lightmapping
-            for(abort = false; currentBounce < Settings.numBounces; currentBounce ++)
+            for(abort = false; currentBounce < Settings.numBounces && false; currentBounce ++)
             {
                 //Find patch with highest exident light
                 int highestIndex = 0;

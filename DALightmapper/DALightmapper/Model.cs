@@ -17,11 +17,19 @@ namespace DALightmapper
         {
             get { return _meshes; }
         }
-
+        public Boolean isLightmapped { get; private set; }
         public Model(String name, Mesh[] mesh)
         {
             _name = name;
             _meshes = mesh;
+            foreach (Mesh m in mesh)
+            {
+                if (m.isLightmapped)
+                {
+                    isLightmapped = true;
+                    break;
+                }
+            }
         }
     }
 }

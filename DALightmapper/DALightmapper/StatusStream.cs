@@ -9,7 +9,7 @@ namespace Ben
     {
         StatusStreamType type;
         TextBox _statusBox;
-        Verbosity _verbosity;   //The minimum verbosity a message needs to be displayed
+        Verbosity _verbosity = Verbosity.Low;   //The minimum verbosity a message needs to be displayed
 
         int _indent;
 

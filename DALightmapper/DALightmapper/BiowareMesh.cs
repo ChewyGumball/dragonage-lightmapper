@@ -77,7 +77,7 @@ namespace Bioware.Files
             Mesh[] meshes = new Mesh[_chunks.Length];
             for (int i = 0; i < meshes.Length; i++)
             {
-                meshes[i] = new Mesh(_chunks[i].name, _chunks[i].tris);
+                meshes[i] = new Mesh(_chunks[i].name, _chunks[i].tris, _chunks[0].receives);
             }
             return new Model(name, meshes);
         }

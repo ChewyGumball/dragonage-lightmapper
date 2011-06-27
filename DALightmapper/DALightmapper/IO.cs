@@ -88,7 +88,7 @@ namespace DALightmapper
                     GFF temp = new GFF(fileName, 0);
                     for (int i = 0; i < temp.structs.Length; i++)
                     {
-                        stream.AppentLine(i+". "+temp.structs[i].ToString(),Verbosity.Low);
+                        stream.AppentLine(i+". "+temp.structs[i].definition.ToString(),Verbosity.Low);
                         stream.indent++;
                         for (int j = 0; j < temp.structs[i].fields.Length; j++)
                         {

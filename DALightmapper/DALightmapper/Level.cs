@@ -86,6 +86,9 @@ namespace DALightmapper
         private static readonly int PROPERTY_VALUE_INDEX = 1;
         private static readonly int PROPERTY_CHILDREN_INDEX = 2;
 
+        //Group index values
+        private static readonly int GROUP_LIST_INDEX = 2;
+
         #endregion
 
         private BiowareStruct roomStruct = null;
@@ -95,6 +98,7 @@ namespace DALightmapper
         private BiowareStruct environmentStruct = null;
         private BiowareStruct terrainChunkStruct = null;
         private BiowareStruct propertyStruct = null;
+        private BiowareStruct levelGroupStruct = null;
 
         public Level(String filePath)
         {
@@ -277,6 +281,19 @@ namespace DALightmapper
                             lights.Add(new PointLight(position, colour, intensity, lightEffect)); break;
                     }
                 }
+                else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)
+                {
+                    //seek to the group struct data
+                    file.BaseStream.Seek(headerFile.dataOffset + objectList[i], SeekOrigin.Begin);
+                    currentPosition = file.BaseStream.Position;
+
+                    //seek to the list
+                    file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_LIST_INDEX].index, SeekOrigin.Begin);
+                    int reference = file.ReadInt32();
+                    file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
+
+                    lights.AddRange(readLights(new GenericList(file)));
+                }
             }
             return lights;
         }
@@ -336,7 +353,7 @@ namespace DALightmapper
 
         private List<BiowareModel> readPropModels(GenericList objectList)
         {
-            List<BiowareModel> models = new List<BiowareModel>();
+            List<BiowareModel> propModels = new List<BiowareModel>();
             BinaryReader file = headerFile.getReader();
             long currentPosition;   //position of beginning of model struct (for offsets within struct
 
@@ -388,24 +405,42 @@ namespace DALightmapper
                     modelID = file.ReadUInt32();
 
                     //add the model to the models list (as normal models)
-                    models.Add(new BiowareModel(position,rotation,modelFileName,modelID, false));
+                    propModels.Add(new BiowareModel(position,rotation,modelFileName,modelID, false));
+                }
+                else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)
+                {
+                    //seek to the group struct data
+                    file.BaseStream.Seek(headerFile.dataOffset + objectList[i], SeekOrigin.Begin);
+                    currentPosition = file.BaseStream.Position;
+
+                    //seek to the list
+                    file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_LIST_INDEX].index, SeekOrigin.Begin);
+                    reference = file.ReadInt32();
+                    file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
+
+                    propModels.AddRange(readPropModels(new GenericList(file)));
                 }
             }
-            return models;
+            return propModels;
         }
 
         private void createMeshHierarchies()
         {
+            //Create a list of model hierarchies
+            List<ModelHierarchy> modelHierarchies = new List<ModelHierarchy>();
+
             //Get all the (unique) names for the model files (.mmh)
             HashSet<String> modelNames = new HashSet<String>();
             foreach (BiowareModel m in models)
             {
-                if(!m.isTerrain)
+                if (!m.isTerrain)
                     modelNames.Add(m.modelFileName);
+                else
+                {
+                    modelHierarchies.Add(m.hierarchy);
+                }
             }
 
-            //Create a list of model hierarchies
-            List<ModelHierarchy> modelHierarchies = new List<ModelHierarchy>();
 
             GFF tempGFF;    //temporary gff file for reading purposes
 
@@ -417,7 +452,7 @@ namespace DALightmapper
                 //If the file was not found
                 if (tempGFF == null)
                 {
-                    //Print an error and throw an exception
+                    //Print an error and throw an exception Todo: CHANGE TO JUST CUSTOM EXCEPTION 
                     Console.WriteLine("Could not find model file \"{0}\".", name);
                     throw new Exception("COULD NOT FIND MODEL FILE, LOOK AT CONSOLE!!!!!!");
                 }
@@ -448,19 +483,17 @@ namespace DALightmapper
                 {
                     BiowareModel m = models[j];
 
-                    //if the model is terrain and it hasn't been set yet
-                    if (m.isTerrain && m == null)
-                    {
-                        //Create the terrain lightmap model, the hierarchy has already been set
-                        _lightmapModels[j] = new ModelInstance(m.modelFileName, m.hierarchy.mesh.toModel(), m.position, m.rotation, m.modelID);
-                    }
-                    //Else if the model is a prop model, hasn't been set yet because each has a unique mmh name
-                    else if (m.modelFileName == mh.mmhName)
+                    // if the model is a prop model or the model is terrain and it hasn't been set yet
+                    if (m.modelFileName == mh.mmhName|| (m.isTerrain && _lightmapModels[i] == null))
                     {
                         //Set the hierarchy in the bioware model
                         m.hierarchy = mh;
-                        //Create the lightmap model
-                        _lightmapModels[j] = new ModelInstance(m.modelFileName, realModels[i], m.position, m.rotation,m.modelID);
+
+                        if (realModels[i].isLightmapped)
+                        {
+                            //Create the lightmap model
+                            _lightmapModels[j] = new ModelInstance(m.modelFileName, realModels[i], m.position, m.rotation, m.modelID);
+                        }
                     }
                 }
             }
@@ -502,6 +535,8 @@ namespace DALightmapper
                         terrainChunkStruct = headerFile.structs[i]; break;
                     case GFFSTRUCTTYPE.TS_PROPERTY:
                         propertyStruct = headerFile.structs[i]; break;
+                    case GFFSTRUCTTYPE.LVL_GROUP:
+                        levelGroupStruct = headerFile.structs[i]; break;
                 }
             }
         }

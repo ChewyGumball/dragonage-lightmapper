@@ -91,6 +91,8 @@ namespace Bioware.Files
             file.BaseStream.Seek(binaryFile.dataOffset + infoStruct.fields[SECTOR_ID_INDEX].index, SeekOrigin.Begin);
             _sectorID = file.ReadInt32();
 
+            name = "Sector " + sectorID;
+
 
 
 
@@ -318,7 +320,7 @@ namespace Bioware.Files
             //Make an array to hold all the triangles
             
             //Set the mesh for the model
-            ModelHierarchy terrainHierarchy = new ModelHierarchy(this,"Sector"+sectorID);
+            ModelHierarchy terrainHierarchy = new ModelHierarchy(this,name);
             terrainModel.hierarchy = terrainHierarchy;
             return terrainModel;
         }
