@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows.Forms;
 using Ben;
 using Bioware.Files;
+
 namespace DALightmapper
 {
     class Settings
