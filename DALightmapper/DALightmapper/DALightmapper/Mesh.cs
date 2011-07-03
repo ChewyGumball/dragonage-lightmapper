@@ -14,15 +14,17 @@ namespace DALightmapper
         public Patch[,] patches { get; private set; }
         public BoundingBox bounds { get; private set; }
         public Boolean isLightmapped { get; private set; }
+        public Boolean castsShadows { get; private set; }
         
         public Triangle this[int i]
         {
             get{ return _tris[i];}
         }
 
-        public Mesh(String name, Triangle[] triangles, Boolean lightmap)
+        public Mesh(String name, Triangle[] triangles, Boolean lightmap, Boolean shadows)
         {
             isLightmapped = lightmap;
+            castsShadows = shadows;
 
             _name = name;
             _tris = triangles;

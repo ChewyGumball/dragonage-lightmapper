@@ -10,18 +10,12 @@
   &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
-    <Setting Name="workingDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)"> </Value>
-    </Setting>
     <Setting Name="erfFiles" Type="System.Collections.Specialized.StringCollection" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
   &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelhierarchies.erf&lt;/string&gt;
   &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelmeshdata.erf&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
-    </Setting>
-    <Setting Name="tempDirectory" Type="System.String" Scope="User">
-      <Value Profile="(Default)"> </Value>
     </Setting>
     <Setting Name="numBounces" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">5</Value>
@@ -37,6 +31,14 @@
     </Setting>
     <Setting Name="clearTempFiles" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="workingDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)">
+                </Value>
+    </Setting>
+    <Setting Name="tempDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)">
+                </Value>
     </Setting>
   </Settings>
 </SettingsFile>

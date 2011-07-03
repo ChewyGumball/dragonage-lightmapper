@@ -33,8 +33,6 @@ namespace DALightmapper
             //Create the IO object
             io = new IO(stream);
 
-            Settings.initializeSettings();
-
             try
             {
 

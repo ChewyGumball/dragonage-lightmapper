@@ -484,12 +484,12 @@ namespace DALightmapper
                     BiowareModel m = models[j];
 
                     // if the model is a prop model or the model is terrain and it hasn't been set yet
-                    if (m.modelFileName == mh.mmhName|| (m.isTerrain && _lightmapModels[i] == null))
+                    if (m.modelFileName == mh.mmhName || (m.isTerrain && _lightmapModels[i] == null))
                     {
                         //Set the hierarchy in the bioware model
                         m.hierarchy = mh;
 
-                        if (realModels[i].isLightmapped)
+                        if (realModels[i].isLightmapped || realModels[i].castsShadows)
                         {
                             //Create the lightmap model
                             _lightmapModels[j] = new ModelInstance(m.modelFileName, realModels[i], m.position, m.rotation, m.modelID);

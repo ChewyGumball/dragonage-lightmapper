@@ -15,7 +15,7 @@ namespace DALightmapper
         public Vector3 normal { get; private set; }
 
         public Vector3 incidentLight { get; set; }
-        public Vector3 excidentLight { get; private set; }
+        public Vector3 excidentLight { get; set; }
 
         public PatchInstance(Patch p, Vector3 offset, Quaternion rotation)
         {

@@ -18,6 +18,7 @@ namespace DALightmapper
             get { return _meshes; }
         }
         public Boolean isLightmapped { get; private set; }
+        public Boolean castsShadows { get; private set; }
         public Model(String name, Mesh[] mesh)
         {
             _name = name;
@@ -27,6 +28,15 @@ namespace DALightmapper
                 if (m.isLightmapped)
                 {
                     isLightmapped = true;
+                    break;
+                }
+            }
+
+            foreach (Mesh m in mesh)
+            {
+                if (m.castsShadows)
+                {
+                    castsShadows = true;
                     break;
                 }
             }

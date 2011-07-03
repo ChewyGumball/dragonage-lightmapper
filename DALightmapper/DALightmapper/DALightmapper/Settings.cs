@@ -32,8 +32,8 @@ namespace DALightmapper
         public static String toolsetPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\tools";  //The path to the toolset
         public static String overrideFolderPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\override";   //The path to the override folder in which to look for files if they aren't in the erf
 
-        public static List<String> filePaths = new List<String>();
-        public static List<ERF> erfFiles = new List<ERF>();
+        public static List<String> filePaths = null;
+        public static List<ERF> erfFiles = null;
        
         
         //--Required ERF files--//
@@ -53,10 +53,15 @@ namespace DALightmapper
         {
             workingDirectory = Properties.Settings.Default.workingDirectory;
             tempDirectory = Properties.Settings.Default.tempDirectory;
+
+            filePaths = new List<String>();
+            erfFiles = new List<ERF>();
+
             foreach (String s in Properties.Settings.Default.filePaths)
             {
                 filePaths.Add(s);
             }
+
             foreach (String s in Properties.Settings.Default.erfFiles)
             {
                 ERF temp = new ERF(s);

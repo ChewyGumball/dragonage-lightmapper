@@ -42,19 +42,33 @@ namespace DALightmapper
 
             PatchInstance[] patches;
             PatchInstance[][] visibleSets;
-            int[][] coefficients;
+            double[][] coefficients;
             LightMap[] maps;
 
+            List<ModelInstance> castingModelsList = new List<ModelInstance>();
+            List<ModelInstance> receivingModelsList = new List<ModelInstance>();
+
+            foreach (ModelInstance m in level.lightmapModels)
+            {
+                if (m.baseModel.isLightmapped)
+                    receivingModelsList.Add(m);
+                if (m.baseModel.castsShadows)
+                    castingModelsList.Add(m);
+            }
+
+            ModelInstance[] receivingModels = receivingModelsList.ToArray();
+            ModelInstance[] castingModels = castingModelsList.ToArray();
+
             //Make the lightmaps and patch instances
-            makeLightmaps(level.lightmapModels, out maps, out patches);
+            makeLightmaps(receivingModels, out maps, out patches);
             System.Console.WriteLine("There are {0} patches in {1} lightmaps.", patches.Length, maps.Length);
 
             //Make visible set for each patch
             visibleSets = new PatchInstance[patches.Length][];
-            coefficients = new int[patches.Length][];
+            coefficients = new double[patches.Length][];
             for (int i = 0; i < patches.Length; i++)
             {
-                visibleSets[i] = makeVisibleSet(level.lightmapModels, patches[i], patches);
+                visibleSets[i] = makeVisibleSet(castingModels, patches[i], patches);
                 coefficients[i] = calculateCoefficients(patches[i], visibleSets[i]);
             }
 
@@ -62,7 +76,7 @@ namespace DALightmapper
             int currentBounce = 0;
 
             //Start the lightmapping process off by just rendering light sources
-            renderLights(); //THIS NEEDS TO BE CHANGED!!!!
+            renderLights(level.lights,patches,castingModels); 
 
             //Do some lightmapping
             for(abort = false; currentBounce < Settings.numBounces && false; currentBounce ++)
@@ -180,20 +194,77 @@ namespace DALightmapper
             return visiblePatches.ToArray();
         }
 
-        private static int[] calculateCoefficients(PatchInstance patch, PatchInstance[] visibleSet)
+        private static double[] calculateCoefficients(PatchInstance patch, PatchInstance[] visibleSet)
         {
-            return new int[visibleSet.Length];
+            return new double[visibleSet.Length];
         }
 
         //Propogates light from a to a's visible set
-        private static void propogate(PatchInstance a, PatchInstance[] visibleSet, int[] coefficients)
+        private static void propogate(PatchInstance a, PatchInstance[] visibleSet, double[] coefficients)
         {
         }
 
         //Initializes patches to the colour received only from visible lights to start the light mapping process
-        private static void renderLights()
+        private static void renderLights(Light[] lights, PatchInstance[] patches, ModelInstance[] castingModels)
         {
-            
+
+            for (int i = 0; i < lights.Length; i++)
+            {
+                Patch lightPatch = new Patch(new Vector2(), lights[i].position,new Vector3(), lights[i].intensity * lights[i].colour, new Vector3());
+                PatchInstance currentLight = new PatchInstance(lightPatch, new Vector3(), new Quaternion());
+                List<ModelInstance> intersectionTests = new List<ModelInstance>();
+                List<PatchInstance> visiblePatches = new List<PatchInstance>();
+
+                bool visible = true;
+
+                foreach (PatchInstance p in patches)
+                {
+                    //First do bounding box check
+                    foreach (ModelInstance model in castingModels)
+                    {
+                            foreach (BoundingBox bounds in model.bounds)
+                            {
+                                if (bounds.containsLine(currentLight.position, p.position) || bounds.lineIntersects(currentLight.position, p.position))
+                                {
+                                    intersectionTests.Add(model);
+                                }
+                            }
+                    }
+                    //Then do triangle by triangle
+                    for (int a = 0; a < intersectionTests.Count && visible; a++)
+                    {
+                        ModelInstance model = intersectionTests[a];
+                        for (int d = 0; d < model.getNumMeshes() && visible; d++)
+                        {
+                            for (int j = 0; j < model.baseModel.meshes[d].getNumTris() && visible; j++)
+                            {
+                                if (model.getTri(d, j).lineIntersects(currentLight.position, p.position))
+                                {
+                                    visible = false;
+                                }
+                            }
+                        }
+                    }
+                    if (visible)
+                    {
+                        visiblePatches.Add(p);
+                    }
+                }
+
+                PatchInstance[] visibleArray = visiblePatches.ToArray();
+                propogate(currentLight,visibleArray,calculateLightCoefficients(lights[i],visibleArray));
+            }        
+        }
+
+        private static double[] calculateLightCoefficients(Light light, PatchInstance[] visibleArray)
+        {
+            double[] coefficients = new double[visibleArray.Length];
+            for (int i = 0; i < coefficients.Length; i++)
+            {
+                //THIS SHOULD TAKE INTO ACCOUNT PATCH NORMAL OR SOMETHING
+                coefficients[i] = light.influence(visibleArray[i].position);
+            }
+            return coefficients;
         }
 
         private static void makeIntoTexture(LightMap l)

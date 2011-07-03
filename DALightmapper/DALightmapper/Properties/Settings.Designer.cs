@@ -42,18 +42,6 @@ namespace DALightmapper.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string workingDirectory {
-            get {
-                return ((string)(this["workingDirectory"]));
-            }
-            set {
-                this["workingDirectory"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute(@"<?xml version=""1.0"" encoding=""utf-16""?>
 <ArrayOfString xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"">
   <string>C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelhierarchies.erf</string>
@@ -65,18 +53,6 @@ namespace DALightmapper.Properties {
             }
             set {
                 this["erfFiles"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string tempDirectory {
-            get {
-                return ((string)(this["tempDirectory"]));
-            }
-            set {
-                this["tempDirectory"] = value;
             }
         }
         
@@ -137,6 +113,30 @@ namespace DALightmapper.Properties {
             }
             set {
                 this["clearTempFiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string workingDirectory {
+            get {
+                return ((string)(this["workingDirectory"]));
+            }
+            set {
+                this["workingDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string tempDirectory {
+            get {
+                return ((string)(this["tempDirectory"]));
+            }
+            set {
+                this["tempDirectory"] = value;
             }
         }
     }
