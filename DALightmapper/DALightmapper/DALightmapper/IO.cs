@@ -88,11 +88,11 @@ namespace DALightmapper
                     GFF temp = new GFF(fileName, 0);
                     for (int i = 0; i < temp.structs.Length; i++)
                     {
-                        stream.AppentLine(i+". "+temp.structs[i].definition.ToString(),Verbosity.Low);
+                        stream.AppendLine(i+". "+temp.structs[i].definition.ToString(),Verbosity.Low);
                         stream.indent++;
                         for (int j = 0; j < temp.structs[i].fields.Length; j++)
                         {
-                            stream.AppentLine(j+". "+temp.structs[i].fields[j].ToString(),Verbosity.Low);
+                            stream.AppendLine(j+". "+temp.structs[i].fields[j].ToString(),Verbosity.Low);
                         }
                         stream.indent--;
                    }
@@ -106,13 +106,13 @@ namespace DALightmapper
                 }
                 else if (extention == ".erf")
                 {
-                    stream.AppentLine("This is an ERF, attempting to read key data",Verbosity.Sparse);
+                    stream.AppendLine("This is an ERF, attempting to read key data",Verbosity.Warnings);
                     ERF thing = new ERF(fileName);
                     thing.readKeyData();
-                    stream.AppentLine("Read in key data, " + thing.resourceCount + " files found", Verbosity.Sparse);
+                    stream.AppendLine("Read in key data, " + thing.resourceCount + " files found", Verbosity.Warnings);
                     for (int i = 0; i < thing.resourceCount; i++)
                     {
-                        stream.AppentLine("\t " + thing.resourceNames[i] + ": " + thing.resourceLengths[i] + " " + thing.resourceOffsets[i], Verbosity.Sparse);
+                        stream.AppendLine("\t " + thing.resourceNames[i] + ": " + thing.resourceLengths[i] + " " + thing.resourceOffsets[i], Verbosity.Warnings);
                     }
                 }
                 else
@@ -128,70 +128,57 @@ namespace DALightmapper
 
         public static void addTempFile(BiowareFile fileObject)
         {
-            tempFiles.Add(fileObject);
+            if (fileObject != null)
+            {
+                tempFiles.Add(fileObject);
+            }
         }
 
         public void cleanUpTempFiles()
         {
             for (int i = 0; i < tempFiles.Count; i++)
             {
-                if (Settings.verboseStatus == Verbosity.Medium)
-                {
-                    if (File.Exists(tempFiles[i].path))
-                        stream.AppendText("Deleting " + tempFiles[i].path + "\n", Verbosity.Sparse);
-                    else
-                        stream.AppendText(tempFiles[i].path + " does not exist.\n", Verbosity.Sparse);
-                }
                 tempFiles[i].Close();
-                File.Delete(tempFiles[i].path);
             }
 
-            stream.AppendText("" + tempFiles.Count + " files deleted.\n", Verbosity.Sparse);
-
+            stream.AppendText("Cleaned up " + tempFiles.Count + " files.\n", Verbosity.Medium);
             tempFiles.Clear();
         }
 
-        //Returns the gff file with the name filename, looking in the specified ERF file, the override folders, and the temp folder.
+        //Returns the gff file with the name filename, looking in the erfs and folders saved in the settings classs.
         //  RETURNS NULL IF THE INPUT FILENAME DOES NOT EXIST IN ONE OF THOSE PLACES
-        public static GFF findGFFFile(String filename, ERF archiveFile)
+        public static GFF findGFFFile(String filename)
         {
             GFF tempGFF = null;
-            //Look in temp folder
-            if (fileIsInTemp(filename))
+
+            //Look in temp directory
+            String tempPath = Settings.tempDirectory + "\\" + filename;
+            if (File.Exists(tempPath))
             {
-                //Look for it in the temp files list
-                foreach (BiowareFile f in tempFiles)
+                tempGFF = new GFF(tempPath, 0);
+            }
+            else
+            {
+                //Look in the erfs
+                foreach (ERF erf in Settings.erfFiles)
                 {
-                    if (f.path == Settings.tempPath + "\\" + filename)
-                        return f as GFF;
+                    if (erf.isInERF(filename))
+                    {
+                        tempGFF = new GFF(erf.path, erf.resourceOffsets[erf.indexOf(filename)]);
+                    }
                 }
-
-                tempGFF = new GFF(Settings.tempPath + "\\" + filename, 0);
-                addTempFile(tempGFF);
+                //Look in the folders
+                foreach (String path in Settings.filePaths)
+                {
+                    String fullPath = path + "\\" + filename;
+                    if (File.Exists(fullPath))
+                    {
+                        tempGFF = new GFF(fullPath, 0);
+                    }
+                }
             }
-            //Look in override folder
-            else if (fileIsInOverride(filename))
-            {
-                tempGFF = new GFF(Settings.overrideFolderPath + "\\" + filename, 0);
-            }
-            //Look in erf
-            else if (archiveFile.isInERF(filename))
-            {
-                archiveFile.separateFile(filename, Settings.tempPath);
-                tempGFF = new GFF(Settings.tempPath + "\\" + filename, 0);
-            }
+            addTempFile(tempGFF);
             return tempGFF;
-        }
-
-        //Returns true if the input filename exists in one of the toolset override directories, false otherwise
-        private static Boolean fileIsInOverride(String filename)
-        {
-            return File.Exists(Settings.overrideFolderPath + "\\" + filename);
-        }
-        //Returns true if the input filename exists in the temporary folder, false otherwise
-        private static Boolean fileIsInTemp(String filename)
-        {
-            return File.Exists(Settings.tempPath + "\\" + filename);
         }
     }
 }

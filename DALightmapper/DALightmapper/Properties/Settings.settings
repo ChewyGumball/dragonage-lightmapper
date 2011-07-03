@@ -1,7 +1,42 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)">
-  <Profiles>
-    <Profile Name="(Default)" />
-  </Profiles>
-  <Settings />
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="DALightmapper.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="filePaths" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\tools&lt;/string&gt;
+  &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\override&lt;/string&gt;
+  &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data&lt;/string&gt;
+&lt;/ArrayOfString&gt;</Value>
+    </Setting>
+    <Setting Name="workingDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)"> </Value>
+    </Setting>
+    <Setting Name="erfFiles" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"&gt;
+  &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelhierarchies.erf&lt;/string&gt;
+  &lt;string&gt;C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelmeshdata.erf&lt;/string&gt;
+&lt;/ArrayOfString&gt;</Value>
+    </Setting>
+    <Setting Name="tempDirectory" Type="System.String" Scope="User">
+      <Value Profile="(Default)"> </Value>
+    </Setting>
+    <Setting Name="numBounces" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+    <Setting Name="minEnergy" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0.5</Value>
+    </Setting>
+    <Setting Name="trueAttenuation" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="verbosity" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="clearTempFiles" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+  </Settings>
 </SettingsFile>

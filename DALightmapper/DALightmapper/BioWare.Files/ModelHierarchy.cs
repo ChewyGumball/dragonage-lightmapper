@@ -97,7 +97,7 @@ namespace Bioware.Files
 
 
             //Find the mesh
-            GFF temp = IO.findGFFFile(_mshName, Settings.meshERF);
+            GFF temp = IO.findGFFFile(_mshName);
             //If its not there throw an exception cause we need it
             if (temp == null)
             {

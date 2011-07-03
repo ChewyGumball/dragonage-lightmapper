@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using Ben;
@@ -18,18 +19,22 @@ namespace DALightmapper
 
         //--Light Mapping Variables--//
         public static int numBounces = 5;   //Number of bounces to calculate light for
+        public static double minimumEnergy = 0.05; //The minimum energy required for lightmapping to continue
+        public static Boolean useNumBounces = false;
+        
         public static float renderThreshold = 0.5f; //The threshold above which a pixel will be rendered instead of lerped
         public static int lerpStartStride = 4;  //The stride to start lerping with
         public static int pixelsPerUnit = 10;   //Number of pixels per unit length to use when making lightmap textures
 
-        //--Paths to Required Files--//
+        //--Paths to Required Files--// 
+        public static String tempDirectory;
+        public static String workingDirectory;
         public static String toolsetPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\tools";  //The path to the toolset
-        public static String mmhERFPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelhierarchies.erf";   //The path to the core mmh erf file
-        public static String mshERFPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\data\\modelmeshdata.erf";   //The path to the core msh erf file
         public static String overrideFolderPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\override";   //The path to the override folder in which to look for files if they aren't in the erf
 
-        //--Path to temp files--//
-        public static String tempPath = Application.StartupPath + "\\temp";
+        public static List<String> filePaths = new List<String>();
+        public static List<ERF> erfFiles = new List<ERF>();
+       
         
         //--Required ERF files--//
         private static ERF _modelERF, _meshERF;
@@ -44,17 +49,54 @@ namespace DALightmapper
         }
         
         //Initializes the variables saved in an ini file leaving the others at default value
-        public static void initializeSettings(String fileName)
+        public static void initializeSettings()
         {
-            if (Directory.Exists(tempPath))
-                Directory.Delete(tempPath, true);
+            workingDirectory = Properties.Settings.Default.workingDirectory;
+            tempDirectory = Properties.Settings.Default.tempDirectory;
+            foreach (String s in Properties.Settings.Default.filePaths)
+            {
+                filePaths.Add(s);
+            }
+            foreach (String s in Properties.Settings.Default.erfFiles)
+            {
+                ERF temp = new ERF(s);
+                temp.readKeyData();
+                erfFiles.Add(temp);
+            }
 
-            Directory.CreateDirectory(tempPath);
+            numBounces = Properties.Settings.Default.numBounces;
+            verboseStatus = (Verbosity)Properties.Settings.Default.verbosity;
+            minimumEnergy = Properties.Settings.Default.minEnergy;
+            useTrueAttenuation = Properties.Settings.Default.trueAttenuation;
+            cleanUpTempFiles = Properties.Settings.Default.clearTempFiles;
+        }
 
-            _modelERF = new ERF(mmhERFPath);
-            _modelERF.readKeyData();
-            _meshERF = new ERF(mshERFPath);
-            _meshERF.readKeyData();
+        public static void saveSettings()
+        {
+            System.Collections.Specialized.StringCollection saveFilePaths = new System.Collections.Specialized.StringCollection();
+            System.Collections.Specialized.StringCollection saveErfFiles = new System.Collections.Specialized.StringCollection();
+
+            foreach (String s in filePaths)
+            {
+                saveFilePaths.Add(s);
+            }
+            foreach (ERF erf in erfFiles)
+            {
+                saveErfFiles.Add(erf.path);
+            }
+
+            Properties.Settings.Default.erfFiles = saveErfFiles;
+            Properties.Settings.Default.filePaths = saveFilePaths;
+            Properties.Settings.Default.workingDirectory = workingDirectory;
+            Properties.Settings.Default.tempDirectory = tempDirectory;
+
+            Properties.Settings.Default.numBounces = numBounces;
+            Properties.Settings.Default.verbosity = (int)verboseStatus;
+            Properties.Settings.Default.minEnergy = minimumEnergy;
+            Properties.Settings.Default.trueAttenuation = useTrueAttenuation;
+            Properties.Settings.Default.clearTempFiles = cleanUpTempFiles;
+
+            Properties.Settings.Default.Save();
         }
     }
 }

@@ -448,7 +448,7 @@ namespace DALightmapper
             foreach(String name in modelNames)
             {
                 //Find the mmh file
-                tempGFF = IO.findGFFFile(name, Settings.modelERF);
+                tempGFF = IO.findGFFFile(name);
                 //If the file was not found
                 if (tempGFF == null)
                 {

@@ -26,7 +26,6 @@ namespace Bioware.Files
             get { return _dataBlockOffset; }
         }
 
-
         //Reads a GFF file from the file with path filename starting at offset
         public GFF(String filename, long offset)
             : base(filename)

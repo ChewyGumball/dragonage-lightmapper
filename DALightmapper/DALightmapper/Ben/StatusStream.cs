@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace Ben
 {
-    public enum Verbosity { Sparse = 0, Low = 1, Medium = 2, High = 3, TESTING = 4 }
+    public enum Verbosity { Warnings = 0, Low = 1, Medium = 2, High = 3, TESTING = 4 }
     enum StatusStreamType { Console = 0, TextBox = 1 }
     public class StatusStream
     {
@@ -37,7 +37,7 @@ namespace Ben
         public delegate void AppendTextDelegate(String text, Verbosity verb);
 
         //Adds text to the status stream
-        public void AppentLine(String text, Verbosity verb)
+        public void AppendLine(String text, Verbosity verb)
         {
             AppendText(text + "\n", verb);
         }
