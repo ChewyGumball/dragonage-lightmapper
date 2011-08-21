@@ -99,11 +99,15 @@ namespace DALightmapper
             //If the loop exited early fire the event saying so
             if (abort)
             {
-                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping after " + 4/*currentBounce*/ + " bounces."), null, null);
+                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping after " + currentBounce + " bounces."), null, null);
             }
             //Otherwise fire the event saying lightmapping was finished completely
             else
             {
+                foreach (LightMap l in maps)
+                {
+                    makeIntoTexture(l);
+                }
                 FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Successfully finished light mapping."), null, null);
             }
         }
@@ -266,9 +270,10 @@ namespace DALightmapper
             }
             return coefficients;
         }
-
+    
         private static void makeIntoTexture(LightMap l)
         {
+            l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
         }
 
         //Calculates the linear interpolation phase of the light mapping algorithm using the given stride

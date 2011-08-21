@@ -8,6 +8,8 @@ using OpenTK;
 using Bioware.Structs;
 using Bioware.Files;
 
+using Ben;
+
 namespace DALightmapper
 {
     class LightMap
@@ -27,7 +29,7 @@ namespace DALightmapper
             width = meshPatches.GetLength(0);
             height = meshPatches.GetLength(1);
 
-            patches = new PatchInstance[width,height];
+            patches = new PatchInstance[width, height];
 
             for (int i = 0; i < width; i++)
             {
@@ -36,6 +38,19 @@ namespace DALightmapper
                     patches[i, j] = new PatchInstance(meshPatches[i, j], model.position, model.rotation);
                 }
             }
+        }
+
+        public Targa makeIntoTexture(String directory)
+        {
+            Targa texture = new Targa(directory + "\\" + model.name + model.id);
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    texture[i, j] = new Pixel(patches[i, j].excidentLight);
+                }
+            }
+            return texture;
         }
     }
 }
