@@ -375,7 +375,7 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Filter = "\"Encapsulated Resource Files|*.erf\"";
+            this.openFileDialog1.Filter = "Encapsulated Resource Files|*.erf";
             this.openFileDialog1.Multiselect = true;
             // 
             // SettingsWindow
