@@ -63,15 +63,16 @@ namespace DALightmapper
             {
                 for (int j = 0; j < height; j++)
                 {
-                    Vector2 uvCoords = new Vector2(i / width, j / height);
+                    Vector2 topLeft = new Vector2(i / width, j / height);
+                    Vector2 bottomRight = new Vector2((i + 1) / width, (j + 1) / height);
 
                     //See if this uv is on any triangle in the mesh
                     foreach (Triangle t in _tris)
                     { 
-                        if (t.uvIsOnThisTriangle(uvCoords))
+                        if (t.isOnUVPixel(topLeft,bottomRight))
                         {
                               //                        uv        Position            normal     emmision             reflection     
-                            patches[i, j] = new Patch(uvCoords, t.uvTo3d(uvCoords), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f));
+                            patches[i, j] = new Patch(topLeft, t.uvTo3d(topLeft), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f));
                             break;
                         }
                     }

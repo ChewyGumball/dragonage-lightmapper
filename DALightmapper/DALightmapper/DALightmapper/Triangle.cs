@@ -147,6 +147,37 @@ namespace DALightmapper
             calculateInverseMatrix();
         }
 
+        public bool isOnUVPixel(Vector2 topLeft, Vector2 bottomRight)
+        {
+            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
+            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
+            
+            //if a corner of the triangle is on the pixel
+            if (pointIsBetween(a, topLeft, bottomRight) ||
+                pointIsBetween(b, topLeft, bottomRight) ||
+                pointIsBetween(c, topLeft, bottomRight))
+                return true;  
+
+            //if a corner of the pixel is on the triangle 
+            if( uvIsOnThisTriangle(topLeft) || 
+                uvIsOnThisTriangle(bottomRight) ||
+                uvIsOnThisTriangle(bottomLeft) ||
+                uvIsOnThisTriangle(topRight))
+                return true;   
+
+            //Could still be on the pixel if the triangle intersects with the 2 borders but not the corners
+            // IE:  ___\____/___
+            //     |____\__/____|
+            //           \/
+           
+            //TODO: do this
+
+
+
+            //if none of the above tests pass then this triangle is not on the pixel
+            return false;
+        }
+
         public bool uvIsOnThisTriangle(Vector2 coord)
         {
             Vector2 convertedCoord = convertToTextureBasis(coord);
@@ -158,15 +189,22 @@ namespace DALightmapper
         //Find where the 2d input coordinates are on the 3d plane defined by this triangle
         public Vector3 uvTo3d(Vector2 coord)
         {
-            //Find the input coordinates in texture basis coordinates
-            Vector2 convertedCoord = convertToTextureBasis(coord);
+            if (uvIsOnThisTriangle(coord))
+            {
+                //Find the input coordinates in texture basis coordinates
+                Vector2 convertedCoord = convertToTextureBasis(coord);
 
-            //Find the direction vector pointing from the origin point to the input point
-            Vector3 directionVector = Vector3.Add(Vector3.Multiply(Vector3.Subtract(y, x),convertedCoord.X),
-                                                  Vector3.Multiply(Vector3.Subtract(z, x), convertedCoord.Y));
+                //Find the direction vector pointing from the origin point to the input point
+                Vector3 directionVector = Vector3.Add(Vector3.Multiply(Vector3.Subtract(y, x), convertedCoord.X),
+                                                      Vector3.Multiply(Vector3.Subtract(z, x), convertedCoord.Y));
 
-            //Add the direction vector to the origin point to get the point we need
-            return Vector3.Add(directionVector, x);
+                //Add the direction vector to the origin point to get the point we need
+                return Vector3.Add(directionVector, x);
+            }
+            else
+            {
+                return (x + y + z) / 3;
+            }
         }
 
         public bool lineIntersects(Vector3 start, Vector3 end)
@@ -227,6 +265,12 @@ namespace DALightmapper
             }
             return true;
         }
+
+        private bool pointIsBetween(Vector2 a, Vector2 topLeft, Vector2 bottomRight)
+        {
+            return a.X > topLeft.X && a.X < bottomRight.X && a.Y < topLeft.Y && a.Y > bottomRight.Y;
+        }
+
         private Vector2 convertToTextureBasis(Vector2 coord){
             
             //Find vector from origin to input point
