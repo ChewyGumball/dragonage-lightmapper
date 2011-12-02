@@ -83,13 +83,13 @@ namespace Bioware.Files
             _numBones = file.ReadInt32();
 
             //Get the children list (should only contain GOB)
-            file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[5].index, SeekOrigin.Begin);
+            file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[TOP_LEVEL_CHILDREN_INDEX].index, SeekOrigin.Begin);
             reference = file.ReadInt32();
             file.BaseStream.Seek(binaryFile.dataOffset + reference, SeekOrigin.Begin);
             GenericList childrenList = new GenericList(file);
 
             //Get the children of the GOB object
-            file.BaseStream.Seek(binaryFile.dataOffset + childrenList[0] + nodeStruct.fields[2].index, SeekOrigin.Begin);
+            file.BaseStream.Seek(binaryFile.dataOffset + childrenList[0] + nodeStruct.fields[GOB_CHILDREN_INDEX].index, SeekOrigin.Begin);
             reference = file.ReadInt32();
             file.BaseStream.Seek(binaryFile.dataOffset + reference, SeekOrigin.Begin);
             childrenList = new GenericList(file);

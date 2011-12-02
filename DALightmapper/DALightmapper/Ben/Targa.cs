@@ -3,26 +3,34 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using System.Drawing;
+
 using OpenTK;
 
 namespace Ben
 {
     struct Pixel
     {
-        public byte r, g, b;
+        public byte r, g, b, a;
 
         public Pixel(byte blue, byte green, byte red)
+            : this(blue, green, red, 255)
+        { }
+
+        public Pixel(Vector3 v)
+            : this((byte)v.X, (byte)v.Y, (byte)v.Z, 255)
+        { }
+
+        public Pixel(Vector4 v)
+            : this((byte)v.X, (byte)v.Y, (byte)v.Z, (byte)v.W)
+        { }
+
+        public Pixel(byte blue, byte green, byte red, byte alpha)
         {
             r = red;
             g = green;
             b = blue;
-        }
-
-        public Pixel(Vector3 v)
-        {
-            r = (byte)v.X;
-            g = (byte)v.Y;
-            b = (byte)v.Z;
+            a = alpha;
         }
     }
 
@@ -40,11 +48,19 @@ namespace Ben
         private const byte compressedMapped4Pass = 33;
         #endregion
 
-        byte compression;
+        byte compression = uncompressedRGB;
         short xOrigin = 0;
         short yOrigin = 0;
-        short width;
-        short height;
+        public short width
+        {
+            get;
+            set;
+        }
+        public short height
+        {
+            get;
+            set;
+        }
         byte bitsPerPixel = 24;
 
         Pixel[] pixels;
@@ -62,6 +78,13 @@ namespace Ben
         {
             filename = file;
             readFromFile();
+        }
+        public Targa(String file, short w, short h)
+        {
+            filename = file;
+            pixels = new Pixel[w * h];
+            width = w;
+            height = h;
         }
         public Targa(Pixel[] pix, short w, short h, byte bpp, String file)
         {
@@ -123,16 +146,23 @@ namespace Ben
 
         private void readUncompressedRGB(BinaryReader file)
         {
-            if (bitsPerPixel != 24)
+            switch (bitsPerPixel)
             {
-                Console.WriteLine("Only 24 bits per pixel is supported, " + filename + " has " + bitsPerPixel + ".");
-            }
-            else
-            {
-                for (int i = 0; i < width * height; i++)
-                {
-                    pixels[i] = new Pixel(file.ReadByte(), file.ReadByte(), file.ReadByte());
-                }
+                case 24:
+                    for (int i = 0; i < width * height; i++)
+                    {
+                        pixels[i] = new Pixel(file.ReadByte(), file.ReadByte(), file.ReadByte());
+                    }
+                    break;
+                case 32:
+                    for (int i = 0; i < width * height; i++)
+                    {
+                        pixels[i] = new Pixel(file.ReadByte(), file.ReadByte(), file.ReadByte(), file.ReadByte());
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Only 24 or 32 bits per pixel is supported, " + filename + " has " + bitsPerPixel + ".");
+                    break;
             }
         }
 
@@ -144,7 +174,7 @@ namespace Ben
             BinaryWriter file;
             try
             {
-                fs = new FileStream(filename, FileMode.Open, FileAccess.Read);
+                fs = new FileStream(filename, FileMode.Create, FileAccess.Write);
                 file = new BinaryWriter(fs);
             }
             catch (Exception e)
@@ -179,15 +209,48 @@ namespace Ben
                     Console.WriteLine("This targa format is not currently supported.");
                     break;
             }
+            file.Close();
+            fs.Close();
+        }
+
+        public Bitmap getTextureData()
+        {
+            Bitmap b = new Bitmap(width, height);
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = height - 1; j > -1; j--)
+                {
+                    
+                    b.SetPixel(i, height - j - 1, Color.FromArgb(this[i,j].a, this[i, j].r, this[i, j].g, this[i, j].b));
+                }
+            }
+            return b;
         }
 
         private void writeUncompressedRGB(BinaryWriter file)
         {
-            for (int i = 0; i < width * height; i++)
+            switch(bitsPerPixel)
             {
-                file.Write(pixels[i].b);
-                file.Write(pixels[i].g);
-                file.Write(pixels[i].r);
+                case 24:
+                    for (int i = 0; i < width * height; i++)
+                    {
+                        file.Write(pixels[i].b);
+                        file.Write(pixels[i].g);
+                        file.Write(pixels[i].r);
+                    }
+                    break;
+                case 32:
+                    for (int i = 0; i < width * height; i++)
+                    {
+                        file.Write(pixels[i].b);
+                        file.Write(pixels[i].g);
+                        file.Write(pixels[i].r);
+                        file.Write(pixels[i].a);
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Unable to write targa: only 24 or 32 bits per pixel is supported, this one has {0}.",bitsPerPixel);
+                    break;
             }
         }
     }

@@ -18,6 +18,8 @@ namespace DALightmapper
         public Vector3 normal { get; private set; }
         public Vector3 position { get; private set; }
 
+        public Vector3 incidentLight { get; set; }
+        public Vector3 excidentLight { get; set; }
 
         public Patch()
         {
@@ -31,6 +33,15 @@ namespace DALightmapper
             normal = norm;
             position = pos;
             isActive = true;
+        }
+        public Patch(Patch p, Vector3 offset, Quaternion rotation):this(p.uvCoords,p.position,p.normal,p.emmission,p.reflectance)
+        {
+            if (isActive)
+            {
+                position = Vector3.Transform(p.position, rotation) + offset;
+                normal = Vector3.Transform(p.normal, rotation);
+                excidentLight = emmission;
+            }
         }
     }
 }

@@ -142,6 +142,11 @@ namespace Bioware.Structs
             file.BaseStream.Seek(chunkDef.fields[0].index + position, SeekOrigin.Begin);
             _name = IOUtilities.readECString(file, dataOffset + file.ReadInt32());
 
+            if (_name == "Object482")
+            {
+                System.Console.Write("d");
+            }
+
             //Seek to vertex size offset and read it
             file.BaseStream.Seek(chunkDef.fields[1].index + position, SeekOrigin.Begin);
             _vertexSize = file.ReadUInt32();

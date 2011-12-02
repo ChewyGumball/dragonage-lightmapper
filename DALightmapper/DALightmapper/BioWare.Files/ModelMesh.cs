@@ -42,6 +42,10 @@ namespace Bioware.Files
             //get the reference to the name of the mesh
             //get the name of the mesh
             name = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
+            if (name == "Object482")
+            {
+                System.Console.Write("JJJJJJJJJJJJJJJ\n");
+            }
             //Get the reference to the list of chunks
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[1].index, SeekOrigin.Begin);
             reference = file.ReadInt32();
@@ -87,7 +91,6 @@ namespace Bioware.Files
                 verts = new Vector3[_chunks[i].vertexCount];
                 uvs = new Vector2[_chunks[i].vertexCount];
                 luvs = new Vector2[_chunks[i].vertexCount];
-
                 //Read in the vertex data
                 for (int j = 0; j < _chunks[i].vertexCount && !IO.abort; j++)
                 {

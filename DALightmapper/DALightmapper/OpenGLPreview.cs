@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -12,20 +13,25 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using Bioware.Files;
 
+using Ben;
+
 namespace DALightmapper
 {
     
-    enum Showing {UV, Model, Lightmap};
+    enum Showing {UV, Model, Lightmap, Texture, Level};
     public partial class OpenGLPreview : Form
     {
         int currentMeshIndex;
         Mesh[] meshes;
-
+        Targa texture;
+        Level level;
         Showing currentlyShowing = Showing.UV;
+
+        TextBitmap modelName;
 
         bool mouseDown = false;
         Point mouseOrigin;
-        Vector3 cameraPos = new Vector3(0, 10, 10);
+        Vector3 cameraPos = new Vector3(0, 30, 30);
         Vector3 origin = new Vector3();
         Vector3 up = new Vector3(0, 1, 0);
         Vector3 colour = Vector3.Normalize(new Vector3(0, -10, -10));
@@ -48,6 +54,7 @@ namespace DALightmapper
         private void setMeshNum(int i)
         {
             currentMeshIndex = i;
+            modelName = new TextBitmap(meshes[currentMeshIndex].getName(), meshes[currentMeshIndex].getName().Length, 35);
             lbl_meshNum.Text = (currentMeshIndex + 1) +"/" + meshes.Length;
         }
 
@@ -80,10 +87,22 @@ namespace DALightmapper
                 ModelMesh mm = new ModelMesh(tempGFF);
                 renderableMeshes.AddRange(mm.toModel().meshes);
             }
+            else if (extention == ".tga")
+            {
+                texture = new Targa(filePath);
+                currentlyShowing = Showing.Texture;
+                refreshView();
+            }
+            else if (extention == ".lvl")
+            {
+                level = new Level(filePath);
+                level.readObjectsAsync();
+                refreshView();
+            }
             //If its not the right type of file then print an error
             else
             {
-                lbl_progressStatus.Text = "This is not a valid model (.mmh or .msh) file!";
+                lbl_progressStatus.Text = "This is not a valid model (.mmh or .msh) or texture (.tga) file!";
             }
             meshes = renderableMeshes.ToArray();
 
@@ -192,6 +211,46 @@ namespace DALightmapper
             glControl1.SwapBuffers();
         }
 
+        private void displayTexture()
+        {
+            int textureIndex = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, textureIndex);
+            GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (float)TextureEnvMode.Modulate);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Linear);
+
+            GL.ClearColor(Color.MidnightBlue);
+            GL.Enable(EnableCap.Texture2D);
+
+            Bitmap textureData = texture.getTextureData();
+            BitmapData data = textureData.LockBits(new Rectangle(0, 0, texture.width, texture.height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, texture.width, texture.height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgr, PixelType.UnsignedByte, data.Scan0);
+
+            textureData.UnlockBits(data);
+            GL.Clear(ClearBufferMask.ColorBufferBit);
+
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(-0.6f, -0.4f);
+            GL.TexCoord2(1.0f, 1.0f); GL.Vertex2(0.6f, -0.4f);
+            GL.TexCoord2(1.0f, 0.0f); GL.Vertex2(0.6f, 0.4f);
+            GL.TexCoord2(0.0f, 0.0f); GL.Vertex2(-0.6f, 0.4f);
+            GL.End();
+
+            glControl1.SwapBuffers();
+            GL.DeleteTexture(textureIndex);
+        }
+
+        private void displayLevel() 
+        {
+            //set camera to first light position
+            //render geometry
+            //render patches
+        }
+
         private void setCamera()
         {
             Matrix4 lookat = Matrix4.LookAt(cameraPos, origin, up);
@@ -206,6 +265,7 @@ namespace DALightmapper
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
             GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Texture2D);
             GL.Begin(BeginMode.Triangles);
             for (int i = 0; i < tris.getNumTris(); i++)
             {
@@ -217,6 +277,7 @@ namespace DALightmapper
             }
             GL.End();
             GL.Disable(EnableCap.DepthTest);
+            //modelName.draw(0,0);
             glControl1.SwapBuffers();
         }
 
@@ -268,6 +329,10 @@ namespace DALightmapper
                     display3D(); break;
                 case Showing.Lightmap:
                     displayLightmap(); break;
+                case Showing.Texture:
+                    displayTexture(); break;
+                case Showing.Level:
+                    displayLevel(); break;
                 default:
                     lbl_progressStatus.Text = "Unknown currently showing status...?" + currentlyShowing; break;
 
@@ -287,7 +352,7 @@ namespace DALightmapper
 
         private void glControl1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (mouseDown)
+            if (mouseDown && currentlyShowing != Showing.Texture)
             {
                 origin += new Vector3(-(e.X - mouseOrigin.X) / 10, -(e.Y - mouseOrigin.Y) / 10, 0);
                 mouseOrigin = e.Location;

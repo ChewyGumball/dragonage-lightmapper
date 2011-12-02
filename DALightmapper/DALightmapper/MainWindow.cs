@@ -16,15 +16,15 @@ namespace DALightmapper
         IO io;
         StatusStream stream;
         int currentJob;
-        Light[] lights;
-        BiowareMesh[] meshes;
-        TextureTarget[] targets;
 
         OpenGLPreview oglPreviewWindow;
         SettingsWindow settingsWindow;
 
         public MainWindow()
         {
+
+
+
             InitializeComponent(); 
             stream = new StatusStream(tb_Status);
             oglPreviewWindow = new OpenGLPreview();

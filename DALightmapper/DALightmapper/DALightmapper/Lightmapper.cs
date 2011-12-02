@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -7,6 +8,7 @@ using Bioware.Files;
 using Bioware.Structs;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 
 using Ben;
 
@@ -40,8 +42,8 @@ namespace DALightmapper
         public static void runLightmaps(Level level)
         {
 
-            PatchInstance[] patches;
-            PatchInstance[][] visibleSets;
+            Patch[] patches;
+            Patch[][] visibleSets;
             double[][] coefficients;
             LightMap[] maps;
 
@@ -64,22 +66,43 @@ namespace DALightmapper
             System.Console.WriteLine("There are {0} patches in {1} lightmaps.", patches.Length, maps.Length);
 
             //Make visible set for each patch
-            visibleSets = new PatchInstance[patches.Length][];
+            visibleSets = new Patch[patches.Length][];
             coefficients = new double[patches.Length][];
-            for (int i = 0; i < patches.Length; i++)
+
+            Task<Patch[]>[] calculations = new Task<Patch[]>[patches.Length];
+            /*
+            Parallel.For(0, patches.Length, delegate(int i)
             {
                 visibleSets[i] = makeVisibleSet(castingModels, patches[i], patches);
-                coefficients[i] = calculateCoefficients(patches[i], visibleSets[i]);
+            }
+            );
+            //*/
+            //*
+            ThreadPool.SetMaxThreads(4, 4);
+            for (int i = 0; i < 1000; i++)
+            {
+                Patch patch = patches[i];
+                calculations[i] = new Task<Patch[]>(() => makeVisibleSet(castingModels,patch,patches));
+                calculations[i].Start();
             }
 
+            for (int i = 0; i < 1000; i++)
+            {
+                visibleSets[i] = calculations[i].Result;
+                if((i % 100) == 0)
+                    System.Console.WriteLine("Done with {0}.", i);
+            }
+            // */
+            System.Console.WriteLine("Done making coeffients.");
+            Environment.Exit(0);
             //Initialize the loop counter so message can say how many bounces were rendered
             int currentBounce = 0;
 
             //Start the lightmapping process off by just rendering light sources
-            renderLights(level.lights,patches,castingModels); 
-
+            renderLights(level.lights,patches,castingModels);
+            System.Console.WriteLine("Done rendering lights.");
             //Do some lightmapping
-            for(abort = false; currentBounce < Settings.numBounces && false; currentBounce ++)
+            for(abort = false; currentBounce < Settings.numBounces; currentBounce ++)
             {
                 //Find patch with highest exident light
                 int highestIndex = 0;
@@ -92,6 +115,7 @@ namespace DALightmapper
                     }
                 }
                 //Propogate it's light
+                coefficients[highestIndex] = calculateCoefficients(patches[highestIndex], visibleSets[highestIndex]);
                 propogate(patches[highestIndex],visibleSets[highestIndex],coefficients[highestIndex]);
             }
             
@@ -113,9 +137,9 @@ namespace DALightmapper
         }
 
         //Makes lightmaps for the input model instances
-        private static void makeLightmaps(ModelInstance[] models, out LightMap[] maps, out PatchInstance[] patches)
+        private static void makeLightmaps(ModelInstance[] models, out LightMap[] maps, out Patch[] patches)
         {
-            List<PatchInstance> patchList = new List<PatchInstance>();
+            List<Patch> patchList = new List<Patch>();
             List<LightMap> lightmapList = new List<LightMap>();
             //Make lightmaps
             foreach (ModelInstance m in models)
@@ -123,19 +147,22 @@ namespace DALightmapper
                 //for each mesh in the model instance
                 for (int i = 0; i < m.baseModel.meshes.Length; i++)
                 {
-                    //Make the lightmap
-                    LightMap temp = new LightMap(m, i);
-                    //For each patch instance in the lightmap
-                    foreach (PatchInstance p in temp.patches)
+                    if (m.baseModel.meshes[i].isLightmapped)
                     {
-                        //If its an active patch add it to the list of patches, otherwise ignore
-                        if (p.isActive)
+                        //Make the lightmap
+                        LightMap temp = new LightMap(m, i);
+                        //For each patch instance in the lightmap
+                        foreach (Patch p in temp.patches)
                         {
-                            patchList.Add(p);
+                            //If its an active patch add it to the list of patches, otherwise ignore
+                            if (p.isActive)
+                            {
+                                patchList.Add(p);
+                            }
                         }
+                        //Add the lightmap to the list of lightmaps
+                        lightmapList.Add(temp);
                     }
-                    //Add the lightmap to the list of lightmaps
-                    lightmapList.Add(temp);
                 }
             }
 
@@ -144,12 +171,12 @@ namespace DALightmapper
         }
 
         //Makes a list of visible sets for each patch based on the input models
-        private static PatchInstance[] makeVisibleSet(ModelInstance[] models, PatchInstance patch, PatchInstance[] patchList)
+        private static Patch[] makeVisibleSet(ModelInstance[] models, Patch patch, Patch[] patchList)
         {
-            List<PatchInstance> visiblePatches = new List<PatchInstance>();
+            List<Patch> visiblePatches = new List<Patch>();
             List<ModelInstance> intersectionTests = new List<ModelInstance>();
 
-            foreach (PatchInstance p in patchList)
+            foreach (Patch p in patchList)
             {
                 //Ignore the patch we are making the set for
                 if(p != patch)
@@ -198,30 +225,52 @@ namespace DALightmapper
             return visiblePatches.ToArray();
         }
 
-        private static double[] calculateCoefficients(PatchInstance patch, PatchInstance[] visibleSet)
+        private static double[] calculateCoefficients(Patch patch, Patch[] visibleSet)
         {
-            return new double[visibleSet.Length];
+            double[] coeffieients = new double[visibleSet.Length];
+            for (int i = 0; i < visibleSet.Length; i++)
+            {
+                Vector3 ray = visibleSet[i].position - patch.position;
+                //cosine law for emitted energy
+                double cosineStart = Math.Cos(Vector3.CalculateAngle(ray, patch.normal));
+
+                //falloff due to distance
+                double falloff = 1 / (Math.Pow(ray.Length, 2));
+
+                //cosine law for received energy
+                ray = patch.position - visibleSet[i].position;
+                double cosineEnd = Math.Cos(Vector3.CalculateAngle(ray, visibleSet[i].normal));
+                
+                coeffieients[i] = cosineStart * falloff * cosineEnd;
+            }
+
+            return coeffieients;
         }
 
         //Propogates light from a to a's visible set
-        private static void propogate(PatchInstance a, PatchInstance[] visibleSet, double[] coefficients)
+        private static void propogate(Patch a, Patch[] visibleSet, double[] coefficients)
         {
+            for (int i = 0; i < visibleSet.Length; i++)
+            {
+                visibleSet[i].excidentLight += Vector3.Multiply(a.excidentLight, (float)coefficients[i] * 30);
+            }
+            a.excidentLight = new Vector3();
         }
 
         //Initializes patches to the colour received only from visible lights to start the light mapping process
-        private static void renderLights(Light[] lights, PatchInstance[] patches, ModelInstance[] castingModels)
+        private static void renderLights(Light[] lights, Patch[] patches, ModelInstance[] castingModels)
         {
 
             for (int i = 0; i < lights.Length; i++)
             {
-                Patch lightPatch = new Patch(new Vector2(), lights[i].position,new Vector3(), lights[i].intensity * lights[i].colour, new Vector3());
-                PatchInstance currentLight = new PatchInstance(lightPatch, new Vector3(), new Quaternion());
+                Patch lightPatch = new Patch(new Vector2(), lights[i].position, new Vector3(), lights[i].intensity * lights[i].colour, new Vector3());
+                Patch currentLight = new Patch(lightPatch, new Vector3(), new Quaternion());
                 List<ModelInstance> intersectionTests = new List<ModelInstance>();
-                List<PatchInstance> visiblePatches = new List<PatchInstance>();
+                List<Patch> visiblePatches = new List<Patch>();
 
                 bool visible = true;
 
-                foreach (PatchInstance p in patches)
+                foreach (Patch p in patches)
                 {
                     //First do bounding box check
                     foreach (ModelInstance model in castingModels)
@@ -255,18 +304,18 @@ namespace DALightmapper
                     }
                 }
 
-                PatchInstance[] visibleArray = visiblePatches.ToArray();
+                Patch[] visibleArray = visiblePatches.ToArray();
                 propogate(currentLight,visibleArray,calculateLightCoefficients(lights[i],visibleArray));
             }        
         }
 
-        private static double[] calculateLightCoefficients(Light light, PatchInstance[] visibleArray)
+        private static double[] calculateLightCoefficients(Light light, Patch[] visibleArray)
         {
             double[] coefficients = new double[visibleArray.Length];
             for (int i = 0; i < coefficients.Length; i++)
             {
                 //THIS SHOULD TAKE INTO ACCOUNT PATCH NORMAL OR SOMETHING
-                coefficients[i] = light.influence(visibleArray[i].position);
+                coefficients[i] = light.influence(visibleArray[i]);
             }
             return coefficients;
         }
@@ -275,115 +324,5 @@ namespace DALightmapper
         {
             l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
         }
-
-        //Calculates the linear interpolation phase of the light mapping algorithm using the given stride
-        private static void lerp(LightMap l, int stride)
-        {
-            int halfStride = stride / 2;
-            int length, width, tempY, tempX;
-            Vector3 a, b, c, d, ratioVector;
-
-            length = l.width;
-            width = l.height;
-
-            for (int x = halfStride; x < length - halfStride; x += stride)
-            {
-                for (int y = halfStride; y < width - halfStride; y += stride)
-                {
-                    //If the x is in bounds calculate the row pixels
-                    if (x < length)
-                    {
-                        //tempY = y - halfStride;
-
-                        //a = l.lightmap[x + halfstride, tempy].incidentlight;
-                        //b = l.lightMap[x - halfStride, tempY].incidentLight;
-
-                        //ratioVector = ratio(a, b);
-
-                        //if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
-                        //    lock (pointsToBeRendered)
-                        //        pointsToBeRendered.Add(new Vector2(x, tempY));
-                        //else
-                        //    l.lightMap[x, tempY].incidentLight = 0.5f * (a + b);
-                    }
-                    //if the y is in bounds calculate the column pixels
-                    if (y < width)
-                    {
-                        //tempX = x - halfStride;
-
-                        //a = l.lightMap[tempX, y + halfStride].incidentLight;
-                        //b = l.lightMap[tempX, y - halfStride].incidentLight;
-
-                        //ratioVector = ratio(a, b);
-
-                        //if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
-                        //    lock (pointsToBeRendered)
-                        //        pointsToBeRendered.Add(new Vector2(tempX, y));
-                        //else
-                        //    l.lightMap[tempX, y].incidentLight = 0.5f * (a + b);
-                    }
-                }
-            }
-
-            //Calculate the center pixels
-            for (int x = halfStride; x < length - halfStride; x += stride)
-            {
-                for (int y = halfStride; y < width - halfStride; y += stride)
-                {
-
-                    //a = l.lightMap[x, y + halfStride].incidentLight;
-                    //b = l.lightMap[x, y - halfStride].incidentLight;
-                    //c = l.lightMap[x + halfStride, y].incidentLight;
-                    //d = l.lightMap[x - halfStride, y].incidentLight;
-
-                    //ratioVector = ratio(a, b, c, d);
-
-                    //if (ratioVector.X < Settings.renderThreshold || ratioVector.Y < Settings.renderThreshold || ratioVector.Z < Settings.renderThreshold)
-                    //    lock (pointsToBeRendered)
-                    //        pointsToBeRendered.Add(new Vector2(x, y));
-                    //else
-                    //    l.lightMap[x, y].incidentLight = 0.25f * (a + b + c + d);
-                }
-            }
-        }
-        
-        //Used to find ratios between 2 vectors (component wise)
-        private static Vector3 ratio(Vector3 a, Vector3 b)
-        {
-            float x, y, z;
-
-            if (a.X == 0 && b.X == 0)
-                x = 1;
-            else if (a.X == 0 || b.X == 0)
-                x = 0;
-            else
-                x = Math.Min(a.X, b.X) / Math.Max(a.X, b.X);
-
-
-            if (a.Y == 0 && b.Y == 0)
-                y = 1;
-            else if (a.Y == 0 || b.Y == 0)
-                y = 0;
-            else
-                y = Math.Min(a.Y, b.Y) / Math.Max(a.Y, b.Y);
-
-
-            if (a.Z == 0 && b.Z == 0)
-                z = 1;
-            else if (a.Z == 0 || b.Z == 0)
-                z = 0;
-            else
-                z = Math.Min(a.Z, b.Z) / Math.Max(a.Z, b.Z);
-
-            return new Vector3(x, y, z);
-        }
-        //Finds the ratio vectors between a,b and c,d then returns the minimum of those component wise
-        private static Vector3 ratio(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
-        {
-            Vector3 pair1 = ratio(a, b);
-            Vector3 pair2 = ratio(c, d);
-            return new Vector3(Math.Min(pair1.X, pair2.X), Math.Min(pair1.Y, pair2.Y), Math.Min(pair1.Z, pair2.Z));
-        }
-
     }
 }

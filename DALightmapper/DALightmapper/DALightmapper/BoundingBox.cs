@@ -93,7 +93,6 @@ namespace DALightmapper
 
         public Boolean lineIntersects(Vector3 start, Vector3 end)
         {
-
             //   (x1,y1,y3) + t(x2,y2,z2) = (x,y,z)
             //      x1 + tx2 = x
             //      t = (x-x1)/x2
@@ -102,6 +101,9 @@ namespace DALightmapper
 
             Vector3 transformedStart = start - center;
             Vector3 magnitude = end - start;
+            Vector3 diffMin = min - transformedStart;
+            Vector3 diffMax = max - transformedStart;
+            float t, u, x, y, z;
 
             //x planes
             //If the magnitude is 0, parallel to the plane, considering this not an intersection
@@ -109,16 +111,16 @@ namespace DALightmapper
             if (magnitude.X != 0)
             {
                 //t is for the min plane, u is for the max plane
-                float t = (min.X - transformedStart.X) / magnitude.X;
-                float u = (max.X - transformedStart.X) / magnitude.X;
+                t = diffMin.X / magnitude.X;
+                u = diffMax.X / magnitude.X;
 
                 //This part is the same for both planes, 
                 //  check if the intersection point is between the end points of the line
                 if ((t <= 1 && t >= 0) || (u <= 1 && u >= 0))
                 {
                     //Check the intersection point is on the bounding box
-                    float y = transformedStart.Y + t * magnitude.Y;
-                    float z = transformedStart.Z + t * magnitude.Z;
+                    y = transformedStart.Y + t * magnitude.Y;
+                    z = transformedStart.Z + t * magnitude.Z;
 
                     if (y >= min.Y && y <= max.Y && z >= min.Z && z <= max.Z)
                     {
@@ -130,12 +132,12 @@ namespace DALightmapper
             //y planes
             if (magnitude.Y != 0)
             {
-                float t = (min.Y - transformedStart.Y) / magnitude.Y;
-                float u = (max.Y - transformedStart.Y) / magnitude.Y;
+                t = diffMin.Y / magnitude.Y;
+                u = diffMax.Y / magnitude.Y;
                 if ((t <= 1 && t >= 0) || (u <= 1 && u >= 0))
                 {
-                    float x = transformedStart.X + t * magnitude.X;
-                    float z = transformedStart.Z + t * magnitude.Z;
+                    x = transformedStart.X + t * magnitude.X;
+                    z = transformedStart.Z + t * magnitude.Z;
 
                     if (x >= min.X && x <= max.X && z >= min.Z && z <= max.Z)
                     {
@@ -146,12 +148,12 @@ namespace DALightmapper
             //z planes
             if (magnitude.Z != 0)
             {
-                float t = (min.Z - transformedStart.Z) / magnitude.Z;
-                float u = (max.Z - transformedStart.Z) / magnitude.Z;
+                t = diffMin.Z / magnitude.Z;
+                u = diffMax.Z / magnitude.Z;
                 if ((t <= 1 && t >= 0) || (u <= 1 && u >= 0))
                 {
-                    float x = transformedStart.X + t * magnitude.X;
-                    float y = transformedStart.Y + t * magnitude.Y;
+                    x = transformedStart.X + t * magnitude.X;
+                    y = transformedStart.Y + t * magnitude.Y;
 
                     if (x >= min.X && x <= max.X && y >= min.Y && y <= max.Y)
                     {

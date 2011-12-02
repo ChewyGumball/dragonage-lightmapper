@@ -11,7 +11,7 @@ namespace DALightmapper
     {
         String _name;
         Triangle[] _tris;
-        public Patch[,] patches { get; private set; }
+        public Texel[,] texels { get; private set; }
         public BoundingBox bounds { get; private set; }
         public Boolean isLightmapped { get; private set; }
         public Boolean castsShadows { get; private set; }
@@ -19,6 +19,11 @@ namespace DALightmapper
         public Triangle this[int i]
         {
             get{ return _tris[i];}
+        }
+
+        public String getName()
+        {
+            return _name;
         }
 
         public Mesh(String name, Triangle[] triangles, Boolean lightmap, Boolean shadows)
@@ -57,30 +62,23 @@ namespace DALightmapper
         //Make patches for a lightmap with dimensions [width,height]
         public void generatePatches(int width, int height)
         {
-            patches = new Patch[width,height];
+            texels = new Texel[width,height];
             //For each pixel
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
                 {
-                    Vector2 topLeft = new Vector2(i / width, j / height);
-                    Vector2 bottomRight = new Vector2((i + 1) / width, (j + 1) / height);
-
+                    Vector2 topLeft = new Vector2(((float)i) / width, ((float)j + 1) / height);
+                    Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)(j)) / height);
+                    texels[i, j] = new Texel();
                     //See if this uv is on any triangle in the mesh
                     foreach (Triangle t in _tris)
                     { 
-                        if (t.isOnUVPixel(topLeft,bottomRight))
+                        if (!t.isDegenerate() && t.isOnUVPixel(topLeft,bottomRight))
                         {
-                              //                        uv        Position            normal     emmision             reflection     
-                            patches[i, j] = new Patch(topLeft, t.uvTo3d(topLeft), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f));
-                            break;
+                              //                         uv        Position            normal     emmision             reflection     
+                            texels[i, j].add( new Patch(topLeft, t.uvTo3d(topLeft,bottomRight), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f)));
                         }
-                    }
-
-                    //if the uv coords were not on a triangle, make an inactive patch
-                    if (patches[i, j] == null)
-                    {
-                        patches[i, j] = new Patch();
                     }
                 }
             }

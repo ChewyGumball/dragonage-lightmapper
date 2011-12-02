@@ -28,13 +28,16 @@ namespace Bioware.Files
             {
                 try
                 {
-                    fs = new FileStream(_path, FileMode.Open,FileAccess.Read);
+                    fs = new FileStream(_path, FileMode.Open,FileAccess.Read, FileShare.Read);
                     file = new BinaryReader(fs);
                     isOpen = true;
                 }
                 catch (Exception e)
                 {
-                    throw e;
+                    if (e.InnerException != null)
+                        Console.WriteLine("{0} \n Inner: {1}.", e.StackTrace,e.InnerException.Message);
+                    else
+                        Console.WriteLine("{0}", e.StackTrace);
                 }
             }
             else

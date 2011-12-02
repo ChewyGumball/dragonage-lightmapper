@@ -35,12 +35,17 @@
             this.tb_path = new System.Windows.Forms.TextBox();
             this.btn_load = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.lbl_progressStatus = new System.Windows.Forms.Label();
             this.btn_prev = new System.Windows.Forms.Button();
             this.btn_next = new System.Windows.Forms.Button();
             this.lbl_meshNum = new System.Windows.Forms.Label();
             this.btn_showLightmap = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // glControl1
@@ -54,7 +59,7 @@
             this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
             this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
             this.glControl1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseUp);
-            this.glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(glControl1_MouseWheel);
+            this.glControl1.MouseWheel += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseWheel);
             // 
             // btn_choose
             // 
@@ -68,9 +73,9 @@
             // 
             // btn_showUV
             // 
-            this.btn_showUV.Location = new System.Drawing.Point(3, 521);
+            this.btn_showUV.Location = new System.Drawing.Point(92, 14);
             this.btn_showUV.Name = "btn_showUV";
-            this.btn_showUV.Size = new System.Drawing.Size(75, 23);
+            this.btn_showUV.Size = new System.Drawing.Size(43, 23);
             this.btn_showUV.TabIndex = 3;
             this.btn_showUV.Text = "UV";
             this.btn_showUV.UseVisualStyleBackColor = true;
@@ -78,9 +83,9 @@
             // 
             // btn_show3D
             // 
-            this.btn_show3D.Location = new System.Drawing.Point(84, 521);
+            this.btn_show3D.Location = new System.Drawing.Point(141, 14);
             this.btn_show3D.Name = "btn_show3D";
-            this.btn_show3D.Size = new System.Drawing.Size(75, 23);
+            this.btn_show3D.Size = new System.Drawing.Size(43, 23);
             this.btn_show3D.TabIndex = 4;
             this.btn_show3D.Text = "3D";
             this.btn_show3D.UseVisualStyleBackColor = true;
@@ -88,16 +93,16 @@
             // 
             // tb_path
             // 
-            this.tb_path.Location = new System.Drawing.Point(3, 570);
+            this.tb_path.Location = new System.Drawing.Point(55, 570);
             this.tb_path.Name = "tb_path";
-            this.tb_path.Size = new System.Drawing.Size(431, 20);
+            this.tb_path.Size = new System.Drawing.Size(379, 20);
             this.tb_path.TabIndex = 5;
             // 
             // btn_load
             // 
-            this.btn_load.Location = new System.Drawing.Point(165, 521);
+            this.btn_load.Location = new System.Drawing.Point(3, 568);
             this.btn_load.Name = "btn_load";
-            this.btn_load.Size = new System.Drawing.Size(84, 23);
+            this.btn_load.Size = new System.Drawing.Size(46, 23);
             this.btn_load.TabIndex = 6;
             this.btn_load.Text = "Load";
             this.btn_load.UseVisualStyleBackColor = true;
@@ -106,15 +111,8 @@
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Filter = "\"Model Hierarchy|*.mmh|Mesh|*.msh\"";
+            this.openFileDialog1.Filter = "Model Hierarchy|*.mmh|Mesh|*.msh|Targa|*.tga";
             this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
-            // 
-            // progressBar1
-            // 
-            this.progressBar1.Location = new System.Drawing.Point(255, 521);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(260, 23);
-            this.progressBar1.TabIndex = 7;
             // 
             // lbl_progressStatus
             // 
@@ -126,7 +124,7 @@
             // 
             // btn_prev
             // 
-            this.btn_prev.Location = new System.Drawing.Point(165, 546);
+            this.btn_prev.Location = new System.Drawing.Point(190, 14);
             this.btn_prev.Name = "btn_prev";
             this.btn_prev.Size = new System.Drawing.Size(26, 23);
             this.btn_prev.TabIndex = 9;
@@ -136,7 +134,7 @@
             // 
             // btn_next
             // 
-            this.btn_next.Location = new System.Drawing.Point(223, 546);
+            this.btn_next.Location = new System.Drawing.Point(222, 14);
             this.btn_next.Name = "btn_next";
             this.btn_next.Size = new System.Drawing.Size(26, 23);
             this.btn_next.TabIndex = 10;
@@ -154,7 +152,7 @@
             // 
             // btn_showLightmap
             // 
-            this.btn_showLightmap.Location = new System.Drawing.Point(3, 546);
+            this.btn_showLightmap.Location = new System.Drawing.Point(11, 14);
             this.btn_showLightmap.Name = "btn_showLightmap";
             this.btn_showLightmap.Size = new System.Drawing.Size(75, 23);
             this.btn_showLightmap.TabIndex = 12;
@@ -162,21 +160,60 @@
             this.btn_showLightmap.UseVisualStyleBackColor = true;
             this.btn_showLightmap.Click += new System.EventHandler(this.btn_showLightmap_Click);
             // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.btn_showLightmap);
+            this.groupBox1.Controls.Add(this.btn_showUV);
+            this.groupBox1.Controls.Add(this.btn_prev);
+            this.groupBox1.Controls.Add(this.btn_next);
+            this.groupBox1.Controls.Add(this.btn_show3D);
+            this.groupBox1.Location = new System.Drawing.Point(261, 521);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(254, 43);
+            this.groupBox1.TabIndex = 13;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Model";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.button2);
+            this.groupBox2.Controls.Add(this.button1);
+            this.groupBox2.Location = new System.Drawing.Point(3, 521);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(168, 43);
+            this.groupBox2.TabIndex = 14;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Level";
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(6, 14);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "Wireframe";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(87, 14);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(75, 23);
+            this.button2.TabIndex = 1;
+            this.button2.Text = "Patches";
+            this.button2.UseVisualStyleBackColor = true;
+            // 
             // OpenGLPreview
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(518, 595);
-            this.Controls.Add(this.btn_showLightmap);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.lbl_meshNum);
-            this.Controls.Add(this.btn_next);
-            this.Controls.Add(this.btn_prev);
             this.Controls.Add(this.lbl_progressStatus);
-            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.btn_load);
             this.Controls.Add(this.tb_path);
-            this.Controls.Add(this.btn_show3D);
-            this.Controls.Add(this.btn_showUV);
             this.Controls.Add(this.btn_choose);
             this.Controls.Add(this.glControl1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -184,6 +221,8 @@
             this.Text = "OpenGLPreview";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.OpenGLPreview_FormClosing);
             this.Load += new System.EventHandler(this.OpenGLPreview_Load);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -198,11 +237,14 @@
         private System.Windows.Forms.TextBox tb_path;
         private System.Windows.Forms.Button btn_load;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Label lbl_progressStatus;
         private System.Windows.Forms.Button btn_prev;
         private System.Windows.Forms.Button btn_next;
         private System.Windows.Forms.Label lbl_meshNum;
         private System.Windows.Forms.Button btn_showLightmap;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button1;
     }
 }

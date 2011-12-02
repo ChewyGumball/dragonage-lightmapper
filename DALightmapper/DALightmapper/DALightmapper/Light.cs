@@ -52,6 +52,6 @@ namespace DALightmapper
 
         //Returns a float value representing the amount of light this light would have on 
         //      input point ignoring obstructions
-        public abstract float influence(Vector3 point);
+        public abstract float influence(Patch patch);
     }
 }

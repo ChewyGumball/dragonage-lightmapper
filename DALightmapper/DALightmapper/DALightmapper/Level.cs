@@ -508,7 +508,10 @@ namespace DALightmapper
             {
                 foreach (Mesh mesh in model.meshes)
                 {
-                    mesh.generatePatches(128, 128);
+                    if (mesh.isLightmapped)
+                    {
+                        mesh.generatePatches(32, 32);
+                    }
                 }
             }
         }
