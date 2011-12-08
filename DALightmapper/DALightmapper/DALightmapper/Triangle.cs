@@ -15,7 +15,6 @@ namespace DALightmapper
         Vector2[] _lVerts;
         Vector3 _normal;
         uint textureID;
-        uint normalTextureID;
 
         MeshChunk _chunk;
 
@@ -226,7 +225,7 @@ namespace DALightmapper
             if (a.Y == -1f && b.X == 1f && b.Y == 0.9995117f && c.X == 1f && topLeft.X == 0.96875f && topLeft.Y == 0.9375f && bottomRight.X == 1f && bottomRight.Y == 0.90625f)
                 System.Console.Write("SHIP");
 
-            //A minimum of 3 points and a maximum of 6 points of the 19 tested below should be added to the list
+            //A minimum of 3 points and a maximum of 7 points of the 19 tested below should be added to the list
             if (pointIsBetween(a, topLeft, bottomRight))
                 points.Add(a);
             if (pointIsBetween(b, topLeft, bottomRight))
@@ -270,7 +269,7 @@ namespace DALightmapper
             if (intersects(c, b, bottomLeft, bottomRight))
                 points.Add(intersectionPoint(c, b, bottomLeft, bottomRight));
 
-            if (points.Count < 3 || points.Count > 6)
+            if (points.Count < 3 || points.Count > 7)
             {
                 if (pointIsBetween(a, topLeft, bottomRight))
                     System.Console.WriteLine("A is on");
@@ -392,6 +391,23 @@ namespace DALightmapper
                 }
             }
             return true;
+        }
+
+        public Vector3 lineIntersectionPoint(Vector3 start, Vector3 end)
+        {
+            if(!lineIntersects(start,end))
+            {
+                throw new Exception(String.Format("The line from {0} to {1} does not intersect this triangle ({2},{3},{4}).", start, end, x, y, z));
+            }
+            //Find intersection of line and plane containing triangle
+            float denominator = Vector3.Dot(normal, end - start);
+            float numerator = Vector3.Dot(normal, x - start);
+            float param = numerator / denominator;
+
+            Vector3 intersection = start + param * (end - start);
+
+            return intersection;
+                
         }
 
         private bool pointIsBetween(Vector2 a, Vector2 topLeft, Vector2 bottomRight)

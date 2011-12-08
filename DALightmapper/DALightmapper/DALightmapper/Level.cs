@@ -122,18 +122,25 @@ namespace DALightmapper
 
         public void readObjectsAsync()
         {
+            readObjects();
+            FinishedReading.BeginInvoke(new FinishedReadingEventArgs(true,"Finished Reading Level Data.",this),null,null);
+        }
+
+        public void readObjects()
+        {
             int reference;      //used for storing the reference to things in files
             BinaryReader file = headerFile.getReader();
 
             //If the level is outdoors, read the models and the terrain mesh, otherwise just read in the models
             //      the file is layed out differently for outdoors and indoor environments
             List<BiowareModel> modelList = new List<BiowareModel>();
-            List<Light> lightList = new List<Light>();;
+            List<Light> lightList = new List<Light>(); ;
             GenericList objectList;
 
             //If this is an outdoor level read in the terrain
-            if(environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN){
-                modelList.AddRange(readTerrainModels());                
+            if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN)
+            {
+                modelList.AddRange(readTerrainModels());
             }
 
             //then make the generic list for lights and models
@@ -153,7 +160,8 @@ namespace DALightmapper
             objectList = new GenericList(file);
 
             //If this is an outdoor level this is the list of models and lights
-            if(environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN){
+            if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN)
+            {
                 modelList.AddRange(readPropModels(objectList));
                 lightList.AddRange(readLights(objectList));
             }
@@ -162,10 +170,10 @@ namespace DALightmapper
             else if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_ROOM)
             {
                 //get to the area struct data
-                file.BaseStream.Seek(headerFile.dataOffset + objectList[0],SeekOrigin.Begin);
+                file.BaseStream.Seek(headerFile.dataOffset + objectList[0], SeekOrigin.Begin);
 
                 //now get the reference to the room list and make it
-                file.BaseStream.Seek(areaStruct.fields[1].index,SeekOrigin.Current);
+                file.BaseStream.Seek(areaStruct.fields[1].index, SeekOrigin.Current);
                 reference = file.ReadInt32();
                 file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
                 GenericList roomList = new GenericList(file);
@@ -190,18 +198,9 @@ namespace DALightmapper
             //Complete the models with model hierarchies
             createMeshHierarchies();
 
-            ModelInstance[] mInstances = new ModelInstance[_models.Length];
-            for (int i = 0; i < mInstances.Length; i++)
-            {
-                BiowareModel mb = _models[i];
-
-
-
-            }
             //Make the lights array
             _lights = lightList.ToArray();
 
-            FinishedReading.BeginInvoke(new FinishedReadingEventArgs(true,"Finished Reading Level Data.",this),null,null);
         }
 
         private List<Light> readLights(GenericList objectList)
@@ -510,7 +509,7 @@ namespace DALightmapper
                 {
                     if (mesh.isLightmapped)
                     {
-                        mesh.generatePatches(32, 32);
+                        mesh.generatePatches(16, 16);
                     }
                 }
             }

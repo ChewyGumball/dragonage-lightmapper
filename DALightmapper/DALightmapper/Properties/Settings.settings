@@ -16,7 +16,7 @@
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
     <Setting Name="numBounces" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">5</Value>
+      <Value Profile="(Default)">2000</Value>
     </Setting>
     <Setting Name="minEnergy" Type="System.Double" Scope="User">
       <Value Profile="(Default)">0.5</Value>
@@ -35,6 +35,9 @@
     </Setting>
     <Setting Name="tempDirectory" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Users\Ben\Documents\BioWare\Dragon Age\temp</Value>
+    </Setting>
+    <Setting Name="maxThreads" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">2</Value>
     </Setting>
   </Settings>
 </SettingsFile>

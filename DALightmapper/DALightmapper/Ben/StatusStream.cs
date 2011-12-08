@@ -1,93 +1,123 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace Ben
 {
     public enum Verbosity { Warnings = 0, Low = 1, Medium = 2, High = 3, TESTING = 4 }
-    enum StatusStreamType { Console = 0, TextBox = 1 }
     public class StatusStream
     {
-        StatusStreamType type;
-        TextBox _statusBox;
-        Verbosity _verbosity = Verbosity.Low;   //The minimum verbosity a message needs to be displayed
+        private Boolean outputToConsole = false;    //If this stream should output to the console or not
+        private List<TextBox> textBoxes;            //The list of text boxes to output too
+  
+        public Verbosity verbosity { get; set; }    //The minimum verbosity level needed to output to this stream
+        public int indent { get; set; }             //The indent to added to output messages
 
-        int _indent;
+        private delegate void AppendTextDelegate(String text, Verbosity verb, TextBox b);   //The delegate definition use to invoke textbox updates
 
-        public Verbosity verbosity
-        {
-            get { return _verbosity; }
-            set { _verbosity = value; }
-        }
-        public int indent
-        {
-            get { return _indent; }
-            set { _indent = value; }
-        }
-
+        //-- Constructors --//
         public StatusStream(TextBox statusBox)
+            : this()
         {
-            type = StatusStreamType.TextBox;
-            _statusBox = statusBox;
+            textBoxes.Add(statusBox);
         }
         public StatusStream()
         {
-            type = StatusStreamType.Console;
+            textBoxes = new List<TextBox>();
+            verbosity = Verbosity.Low;
         }
 
-        public delegate void AppendTextDelegate(String text, Verbosity verb);
 
-        //Adds text to the status stream
-        public void AppendLine(String text, Verbosity verb)
+        //-- Attach/Detatch the console or textboxes to/from this tream --//
+        public void attachToConsole()
+        {
+            outputToConsole = true;
+        }
+        public void detatchFromConsole()
+        {
+            outputToConsole = false;
+        }
+        public void attachTextBox(TextBox box)
+        {
+            if (!textBoxes.Contains(box))
+                textBoxes.Add(box);
+        }
+        public void detatchTextBox(TextBox box)
+        {
+            textBoxes.Remove(box);
+        }
+
+
+        //-- Append methods with formatting using the lowest verbosity --// 
+        //--    Can't use default parameter for verbosity because of ambiguity between and int type first format parameter 
+        //--    with no verbosity and Verbosity but no parameters --//
+        public void AppendFormatLine(String format, params object[] args)
+        {
+            AppendFormatLine(format, Verbosity.Warnings, args);
+        }
+        public void AppendFormat(String format, params object[] args)
+        {
+            AppendFormat(format, Verbosity.Warnings, args);
+        }
+
+        //-- Append methods with formatting using the input verbosity --//
+        public void AppendFormatLine(String format, Verbosity verb, params object[] args)
+        {
+            AppendFormat(format + "\n", verb, args);
+        }
+        public void AppendFormat(String format, Verbosity verb, params object[] args)
+        {
+            AppendText(String.Format(format, args), verb);
+        }
+
+        //-- Append methods without formatting - default verbosity is the lowest --//
+        public void AppendLine(String text, Verbosity verb = Verbosity.Warnings)
         {
             AppendText(text + "\n", verb);
         }
-        public void AppendText(String text, Verbosity verb)
+        public void AppendText(String text, Verbosity verb = Verbosity.Warnings)
         {
-            if (type != StatusStreamType.Console && _statusBox.InvokeRequired)
-            {
-                _statusBox.Invoke(new AppendTextDelegate(this.AppendText), text, verb);
-            }
-            else
-            {
-                if (verbosity >= verb)
-                {
-                    //Apply Indent
-                    for (int i = 0; i < indent; i++)
-                        text = "    " + text;
+            if (outputToConsole)
+                System.Console.Write(text);
 
-                    //Output text
-                    switch (type)
-                    {
-                        case StatusStreamType.TextBox:
-                            if (_statusBox.TextLength > _statusBox.MaxLength - 20)
-                                _statusBox.Clear();
-                            _statusBox.AppendText(text);
-                            break;
-                        case StatusStreamType.Console:
-                            Console.Write(text);
-                            break;
-                        default:
-                            Console.WriteLine("COULD NOT FIND THE TYPE OF THIS STATUS STREAM :O");
-                            break;
-                    }
-                }
+            foreach (TextBox t in textBoxes)
+            {
+                //If this thread is not the textbox's thread, invoke the update method
+                if (t.InvokeRequired)
+                    t.Invoke(new AppendTextDelegate(this.AppendTextInvoker), text, verb, t);
+                else
+                    AppendTextInvoker(text, verb, t);
             }
         }
 
-        //Clears the status stream of all text
+        //-- Write 'text' to textbox b if 'verb' is equal to or lower than this streams verbosity --//
+        private void AppendTextInvoker(String text, Verbosity verb, TextBox b)
+        {
+            if (verbosity >= verb)
+            {
+                //Apply Indent
+                for (int i = 0; i < indent; i++)
+                    text = "    " + text;
+
+                //Double the textbox's max length if this text would overflow
+                if (b.TextLength + text.Length > b.MaxLength)
+                {
+                    b.MaxLength *= 2;
+                }
+
+                b.AppendText(text);
+            }
+        }
+
+        //-- Clears all output channels of text --//
         public void clear()
         {
-            switch (type)
+            if (outputToConsole)
+                Console.Clear();
+
+            foreach (TextBox t in textBoxes)
             {
-                case StatusStreamType.TextBox:
-                    _statusBox.Clear();
-                    break;
-                case StatusStreamType.Console:
-                    Console.Clear();
-                    break;
-                default:
-                    Console.WriteLine("COULD NOT FIND THE TYPE OF THIS STATUS STREAM :O");
-                    break;
+                t.Clear();
             }
         }
     }

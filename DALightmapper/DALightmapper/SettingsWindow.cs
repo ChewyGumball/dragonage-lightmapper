@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Threading;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -40,6 +41,9 @@ namespace DALightmapper
 
             nmup_minEnergy.Value = (decimal)Settings.minimumEnergy;
             nmup_numBounces.Value = Settings.numBounces;
+            nmup_Cores.Maximum = Environment.ProcessorCount;
+            nmup_Cores.Minimum = 1;
+            nmup_Cores.Value = Settings.maxThreads;
 
         }
 
@@ -129,6 +133,12 @@ namespace DALightmapper
         {
             e.Cancel = true;
             Hide();
+        }
+
+        private void nmup_Cores_ValueChanged(object sender, EventArgs e)
+        {
+            Settings.maxThreads = (int)nmup_Cores.Value;
+            ThreadPool.SetMaxThreads(Settings.maxThreads, Settings.maxThreads);
         }
     }
 }

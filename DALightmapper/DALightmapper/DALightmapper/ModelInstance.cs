@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using OpenTK;
 
 namespace DALightmapper
@@ -11,6 +12,21 @@ namespace DALightmapper
         public Quaternion rotation { get; private set; }
         public uint id { get; private set; }
         public BoundingBox[] bounds { get; private set; }
+        public List<Triangle> tris
+        {
+            get
+            {
+                List<Triangle> triangles = new List<Triangle>();
+                for (int i = 0; i < baseModel.meshes.Length; i++)
+                {
+                    for (int j = 0; j < baseModel.meshes[i].getNumTris(); j++)
+                    {
+                        triangles.Add(getTri(i, j));
+                    }
+                }
+                return triangles;
+            }
+        }
 
         public ModelInstance (String n, Model baseM, Vector3 pos, Quaternion rot, uint modelId)
         {

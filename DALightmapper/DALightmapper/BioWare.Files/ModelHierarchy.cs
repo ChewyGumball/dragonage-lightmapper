@@ -154,7 +154,7 @@ namespace Bioware.Files
 
                     //Get whether it receives shadows
                     file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_RECEIVES_BAKED_INDEX].index, SeekOrigin.Begin);
-                    currentMeshChunk.receives = file.ReadByte() == 1;
+                    currentMeshChunk.receives = currentMeshChunk.usesTwoTexCoords? file.ReadByte() == 1 : false;
                 }
             }
         }

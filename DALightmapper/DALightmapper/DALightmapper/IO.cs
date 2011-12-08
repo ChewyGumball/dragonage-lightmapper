@@ -66,6 +66,11 @@ namespace DALightmapper
         {
             stream = statStream;
         }
+        public IO()
+        {
+            stream = new StatusStream();
+            stream.attachToConsole();
+        }
 
         //Reads in the data needed for a level
         //Currently reads more than lvl files for testing purposes NEED TO CLEAN UP 

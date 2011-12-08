@@ -24,14 +24,13 @@ namespace DALightmapper
         {
 
 
-
-            InitializeComponent(); 
-            stream = new StatusStream(tb_Status);
+            InitializeComponent();
+            Settings.stream.attachTextBox(tb_Status);
             oglPreviewWindow = new OpenGLPreview();
             settingsWindow = new SettingsWindow();
 
             //Create the IO object
-            io = new IO(stream);
+            io = new IO(Settings.stream);
 
             try
             {
@@ -47,11 +46,11 @@ namespace DALightmapper
             }
             catch (UnauthorizedAccessException)
             {
-                stream.AppendLine("The working directory (\"" + Settings.workingDirectory + "\") could not be accessed due to permissions.\n\t Please change the permissions of the parent directory.", Verbosity.Warnings);
+                Settings.stream.AppendLine("The working directory (\"" + Settings.workingDirectory + "\") could not be accessed due to permissions.\n\t Please change the permissions of the parent directory.", Verbosity.Warnings);
             }
             catch (Exception e)
             {
-                stream.AppendLine("There was an error accessing the working directory (\"" + Settings.workingDirectory + "\"), " + e.Message, Verbosity.Warnings);
+                Settings.stream.AppendLine("There was an error accessing the working directory (\"" + Settings.workingDirectory + "\"), " + e.Message, Verbosity.Warnings);
             }
 
             //Plug into thread finish handler for Light Mapping
@@ -75,14 +74,14 @@ namespace DALightmapper
         {
             if (currentJob > 0 && Settings.cleanUpTempFiles && io.numTempFiles > 0)
             {
-                stream.AppendText("Cleaning up temp files first.\n", Verbosity.Warnings);
+                Settings.stream.AppendText("Cleaning up temp files first.\n", Verbosity.Warnings);
                 io.cleanUpTempFiles();
-                stream.AppendText("\n", Verbosity.Warnings);
+                Settings.stream.AppendText("\n", Verbosity.Warnings);
             }
 
             if (currentJob >= lb_Files.Items.Count)
             {
-                stream.AppendText("Finished all jobs.\n", Verbosity.Warnings);
+                Settings.stream.AppendText("Finished all jobs.\n", Verbosity.Warnings);
                 btn_Start.Enabled = true;
                 btn_Stop.Enabled = false;
                 btn_Add.Enabled = true;
@@ -90,7 +89,7 @@ namespace DALightmapper
             }
             else
             {
-                stream.AppendText("Starting job " + (currentJob + 1) + ":\n", Verbosity.Warnings);
+                Settings.stream.AppendText("Starting job " + (currentJob + 1) + ":\n", Verbosity.Warnings);
                 //Read in data
                 io.readLevelAsync(lb_Files.Items[currentJob++].ToString(), new FinishedReadingEventHandler(doneReading));
             }
@@ -98,7 +97,7 @@ namespace DALightmapper
 
         private void btn_Clear_Click(object sender, EventArgs e)
         {
-            stream.clear();
+            Settings.stream.clear();
         }
 
         private void btn_Stop_Click(object sender, EventArgs e)
@@ -121,7 +120,7 @@ namespace DALightmapper
                 this.BeginInvoke(new doneReadingDelegate(doneReading), e);
             else
             {
-                stream.AppendText(e.message + " \n", Verbosity.Warnings);
+                Settings.stream.AppendText(e.message + " \n", Verbosity.Warnings);
 
                 //If the reading was successful proceed with creating lightmaps
                 if (e.successful)
@@ -147,12 +146,12 @@ namespace DALightmapper
                 this.BeginInvoke(new doneLightMappingDelegate(doneLightMapping), e);
             else
             {
-                stream.AppendText(e.message + " \n", Verbosity.Warnings);
+                Settings.stream.AppendText(e.message + " \n", Verbosity.Warnings);
 
                 //Save lightmaps properly
 
-                stream.AppendText("Procceding to next job.\n", Verbosity.Warnings);
-                stream.AppendText("\n", Verbosity.Warnings);
+                Settings.stream.AppendText("Procceding to next job.\n", Verbosity.Warnings);
+                Settings.stream.AppendText("\n", Verbosity.Warnings);
 
                 //process next job
                 proccessNextJob();
@@ -166,11 +165,11 @@ namespace DALightmapper
             for (int i = 0; i < paths.Length; i++)
                 if (lb_Files.Items.Contains(paths[i]))
                 {
-                    stream.AppendText("Job already exists: " + paths[i] + "\n", Verbosity.Low);
+                    Settings.stream.AppendText("Job already exists: " + paths[i] + "\n", Verbosity.Low);
                 }
                 else
                 {
-                    stream.AppendText("Adding job to list: " + paths[i] + "\n", Verbosity.Low);
+                    Settings.stream.AppendText("Adding job to list: " + paths[i] + "\n", Verbosity.Low);
                     lb_Files.Items.Add(paths[i]);
                 }
         }
@@ -180,7 +179,7 @@ namespace DALightmapper
             ListBox.SelectedIndexCollection indices = lb_Files.SelectedIndices;
             while (indices.Count != 0)
             {
-                stream.AppendText("Removing job from list: " + lb_Files.Items[indices[0]] + "\n", Verbosity.Low);
+                Settings.stream.AppendText("Removing job from list: " + lb_Files.Items[indices[0]] + "\n", Verbosity.Low);
                 lb_Files.Items.RemoveAt(indices[0]);
             }
         }

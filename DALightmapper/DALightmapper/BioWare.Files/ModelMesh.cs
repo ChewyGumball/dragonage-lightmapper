@@ -42,10 +42,7 @@ namespace Bioware.Files
             //get the reference to the name of the mesh
             //get the name of the mesh
             name = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
-            if (name == "Object482")
-            {
-                System.Console.Write("JJJJJJJJJJJJJJJ\n");
-            }
+
             //Get the reference to the list of chunks
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[1].index, SeekOrigin.Begin);
             reference = file.ReadInt32();
@@ -58,9 +55,7 @@ namespace Bioware.Files
             //Make an array of chunks of the correct size
             _chunks = new MeshChunk[listLength];
             int triangleNum = 0;
-
-            int chunkSize = getChunkSize();
-
+            
             //Create all the chunks
             for (int i = 0; i < listLength && !IO.abort; i++)
             {
@@ -81,7 +76,6 @@ namespace Bioware.Files
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[3].index, SeekOrigin.Begin);
             //Get the reference to the list
             long indexOffset = file.ReadUInt32() + binaryFile.dataOffset + 4;
-            long copy = indexOffset;
             //Index variables for triangles
             ushort index1, index2, index3;
 
@@ -94,20 +88,19 @@ namespace Bioware.Files
                 //Read in the vertex data
                 for (int j = 0; j < _chunks[i].vertexCount && !IO.abort; j++)
                 {
+                    long currentIndex = vertexOffset + _chunks[i].vertexOffset + (_chunks[i].vertexSize * j);
                     //Read in the positions
-                    file.BaseStream.Seek(vertexOffset + _chunks[i].positionOffset, SeekOrigin.Begin);
+                    file.BaseStream.Seek(currentIndex + _chunks[i].positionOffset, SeekOrigin.Begin);
                     verts[j] = new Vector3(IOUtilities.readFloat16(file), IOUtilities.readFloat16(file), IOUtilities.readFloat16(file));
                     //Read in the uvs
-                    file.BaseStream.Seek(vertexOffset + _chunks[i].textureOffset, SeekOrigin.Begin);
+                    file.BaseStream.Seek(currentIndex + _chunks[i].textureOffset, SeekOrigin.Begin);
                     uvs[j] = new Vector2(IOUtilities.readFloat16(file), IOUtilities.readFloat16(file));
                     //If there are a second set, read them in too
                     if (_chunks[i].usesTwoTexCoords)
                     {
-                        file.BaseStream.Seek(vertexOffset + _chunks[i].texture2Offset, SeekOrigin.Begin);
+                        file.BaseStream.Seek(currentIndex + _chunks[i].texture2Offset, SeekOrigin.Begin);
                         luvs[j] = new Vector2(IOUtilities.readFloat16(file), IOUtilities.readFloat16(file));
                     }
-                    //Increase the offset by 1 vertex
-                    vertexOffset += _chunks[i].vertexSize;
                 }
 
                 //Seek to index data (skipping the length int at beginning)

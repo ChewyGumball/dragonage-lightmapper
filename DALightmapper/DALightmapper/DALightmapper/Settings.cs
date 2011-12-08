@@ -13,12 +13,18 @@ namespace DALightmapper
         public static int worldScale = 10;  //How much to scale up the world on import
         public static bool useTrueAttenuation = true;   //Whether to use d^-2 or a more linear fall off specified per light for lighting
 
-        //--Housekeeping Variables--//
+        //--Output Stream Variables--//
         public static Verbosity verboseStatus = Verbosity.Low;   //The level of verbosity messages are checked against for display
+        public static StatusStream stream = new StatusStream();
+        
+        //-- Housekeeping Variables --//
         public static Boolean cleanUpTempFiles = true;  //Whether to clean up the temp files created
 
+        //-- Multi-threading Variables --//
+        public static int maxThreads = 2;
+
         //--Light Mapping Variables--//
-        public static int numBounces = 5;   //Number of bounces to calculate light for
+        public static int numBounces = 2000;   //Number of bounces to calculate light for
         public static double minimumEnergy = 0.05; //The minimum energy required for lightmapping to continue
         public static Boolean useNumBounces = false;
         
@@ -34,20 +40,7 @@ namespace DALightmapper
 
         public static List<String> filePaths = null;
         public static List<ERF> erfFiles = null;
-       
-        
-        //--Required ERF files--//
-        private static ERF _modelERF, _meshERF;
-
-        public static ERF modelERF
-        {
-            get { return _modelERF; }
-        }
-        public static ERF meshERF
-        {
-            get { return _meshERF; }
-        }
-        
+               
         //Initializes the variables saved in an ini file leaving the others at default value
         public static void initializeSettings()
         {
@@ -74,6 +67,7 @@ namespace DALightmapper
             minimumEnergy = Properties.Settings.Default.minEnergy;
             useTrueAttenuation = Properties.Settings.Default.trueAttenuation;
             cleanUpTempFiles = Properties.Settings.Default.clearTempFiles;
+            maxThreads = Properties.Settings.Default.maxThreads;
         }
 
         public static void saveSettings()
@@ -100,6 +94,7 @@ namespace DALightmapper
             Properties.Settings.Default.minEnergy = minimumEnergy;
             Properties.Settings.Default.trueAttenuation = useTrueAttenuation;
             Properties.Settings.Default.clearTempFiles = cleanUpTempFiles;
+            Properties.Settings.Default.maxThreads = maxThreads;
 
             Properties.Settings.Default.Save();
         }

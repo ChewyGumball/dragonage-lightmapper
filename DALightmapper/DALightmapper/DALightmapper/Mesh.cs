@@ -76,8 +76,8 @@ namespace DALightmapper
                     { 
                         if (!t.isDegenerate() && t.isOnUVPixel(topLeft,bottomRight))
                         {
-                              //                         uv        Position            normal     emmision             reflection     
-                            texels[i, j].add( new Patch(topLeft, t.uvTo3d(topLeft,bottomRight), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f)));
+                              //                              Position                   normal     emmision             reflection     
+                            texels[i, j].add( new Patch(t.uvTo3d(topLeft,bottomRight), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f)));
                         }
                     }
                 }

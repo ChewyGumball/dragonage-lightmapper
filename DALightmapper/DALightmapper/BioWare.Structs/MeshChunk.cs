@@ -82,6 +82,10 @@ namespace Bioware.Structs
         {
             get { return _indexOffset; }
         }
+        public uint vertexOffset
+        {
+            get { return _vertexOffset; }
+        }
 
         public Triangle[] tris
         {
@@ -142,10 +146,6 @@ namespace Bioware.Structs
             file.BaseStream.Seek(chunkDef.fields[0].index + position, SeekOrigin.Begin);
             _name = IOUtilities.readECString(file, dataOffset + file.ReadInt32());
 
-            if (_name == "Object482")
-            {
-                System.Console.Write("d");
-            }
 
             //Seek to vertex size offset and read it
             file.BaseStream.Seek(chunkDef.fields[1].index + position, SeekOrigin.Begin);
@@ -194,11 +194,14 @@ namespace Bioware.Structs
                         break;
 
                     case Usage.TEXCOORD:
-                        if (_usesTwoTexCoords)
-                            _texture2Offset = file.ReadInt32();
-                        else
+                        int offset = file.ReadInt32();
+                        file.BaseStream.Seek(reference + (vertStruct.structSize * i) + vertStruct.fields[4].index, SeekOrigin.Begin);
+                        uint index = file.ReadUInt32();
+                        if (index == 0)
+                            _textureOffset = offset;
+                        else if (index == 1)
                         {
-                            _textureOffset = file.ReadInt32();
+                            _texture2Offset = offset;
                             _usesTwoTexCoords = true;
                         }
                         break;

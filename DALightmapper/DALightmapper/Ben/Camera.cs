@@ -10,16 +10,15 @@ namespace Ben
     class Camera
     {
         public Vector3 position { get; set; }
-        public Matrix4 matrix { get; set; }
+        public Matrix4 matrix { get { return Matrix4.CreateTranslation(position) * Matrix4.CreateRotationZ(-rightAngle) * Matrix4.CreateRotationX(-upAngle); } }
+        private float upAngle = (float)(Math.PI / 2);
+        private float rightAngle = 0;
 
         public Camera()
-            : this(new Vector3(0,0,0), new Vector3(0,1,0), new Vector3(0,0,2))
-        { }
-
-        public Camera(Vector3 inPosition, Vector3 inUp, Vector3 inLookAt)
         {
-            matrix = Matrix4.LookAt(inPosition, inLookAt, inUp);
+            position = new Vector3();
         }
+        
 
         public void localTranslate(Vector3 trans)
         {
@@ -27,24 +26,29 @@ namespace Ben
         }
         public void translate(Vector3 translate)
         {
-            matrix = Matrix4.Translation(translate) * matrix;
+            position -= translate;
         }
 
-        public void localRotate(Vector3 axis, float angle)
+        public void rotateRight(float angle)
         {
-            rotate(getLocalVector(axis), angle);
+            rightAngle += angle;
+            
+            rightAngle = rightAngle % (float)(Math.PI * 2);
         }
-        public void rotate(Vector3 axis, float angle)
+
+        public void rotateUp(float angle)
         {
-            matrix = Matrix4.Rotate(axis, angle) * matrix;
+            upAngle += angle;
+
+            if (upAngle > Math.PI)
+                upAngle = (float)(Math.PI);
+            else if (upAngle < 0)
+                upAngle = 0;
         }
 
         private Vector3 getLocalVector(Vector3 world)
         {
-            Vector3 x = matrix.Row0.Xyz;
-            Vector3 y = matrix.Row1.Xyz;
-            Vector3 z = matrix.Row2.Xyz;
-            return (x * world.X) + (y * world.Y) + (z * world.Z); 
+            return Vector3.Transform(world, Matrix4.CreateRotationX(upAngle) * Matrix4.CreateRotationZ(rightAngle));
         }
     }
 }

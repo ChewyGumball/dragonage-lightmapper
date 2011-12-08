@@ -99,6 +99,8 @@
     <Compile Include="DALightmapper\Light.cs" />
     <Compile Include="DALightmapper\LightMap.cs" />
     <Compile Include="DALightmapper\Lightmapper.cs" />
+    <Compile Include="DALightmapper\Octree.cs" />
+    <Compile Include="DALightmapper\Partitioner.cs" />
     <Compile Include="DALightmapper\Texel.cs" />
     <Compile Include="MainWindow.cs">
       <SubType>Form</SubType>
@@ -156,6 +158,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="SettingsWindow.resx">
       <DependentUpon>SettingsWindow.cs</DependentUpon>

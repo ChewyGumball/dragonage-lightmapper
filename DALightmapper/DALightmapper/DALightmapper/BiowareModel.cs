@@ -16,7 +16,6 @@ namespace DALightmapper
         private Vector3 _position;
         private Quaternion _rotation;
         private String _modelFileName;
-        private uint[] _textureIDs;
         private uint _modelID;
 
         Boolean _isTerrain;
@@ -45,10 +44,6 @@ namespace DALightmapper
         public String modelFileName
         {
             get { return _modelFileName; }
-        }
-        public uint[] textureIDs
-        {
-            get { return _textureIDs; }
         }
         public uint modelID
         {

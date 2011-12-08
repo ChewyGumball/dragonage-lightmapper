@@ -56,7 +56,7 @@ namespace DALightmapper.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2000")]
         public int numBounces {
             get {
                 return ((int)(this["numBounces"]));
@@ -135,6 +135,18 @@ namespace DALightmapper.Properties {
             }
             set {
                 this["tempDirectory"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2")]
+        public int maxThreads {
+            get {
+                return ((int)(this["maxThreads"]));
+            }
+            set {
+                this["maxThreads"] = value;
             }
         }
     }

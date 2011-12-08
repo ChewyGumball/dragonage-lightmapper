@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -18,28 +19,33 @@ using Ben;
 namespace DALightmapper
 {
     
-    enum Showing {UV, Model, Lightmap, Texture, Level};
+    enum Showing {Nothing, UV, Model, Lightmap, Texture, Level};
     public partial class OpenGLPreview : Form
     {
         int currentMeshIndex;
+        String file;
+        String drawString;
         Mesh[] meshes;
         Targa texture;
         Level level;
-        Showing currentlyShowing = Showing.UV;
+        Showing currentlyShowing = Showing.Nothing;
 
-        TextBitmap modelName;
+        int textureIndex;
+        Bitmap bitmap;
 
         bool mouseDown = false;
         Point mouseOrigin;
         Vector3 cameraPos = new Vector3(0, 30, 30);
         Vector3 origin = new Vector3();
-        Vector3 up = new Vector3(0, 1, 0);
+        Vector3 up = new Vector3(0, -1, 0);
         Vector3 colour = Vector3.Normalize(new Vector3(0, -10, -10));
+        Camera camera = new Camera();
 
         public OpenGLPreview()
         {
             InitializeComponent();
             setButtons(false);
+            camera = new Camera();
         }
 
         private void setButtons(bool b)
@@ -54,7 +60,6 @@ namespace DALightmapper
         private void setMeshNum(int i)
         {
             currentMeshIndex = i;
-            modelName = new TextBitmap(meshes[currentMeshIndex].getName(), meshes[currentMeshIndex].getName().Length, 35);
             lbl_meshNum.Text = (currentMeshIndex + 1) +"/" + meshes.Length;
         }
 
@@ -63,63 +68,27 @@ namespace DALightmapper
             tb_path.Text = openFileDialog1.FileName;
         }
 
-        private void btn_choose_Click(object sender, EventArgs e)
+        
+        //Refreshes the view with the appropriate settings and draws the text bitmap on the screen
+        private void refreshView()
         {
-            openFileDialog1.ShowDialog();
-        }
-
-        private void btn_load_Click(object sender, EventArgs e)
-        {
-            String filePath = tb_path.Text;
-            String extention = Path.GetExtension(filePath);
-            List<Mesh> renderableMeshes = new List<Mesh>();
-
-            //Try and find the model file
-            if (extention == ".mmh")
+            switch (currentlyShowing)
             {
-                GFF tempGFF = new GFF(filePath, 0);
-                ModelHierarchy mh = new ModelHierarchy(tempGFF);
-                renderableMeshes.AddRange(mh.mesh.toModel().meshes);
-            }
-            else if (extention == ".msh")
-            {
-                GFF tempGFF = new GFF(filePath, 0);
-                ModelMesh mm = new ModelMesh(tempGFF);
-                renderableMeshes.AddRange(mm.toModel().meshes);
-            }
-            else if (extention == ".tga")
-            {
-                texture = new Targa(filePath);
-                currentlyShowing = Showing.Texture;
-                refreshView();
-            }
-            else if (extention == ".lvl")
-            {
-                level = new Level(filePath);
-                level.readObjectsAsync();
-                refreshView();
-            }
-            //If its not the right type of file then print an error
-            else
-            {
-                lbl_progressStatus.Text = "This is not a valid model (.mmh or .msh) or texture (.tga) file!";
-            }
-            meshes = renderableMeshes.ToArray();
-
-            // Enable the buttons if there are actually meshes
-            if (meshes.Length > 0)
-            {
-                setMeshNum(0);
-                setButtons(true);
-            }
-            else
-            {
-                lbl_meshNum.Text = "";
-                setButtons(false);
+                case Showing.UV:
+                    displayUV(); break;
+                case Showing.Model:
+                    display3D(); break;
+                case Showing.Lightmap:
+                    displayLightmap(); break;
+                case Showing.Texture:
+                    displayTexture(); break;
+                case Showing.Level:
+                    displayLevel(); break;
+                default:
+                    lbl_progressStatus.Text = "Unknown currently showing status...?" + currentlyShowing; break;
 
             }
         }
-
         //Draws the UV map of the current mesh
         private void displayUV()
         {
@@ -150,7 +119,6 @@ namespace DALightmapper
             GL.End();
             glControl1.SwapBuffers();
         }
-
         //Draws a 3d view of the current mesh 
         private void display3D()
         {
@@ -159,12 +127,15 @@ namespace DALightmapper
 
             GL.Viewport(0, 0, Width, Height);
 
-            Matrix4 perpective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1, 1, 64);
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1, 1, 1000);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
-            GL.LoadMatrix(ref perpective);
+            GL.LoadMatrix(ref perspective);
 
-            setCamera();
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            Matrix4 camMatrix = camera.matrix;
+            GL.LoadMatrix(ref camMatrix);
 
             GL.Viewport(0, 0, width, height);
 
@@ -172,9 +143,8 @@ namespace DALightmapper
             GL.Color3(Color.White);
             GL.LineWidth(0.5f);
 
-            redraw();
+            redraw3D();
         }
-
         //Draws the Lightmap UV of the current mesh
         private void displayLightmap()
         {
@@ -210,7 +180,7 @@ namespace DALightmapper
             GL.End();
             glControl1.SwapBuffers();
         }
-
+        //Draws a Texure 
         private void displayTexture()
         {
             int textureIndex = GL.GenTexture();
@@ -230,25 +200,44 @@ namespace DALightmapper
             textureData.UnlockBits(data);
             GL.Clear(ClearBufferMask.ColorBufferBit);
 
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.Ortho(0, 1, 1, 0, -1, 1);
+
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadIdentity();
 
             GL.Begin(BeginMode.Quads);
-            GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(-0.6f, -0.4f);
-            GL.TexCoord2(1.0f, 1.0f); GL.Vertex2(0.6f, -0.4f);
-            GL.TexCoord2(1.0f, 0.0f); GL.Vertex2(0.6f, 0.4f);
-            GL.TexCoord2(0.0f, 0.0f); GL.Vertex2(-0.6f, 0.4f);
+            GL.TexCoord2(0.0f, 1.0f); GL.Vertex2(0.1f, 0.9f);
+            GL.TexCoord2(1.0f, 1.0f); GL.Vertex2(0.9f, 0.9f);
+            GL.TexCoord2(1.0f, 0.0f); GL.Vertex2(0.9f, 0.1f);
+            GL.TexCoord2(0.0f, 0.0f); GL.Vertex2(0.1f, 0.1f);
             GL.End();
+
+            redrawText();
 
             glControl1.SwapBuffers();
             GL.DeleteTexture(textureIndex);
         }
-
-        private void displayLevel() 
+        //Draws all the meshes in a level
+        private void displayLevel()
         {
-            //set camera to first light position
-            //render geometry
-            //render patches
+            int width = glControl1.Width;
+            int height = glControl1.Height;
+
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1, 1, 1000);
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.LoadMatrix(ref perspective);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            Matrix4 camMatrix = camera.matrix;
+            GL.LoadMatrix(ref camMatrix);
+            //GL.Translate(new Vector3(0, 10, 0));
+
+            GL.Viewport(0, 0, width, height);
+
+            redraw();
         }
 
         private void setCamera()
@@ -261,11 +250,83 @@ namespace DALightmapper
 
         private void redraw()
         {
+            Matrix4 cameraMatrix = camera.matrix;
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
+            GL.LoadMatrix(ref cameraMatrix);
+
+            if (currentlyShowing == Showing.Model)
+                redraw3D();
+            else if (currentlyShowing == Showing.Level)
+                redrawLevel();
+
+            redrawText();
+
+            glControl1.SwapBuffers();
+        }
+
+        private void redrawText()
+        {
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+            GL.Ortho(0, 1, 1, 0, -1, 1);
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PushMatrix();
+            GL.LoadIdentity();
+
+            GL.Disable(EnableCap.DepthTest);
+
+            GL.Enable(EnableCap.Texture2D);
+            GL.BindTexture(TextureTarget.Texture2D, textureIndex);
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+
+            GL.Begin(BeginMode.Quads);
+            GL.TexCoord2(0f, 0f); GL.Vertex2(0f, 0f);
+            GL.TexCoord2(1f, 0f); GL.Vertex2(1f, 0f);
+            GL.TexCoord2(1f, 1f); GL.Vertex2(1f, 1f);
+            GL.TexCoord2(0f, 1f); GL.Vertex2(0f, 1f);
+            GL.End();
+
+            GL.Disable(EnableCap.Texture2D);
+            GL.Disable(EnableCap.Blend);
+
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.PopMatrix();
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.PopMatrix();
+
+        }
+        private void redrawLevel()
+        {
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.Enable(EnableCap.DepthTest);
+            GL.Begin(BeginMode.Triangles);
+            //render geometry
+            foreach (ModelInstance m in level.lightmapModels)
+            {
+                foreach (Triangle t in m.tris)
+                {
+                    GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
+                    GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
+                    GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
+                }
+            }
+            GL.End();
+            GL.Disable(EnableCap.DepthTest);
+        }
+        private void redraw3D()
+        {
             Mesh tris = meshes[currentMeshIndex];
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.PolygonMode(MaterialFace.Front, PolygonMode.Fill);
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             GL.Enable(EnableCap.DepthTest);
-            GL.Enable(EnableCap.Texture2D);
+            //GL.Enable(EnableCap.Texture2D);
             GL.Begin(BeginMode.Triangles);
             for (int i = 0; i < tris.getNumTris(); i++)
             {
@@ -277,10 +338,29 @@ namespace DALightmapper
             }
             GL.End();
             GL.Disable(EnableCap.DepthTest);
-            //modelName.draw(0,0);
-            glControl1.SwapBuffers();
         }
 
+        //Clears the text bitmap then writes the input string on it
+        private void updateBitmap(String s)
+        {
+            Graphics gfx = Graphics.FromImage(bitmap);
+            gfx.Clear(Color.Transparent);
+            gfx.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            gfx.DrawString(s, new Font(FontFamily.GenericSansSerif, 11), Brushes.White, new PointF(0, 0));
+
+            BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            GL.BindTexture(TextureTarget.Texture2D, textureIndex);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Linear);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+
+            bitmap.UnlockBits(data);
+        }
+
+
+        //-- Input Handlers --//
         private void btn_showUV_Click(object sender, EventArgs e)
         {
             currentlyShowing = Showing.UV;
@@ -306,6 +386,9 @@ namespace DALightmapper
 
             setMeshNum(currentMeshIndex - 1);
 
+            drawString = "File: " + file + "\nModel: " + meshes[currentMeshIndex].getName();
+            updateBitmap(drawString);
+
             refreshView();
         }
 
@@ -316,33 +399,17 @@ namespace DALightmapper
 
             setMeshNum(currentMeshIndex + 1);
 
+            drawString = "File: " + file + "\nModel: " + meshes[currentMeshIndex].getName();
+            updateBitmap(drawString);
+
             refreshView();
-        }
-
-        private void refreshView()
-        {
-            switch (currentlyShowing)
-            {
-                case Showing.UV:
-                    displayUV(); break;
-                case Showing.Model:
-                    display3D(); break;
-                case Showing.Lightmap:
-                    displayLightmap(); break;
-                case Showing.Texture:
-                    displayTexture(); break;
-                case Showing.Level:
-                    displayLevel(); break;
-                default:
-                    lbl_progressStatus.Text = "Unknown currently showing status...?" + currentlyShowing; break;
-
-            }
         }
 
         private void glControl1_MouseDown(object sender, MouseEventArgs e)
         {
             mouseDown = true;
             mouseOrigin = e.Location;
+            //glControl1.Focus();
         }
 
         private void glControl1_MouseUp(object sender, MouseEventArgs e)
@@ -352,11 +419,22 @@ namespace DALightmapper
 
         private void glControl1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (mouseDown && currentlyShowing != Showing.Texture)
+            if (mouseDown && (currentlyShowing == Showing.Model || currentlyShowing == Showing.Level))
             {
-                origin += new Vector3(-(e.X - mouseOrigin.X) / 10, -(e.Y - mouseOrigin.Y) / 10, 0);
+                float side = 1000f;
+                float diffX = (e.X - mouseOrigin.X);
+                float diffY = (e.Y - mouseOrigin.Y);
+
+                float angleX = (float)Math.Acos(((2 * side * side) - (diffX * diffX)) / (2 * side * side));
+                float angleY = (float)Math.Acos(((2 * side * side) - (diffY * diffY)) / (2 * side * side));
+
+                if (diffX < 0)
+                    angleX *= -1;
+                if (diffY < 0)
+                    angleY *= -1;
+                camera.rotateRight(angleX);
+                camera.rotateUp(angleY);
                 mouseOrigin = e.Location;
-                setCamera();
                 redraw();
             }
         }
@@ -373,7 +451,108 @@ namespace DALightmapper
 
         private void OpenGLPreview_Load(object sender, EventArgs e)
         {
+        }
 
+        private void glControl1_MouseLeave(object sender, EventArgs e)
+        {
+            mouseDown = false;
+        }
+
+        private void glControl1_KeyDown(object sender, KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.D:
+                    camera.localTranslate(new Vector3(0.5f, 0, 0));
+                    redraw();
+                    break;
+                case Keys.S:
+                    camera.localTranslate(new Vector3(0, 0, 0.5f));
+                    redraw();
+                    break;
+                case Keys.A:
+                    camera.localTranslate(new Vector3(-0.5f, 0, 0));
+                    redraw();
+                    break;
+                case Keys.W:
+                    camera.localTranslate(new Vector3(0, 0, -0.5f));
+                    redraw();
+                    break;
+            }
+        }
+
+        private void btn_choose_Click(object sender, EventArgs e)
+        {
+            openFileDialog1.ShowDialog();
+        }
+
+        private void btn_load_Click(object sender, EventArgs e)
+        {
+            setButtons(false);
+            String filePath = tb_path.Text;
+            file = filePath;
+            String extention = Path.GetExtension(filePath);
+            List<Mesh> renderableMeshes = new List<Mesh>();
+            drawString = "File: " + file;
+
+            updateBitmap(drawString);
+
+            //Try and find the model file
+            if (extention == ".mmh")
+            {
+                GFF tempGFF = new GFF(filePath, 0);
+                ModelHierarchy mh = new ModelHierarchy(tempGFF);
+                currentlyShowing = Showing.Model;
+                meshes = mh.mesh.toModel().meshes;
+                setButtons(true);
+                if (meshes.Length > 0)
+                {
+                    setMeshNum(0);
+                }
+            }
+            else if (extention == ".msh")
+            {
+                GFF tempGFF = new GFF(filePath, 0);
+                ModelMesh mm = new ModelMesh(tempGFF);
+                currentlyShowing = Showing.Model;
+                meshes = mm.toModel().meshes;
+                setButtons(true);
+                if (meshes.Length > 0)
+                {
+                    setMeshNum(0);
+                }
+            }
+            else if (extention == ".tga")
+            {
+                texture = new Targa(filePath);
+                currentlyShowing = Showing.Texture;
+            }
+            else if (extention == ".lvl")
+            {
+                level = new Level(filePath);
+                currentlyShowing = Showing.Level;
+                level.readObjects();
+            }
+            //If its not the right type of file then print an error
+            else
+            {
+                lbl_progressStatus.Text = "This is not a valid model (.mmh or .msh), texture (.tga), or level (.lvl) file!";
+            }
+            refreshView();
+        }
+
+        //-- Setup for the gl context --//
+        private void glControl1_Load(object sender, EventArgs e)
+        {
+            textureIndex = GL.GenTexture();
+            bitmap = new Bitmap(glControl1.Width, glControl1.Height);
+            updateBitmap("Nothing to see here.");
+            GL.MatrixMode(MatrixMode.Projection);
+            GL.LoadIdentity();
+            GL.ClearColor(Color.Black);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            redrawText();
+            glControl1.SwapBuffers();
         }
     }
 }

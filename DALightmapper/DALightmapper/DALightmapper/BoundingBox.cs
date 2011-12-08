@@ -21,6 +21,34 @@ namespace DALightmapper
             center = new Vector3();
         }
 
+        public BoundingBox(List<Triangle> triangles)
+        {
+            float minX = triangles[0].x.X;
+            float minY = triangles[0].x.Y;
+            float minZ = triangles[0].x.Z;
+            float maxX = triangles[0].x.X;
+            float maxY = triangles[0].x.Y;
+            float maxZ = triangles[0].x.Z;
+
+            foreach(Triangle t in triangles)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    minX = Math.Min(t[i].X, minX);
+                    minY = Math.Min(t[i].Y, minY);
+                    minZ = Math.Min(t[i].Z, minZ);
+
+                    maxX = Math.Max(t[i].X, maxX);
+                    maxY = Math.Max(t[i].Y, maxY);
+                    maxZ = Math.Max(t[i].Z, maxZ);
+                }
+            }
+
+            max = new Vector3(maxX, maxY, maxZ);
+            min = new Vector3(minX, minY, minZ);
+            center = (max + min) / 2;
+        }
+
         //Bounding box with offset and rotation from another bounding box
         public BoundingBox(BoundingBox bb, Vector3 offset, Quaternion rotation)
         {
@@ -74,21 +102,11 @@ namespace DALightmapper
             min = new Vector3(minX, minY, minZ);
         }
 
-        public Boolean containsLine(Vector3 start, Vector3 end)
+        public BoundingBox(Vector3 c, float lengthX, float lengthY, float lengthZ)
         {
-            Vector3 transformedStart = start - center;
-            Vector3 transformedEnd = end - center;
-            return lessThanOrEqual(transformedStart, max) && lessThanOrEqual(transformedEnd, max) &&
-                   greaterThanOrEqual(transformedStart, min) && greaterThanOrEqual(transformedEnd, min);
-        }
-
-        private Boolean lessThanOrEqual(Vector3 a, Vector3 b)
-        {
-            return a.X <= b.X && a.Y <= b.Y && a.Z <= b.Z;
-        }
-        private Boolean greaterThanOrEqual(Vector3 a, Vector3 b)
-        {
-            return a.X >= b.X && a.Y >= b.Y && a.Z >= b.Z;
+            center = c;
+            max = center + new Vector3(lengthX, lengthY, lengthZ);
+            min = center - new Vector3(lengthX, lengthY, lengthZ);
         }
 
         public Boolean lineIntersects(Vector3 start, Vector3 end)
@@ -166,5 +184,34 @@ namespace DALightmapper
             return false;
         }
 
+        public Boolean triangleIntersects(Triangle t)
+        {
+            return false;
+        }
+
+        public Boolean containsPoint(Vector3 p)
+        {
+            return lessThanOrEqual(p, max) && lessThanOrEqual(p, max) &&
+                   greaterThanOrEqual(p, min) && greaterThanOrEqual(p, min);
+        }
+
+        public Boolean containsLine(Vector3 start, Vector3 end)
+        {
+            return containsPoint(start) && containsPoint(end);
+        }
+
+        public Boolean containsTriangle(Triangle t)
+        {
+            return containsPoint(t.x) && containsPoint(t.y) && containsPoint(t.z);
+        }
+
+        private Boolean lessThanOrEqual(Vector3 a, Vector3 b)
+        {
+            return a.X <= b.X && a.Y <= b.Y && a.Z <= b.Z;
+        }
+        private Boolean greaterThanOrEqual(Vector3 a, Vector3 b)
+        {
+            return a.X >= b.X && a.Y >= b.Y && a.Z >= b.Z;
+        }
     }
 }

@@ -11,6 +11,8 @@ using System.Drawing.Imaging;
 using System.Diagnostics;
 
 using Ben;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.IO;
 
 namespace DALightmapper
 {
@@ -47,7 +49,11 @@ namespace DALightmapper
             double[][] coefficients;
             LightMap[] maps;
 
-            List<ModelInstance> castingModelsList = new List<ModelInstance>();
+            //The list of triangles which will be casting shadows
+            //  This comes from the models which cast shadows, we don't care which models they come from
+            List<Triangle> castingTriangles = new List<Triangle>();
+
+            //The list of models that need lightmaps
             List<ModelInstance> receivingModelsList = new List<ModelInstance>();
 
             foreach (ModelInstance m in level.lightmapModels)
@@ -55,52 +61,57 @@ namespace DALightmapper
                 if (m.baseModel.isLightmapped)
                     receivingModelsList.Add(m);
                 if (m.baseModel.castsShadows)
-                    castingModelsList.Add(m);
+                    castingTriangles.AddRange(m.tris);
             }
 
             ModelInstance[] receivingModels = receivingModelsList.ToArray();
-            ModelInstance[] castingModels = castingModelsList.ToArray();
 
             //Make the lightmaps and patch instances
             makeLightmaps(receivingModels, out maps, out patches);
-            System.Console.WriteLine("There are {0} patches in {1} lightmaps.", patches.Length, maps.Length);
-
+            Partitioner scene = new Octree(castingTriangles);
+            Settings.stream.AppendFormatLine("There are {0} patches in {1} lightmaps.", patches.Length, maps.Length);
             //Make visible set for each patch
             visibleSets = new Patch[patches.Length][];
             coefficients = new double[patches.Length][];
-
-            Task<Patch[]>[] calculations = new Task<Patch[]>[patches.Length];
+            
             /*
-            Parallel.For(0, patches.Length, delegate(int i)
+            ParallelOptions opts = new ParallelOptions();
+            opts.MaxDegreeOfParallelism = Settings.maxThreads;
+            Parallel.For(0, patches.Length,opts, delegate(int i)
             {
-                visibleSets[i] = makeVisibleSet(castingModels, patches[i], patches);
+                visibleSets[i] = makeVisibleSet(patches[i], patches, scene);
+                if ((i % 100) == 0)
+                {
+                    System.GC.Collect();
+                    Settings.stream.AppendFormatLine("Done making visible set for {0} patches.", i);
+                }
+
             }
             );
             //*/
-            //*
-            ThreadPool.SetMaxThreads(4, 4);
-            for (int i = 0; i < 1000; i++)
+            /*
+            Task<Patch[]>[] calculations = new Task<Patch[]>[patches.Length];
+            for (int i = 0; i < patches.Length; i++)
             {
                 Patch patch = patches[i];
-                calculations[i] = new Task<Patch[]>(() => makeVisibleSet(castingModels,patch,patches));
+                calculations[i] = new Task<Patch[]>(() => makeVisibleSet(patch,patches,scene));
                 calculations[i].Start();
             }
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < patches.Length; i++)
             {
                 visibleSets[i] = calculations[i].Result;
                 if((i % 100) == 0)
-                    System.Console.WriteLine("Done with {0}.", i);
+                    Settings.stream.AppendFormatLine("Done making visible set for {0} patches.", Verbosity.Medium, i);
             }
             // */
-            System.Console.WriteLine("Done making coeffients.");
-            Environment.Exit(0);
+            Settings.stream.AppendLine("Done making visible sets.");
             //Initialize the loop counter so message can say how many bounces were rendered
             int currentBounce = 0;
 
             //Start the lightmapping process off by just rendering light sources
-            renderLights(level.lights,patches,castingModels);
-            System.Console.WriteLine("Done rendering lights.");
+            renderLights(level.lights,patches,scene);
+            Settings.stream.AppendLine("Done rendering lights.");
             //Do some lightmapping
             for(abort = false; currentBounce < Settings.numBounces; currentBounce ++)
             {
@@ -115,8 +126,7 @@ namespace DALightmapper
                     }
                 }
                 //Propogate it's light
-                coefficients[highestIndex] = calculateCoefficients(patches[highestIndex], visibleSets[highestIndex]);
-                propogate(patches[highestIndex],visibleSets[highestIndex],coefficients[highestIndex]);
+                propogate(patches[highestIndex], patches,scene);
             }
             
             
@@ -135,7 +145,15 @@ namespace DALightmapper
                 FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Successfully finished light mapping."), null, null);
             }
         }
-
+        private static int GetObjectSize(object TestObject)
+        {
+            BinaryFormatter bf = new BinaryFormatter();
+            MemoryStream ms = new MemoryStream();
+            byte[] Array;
+            bf.Serialize(ms, TestObject);
+            Array = ms.ToArray();
+            return Array.Length;
+        }
         //Makes lightmaps for the input model instances
         private static void makeLightmaps(ModelInstance[] models, out LightMap[] maps, out Patch[] patches)
         {
@@ -154,11 +172,7 @@ namespace DALightmapper
                         //For each patch instance in the lightmap
                         foreach (Patch p in temp.patches)
                         {
-                            //If its an active patch add it to the list of patches, otherwise ignore
-                            if (p.isActive)
-                            {
-                                patchList.Add(p);
-                            }
+                            patchList.Add(p);
                         }
                         //Add the lightmap to the list of lightmaps
                         lightmapList.Add(temp);
@@ -171,57 +185,31 @@ namespace DALightmapper
         }
 
         //Makes a list of visible sets for each patch based on the input models
-        private static Patch[] makeVisibleSet(ModelInstance[] models, Patch patch, Patch[] patchList)
+        private static Patch[] makeVisibleSet(Patch patch, Patch[] patchList, Partitioner scene)
         {
             List<Patch> visiblePatches = new List<Patch>();
-            List<ModelInstance> intersectionTests = new List<ModelInstance>();
+            //List<ModelInstance> intersectionTests = new List<ModelInstance>();
 
             foreach (Patch p in patchList)
             {
                 //Ignore the patch we are making the set for
                 if(p != patch)
                 {
-                    bool visible = true;
-                    intersectionTests.Clear();
                     //Do simple facing test, < 0 means the direction to the patch is on the side of the patch we want
                     Vector3 vectorToPatch = p.position - patch.position;
                     if (Vector3.Dot(patch.normal, vectorToPatch) > 0)
                     {
-                        //Do complicated test, go through all the models and see if something is in the way
-
-                        //First do bounding box check
-                        foreach (ModelInstance model in models)
-                        {
-                            foreach (BoundingBox bounds in model.bounds)
-                            {
-                                if (bounds.containsLine(patch.position, p.position) || bounds.lineIntersects(patch.position, p.position))
-                                {
-                                    intersectionTests.Add(model);
-                                }
-                            }
-                        }
-                        //Then do triangle by triangle
-                        for (int a = 0;a < intersectionTests.Count && visible; a++) 
-                        {
-                            ModelInstance model = intersectionTests[a];
-                            for (int i = 0; i < model.getNumMeshes() && visible; i++)
-                            {
-                                for (int j = 0; j < model.baseModel.meshes[i].getNumTris() && visible; j++)
-                                {
-                                    if (model.getTri(i, j).lineIntersects(patch.position, p.position))
-                                    {
-                                        visible = false;
-                                    }
-                                }
-                            }
-                        }
-                        if (visible)
+                        if (scene.lineIsUnobstructed(patch.position, p.position))
                         {
                             visiblePatches.Add(p);
                         }
                     }
                 }
             }
+
+            //Patch[] visibles = new Patch[visiblePatches.Count];
+            //visiblePatches.CopyTo(visibles);
+            visiblePatches.TrimExcess();
             return visiblePatches.ToArray();
         }
 
@@ -248,64 +236,40 @@ namespace DALightmapper
         }
 
         //Propogates light from a to a's visible set
-        private static void propogate(Patch a, Patch[] visibleSet, double[] coefficients)
+        private static void propogate(Patch a, Patch[] patchList, Partitioner scene)
         {
+            Patch[] visibleSet = makeVisibleSet(a, patchList, scene);
+            double[] coefficients = calculateCoefficients(a, visibleSet);
             for (int i = 0; i < visibleSet.Length; i++)
             {
-                visibleSet[i].excidentLight += Vector3.Multiply(a.excidentLight, (float)coefficients[i] * 30);
+                visibleSet[i].incidentLight += Vector3.Multiply(a.excidentLight, (float)coefficients[i]);
             }
-            a.excidentLight = new Vector3();
+            a.incidentLight = new Vector3();
         }
 
         //Initializes patches to the colour received only from visible lights to start the light mapping process
-        private static void renderLights(Light[] lights, Patch[] patches, ModelInstance[] castingModels)
+        private static void renderLights(Light[] lights, Patch[] patches, Partitioner scene)
         {
 
             for (int i = 0; i < lights.Length; i++)
             {
-                Patch lightPatch = new Patch(new Vector2(), lights[i].position, new Vector3(), lights[i].intensity * lights[i].colour, new Vector3());
-                Patch currentLight = new Patch(lightPatch, new Vector3(), new Quaternion());
-                List<ModelInstance> intersectionTests = new List<ModelInstance>();
+                Patch lightPatch = new Patch(lights[i].position, new Vector3(), lights[i].intensity * lights[i].colour, new Vector3());
                 List<Patch> visiblePatches = new List<Patch>();
-
-                bool visible = true;
 
                 foreach (Patch p in patches)
                 {
-                    //First do bounding box check
-                    foreach (ModelInstance model in castingModels)
+                    Vector3 vectorToPatch = lightPatch.position - p.position;
+                    if (Vector3.Dot(p.normal, vectorToPatch) > 0)
                     {
-                            foreach (BoundingBox bounds in model.bounds)
-                            {
-                                if (bounds.containsLine(currentLight.position, p.position) || bounds.lineIntersects(currentLight.position, p.position))
-                                {
-                                    intersectionTests.Add(model);
-                                }
-                            }
-                    }
-                    //Then do triangle by triangle
-                    for (int a = 0; a < intersectionTests.Count && visible; a++)
-                    {
-                        ModelInstance model = intersectionTests[a];
-                        for (int d = 0; d < model.getNumMeshes() && visible; d++)
+                        if (scene.lineIsUnobstructed(lightPatch.position, p.position))
                         {
-                            for (int j = 0; j < model.baseModel.meshes[d].getNumTris() && visible; j++)
-                            {
-                                if (model.getTri(d, j).lineIntersects(currentLight.position, p.position))
-                                {
-                                    visible = false;
-                                }
-                            }
+                            visiblePatches.Add(p);
                         }
-                    }
-                    if (visible)
-                    {
-                        visiblePatches.Add(p);
                     }
                 }
 
                 Patch[] visibleArray = visiblePatches.ToArray();
-                propogate(currentLight,visibleArray,calculateLightCoefficients(lights[i],visibleArray));
+                propogate(lightPatch,visibleArray,scene);
             }        
         }
 

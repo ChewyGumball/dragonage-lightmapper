@@ -54,9 +54,12 @@
             this.trb_Verbosity = new System.Windows.Forms.TrackBar();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.nmup_Cores = new System.Windows.Forms.NumericUpDown();
+            this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_minEnergy)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numBounces)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).BeginInit();
             this.SuspendLayout();
             // 
             // lb_filePaths
@@ -193,7 +196,7 @@
             // 
             this.rb_energyInSystem.AutoSize = true;
             this.rb_energyInSystem.Checked = true;
-            this.rb_energyInSystem.Location = new System.Drawing.Point(592, 222);
+            this.rb_energyInSystem.Location = new System.Drawing.Point(606, 222);
             this.rb_energyInSystem.Name = "rb_energyInSystem";
             this.rb_energyInSystem.Size = new System.Drawing.Size(148, 17);
             this.rb_energyInSystem.TabIndex = 7;
@@ -204,7 +207,7 @@
             // rb_numBounces
             // 
             this.rb_numBounces.AutoSize = true;
-            this.rb_numBounces.Location = new System.Drawing.Point(592, 198);
+            this.rb_numBounces.Location = new System.Drawing.Point(606, 198);
             this.rb_numBounces.Name = "rb_numBounces";
             this.rb_numBounces.Size = new System.Drawing.Size(121, 17);
             this.rb_numBounces.TabIndex = 6;
@@ -215,7 +218,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(576, 182);
+            this.label6.Location = new System.Drawing.Point(590, 182);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(121, 13);
             this.label6.TabIndex = 5;
@@ -224,7 +227,7 @@
             // nmup_minEnergy
             // 
             this.nmup_minEnergy.DecimalPlaces = 3;
-            this.nmup_minEnergy.Location = new System.Drawing.Point(746, 222);
+            this.nmup_minEnergy.Location = new System.Drawing.Point(760, 222);
             this.nmup_minEnergy.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -247,7 +250,7 @@
             // 
             // nmup_numBounces
             // 
-            this.nmup_numBounces.Location = new System.Drawing.Point(746, 198);
+            this.nmup_numBounces.Location = new System.Drawing.Point(760, 198);
             this.nmup_numBounces.Maximum = new decimal(new int[] {
             9999,
             0,
@@ -267,7 +270,7 @@
             // cb_useTrueAttenuation
             // 
             this.cb_useTrueAttenuation.AutoSize = true;
-            this.cb_useTrueAttenuation.Location = new System.Drawing.Point(579, 159);
+            this.cb_useTrueAttenuation.Location = new System.Drawing.Point(593, 159);
             this.cb_useTrueAttenuation.Name = "cb_useTrueAttenuation";
             this.cb_useTrueAttenuation.Size = new System.Drawing.Size(122, 17);
             this.cb_useTrueAttenuation.TabIndex = 0;
@@ -278,7 +281,7 @@
             // lbl_verbosity
             // 
             this.lbl_verbosity.AutoSize = true;
-            this.lbl_verbosity.Location = new System.Drawing.Point(452, 165);
+            this.lbl_verbosity.Location = new System.Drawing.Point(449, 187);
             this.lbl_verbosity.Name = "lbl_verbosity";
             this.lbl_verbosity.Size = new System.Drawing.Size(0, 13);
             this.lbl_verbosity.TabIndex = 3;
@@ -288,7 +291,7 @@
             this.cb_clearTempDir.AutoSize = true;
             this.cb_clearTempDir.Checked = true;
             this.cb_clearTempDir.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.cb_clearTempDir.Location = new System.Drawing.Point(579, 136);
+            this.cb_clearTempDir.Location = new System.Drawing.Point(593, 136);
             this.cb_clearTempDir.Name = "cb_clearTempDir";
             this.cb_clearTempDir.Size = new System.Drawing.Size(222, 17);
             this.cb_clearTempDir.TabIndex = 2;
@@ -299,7 +302,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(425, 115);
+            this.label4.Location = new System.Drawing.Point(422, 137);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(99, 13);
             this.label4.TabIndex = 1;
@@ -308,7 +311,7 @@
             // trb_Verbosity
             // 
             this.trb_Verbosity.LargeChange = 2;
-            this.trb_Verbosity.Location = new System.Drawing.Point(425, 131);
+            this.trb_Verbosity.Location = new System.Drawing.Point(422, 153);
             this.trb_Verbosity.Maximum = 4;
             this.trb_Verbosity.Name = "trb_Verbosity";
             this.trb_Verbosity.Size = new System.Drawing.Size(99, 45);
@@ -321,11 +324,30 @@
             this.openFileDialog1.Filter = "Encapsulated Resource Files|*.erf";
             this.openFileDialog1.Multiselect = true;
             // 
+            // nmup_Cores
+            // 
+            this.nmup_Cores.Location = new System.Drawing.Point(513, 222);
+            this.nmup_Cores.Name = "nmup_Cores";
+            this.nmup_Cores.Size = new System.Drawing.Size(38, 20);
+            this.nmup_Cores.TabIndex = 14;
+            this.nmup_Cores.ValueChanged += new System.EventHandler(this.nmup_Cores_ValueChanged);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(422, 224);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(84, 13);
+            this.label7.TabIndex = 15;
+            this.label7.Text = "Maximum Cores:";
+            // 
             // SettingsWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(851, 273);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.nmup_Cores);
             this.Controls.Add(this.rb_energyInSystem);
             this.Controls.Add(this.cb_clearTempDir);
             this.Controls.Add(this.rb_numBounces);
@@ -356,6 +378,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.nmup_minEnergy)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numBounces)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -389,5 +412,7 @@
         private System.Windows.Forms.TextBox tb_tempDirectory;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.NumericUpDown nmup_Cores;
+        private System.Windows.Forms.Label label7;
     }
 }
