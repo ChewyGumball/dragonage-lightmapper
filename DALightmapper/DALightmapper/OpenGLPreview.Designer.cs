@@ -44,6 +44,7 @@
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button2 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.btn_showAll = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -127,7 +128,7 @@
             // 
             // btn_prev
             // 
-            this.btn_prev.Location = new System.Drawing.Point(190, 14);
+            this.btn_prev.Location = new System.Drawing.Point(236, 14);
             this.btn_prev.Name = "btn_prev";
             this.btn_prev.Size = new System.Drawing.Size(26, 23);
             this.btn_prev.TabIndex = 9;
@@ -137,7 +138,7 @@
             // 
             // btn_next
             // 
-            this.btn_next.Location = new System.Drawing.Point(222, 14);
+            this.btn_next.Location = new System.Drawing.Point(268, 14);
             this.btn_next.Name = "btn_next";
             this.btn_next.Size = new System.Drawing.Size(26, 23);
             this.btn_next.TabIndex = 10;
@@ -165,14 +166,15 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.btn_showAll);
             this.groupBox1.Controls.Add(this.btn_showLightmap);
             this.groupBox1.Controls.Add(this.btn_showUV);
             this.groupBox1.Controls.Add(this.btn_prev);
             this.groupBox1.Controls.Add(this.btn_next);
             this.groupBox1.Controls.Add(this.btn_show3D);
-            this.groupBox1.Location = new System.Drawing.Point(261, 521);
+            this.groupBox1.Location = new System.Drawing.Point(212, 521);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(254, 43);
+            this.groupBox1.Size = new System.Drawing.Size(303, 43);
             this.groupBox1.TabIndex = 13;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Model";
@@ -205,6 +207,16 @@
             this.button1.TabIndex = 0;
             this.button1.Text = "Wireframe";
             this.button1.UseVisualStyleBackColor = true;
+            // 
+            // btn_showAll
+            // 
+            this.btn_showAll.Location = new System.Drawing.Point(191, 14);
+            this.btn_showAll.Name = "btn_showAll";
+            this.btn_showAll.Size = new System.Drawing.Size(39, 23);
+            this.btn_showAll.TabIndex = 13;
+            this.btn_showAll.Text = "All";
+            this.btn_showAll.UseVisualStyleBackColor = true;
+            this.btn_showAll.Click += new System.EventHandler(this.btn_showAll_Click);
             // 
             // OpenGLPreview
             // 
@@ -249,5 +261,6 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btn_showAll;
     }
 }

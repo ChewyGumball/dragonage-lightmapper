@@ -19,7 +19,7 @@ namespace DALightmapper
                 List<Triangle> triangles = new List<Triangle>();
                 for (int i = 0; i < baseModel.meshes.Length; i++)
                 {
-                    for (int j = 0; j < baseModel.meshes[i].getNumTris(); j++)
+                    for (int j = 0; j < baseModel.meshes[i].tris.Length; j++)
                     {
                         triangles.Add(getTri(i, j));
                     }
@@ -48,9 +48,9 @@ namespace DALightmapper
             return baseModel.meshes.Length;
         }
 
-        public Triangle getTri(int meshIndex, int triIndex)
+        private Triangle getTri(int meshIndex, int triIndex)
         {
-            Triangle oldTri = baseModel.meshes[meshIndex][triIndex];
+            Triangle oldTri = baseModel.meshes[meshIndex].tris[triIndex];
             return new Triangle((Vector3.Transform(oldTri.x, rotation) + position),
                                 (Vector3.Transform(oldTri.y, rotation) + position),
                                 (Vector3.Transform(oldTri.z, rotation) + position),

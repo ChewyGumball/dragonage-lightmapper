@@ -9,6 +9,7 @@ namespace DALightmapper
         private Octree[] children;
         private BoundingBox bounds;
         private List<Triangle> tris;
+        private List<Photon> points;
 
         private static Vector3[] offsets =   {
                                                 new Vector3(-0.5f,-0.5f,-0.5f),
@@ -26,12 +27,21 @@ namespace DALightmapper
             build(triangles, 5, new BoundingBox(triangles));
         }
 
+        public Octree(List<Photon> p)
+        {
+            build(p, 5, new BoundingBox(p));
+        }
 
         public Octree(List<Triangle> triangles, int maxTriangles, BoundingBox box)
         {
             build(triangles, maxTriangles, box);
         }
 
+        public Octree(List<Photon> p, int maxPoints, BoundingBox box)
+        {
+            build(p, maxPoints, box);
+        }
+        
         public void build(List<Triangle> triangles, int maxTriangles, BoundingBox box)
         {
             bounds = box;
@@ -62,6 +72,40 @@ namespace DALightmapper
                         }
                     }
                     children[i] = new Octree(childrenTriangles, maxTriangles, newBox);
+                }
+            }
+        }
+
+        public void build(List<Photon> p, int maxPoints, BoundingBox box)
+        {
+            bounds = box;
+            if (p.Count <= maxPoints)
+            {
+                points = p;
+                children = new Octree[0];
+            }
+            else
+            {
+                points = new List<Photon>();
+                children = new Octree[8];
+                BoundingBox newBox;
+                List<Photon> childrenPoints;
+                Vector3 lengths = (bounds.max - bounds.min) / 2;
+                Vector3 halfLengths = lengths / 2;
+                for (int i = 0; i < 8; i++)
+                {
+                    childrenPoints = new List<Photon>();
+                    Vector3 offset = Vector3.Multiply(lengths, offsets[i]);
+                    newBox = new BoundingBox(bounds.center + offset, halfLengths.X, halfLengths.Y, halfLengths.Z);
+                    foreach (Photon point in p)
+                    {
+                        if (newBox.containsPoint(point.position))
+                        {
+                            childrenPoints.Add(point);
+                            //triangles.Remove(t);
+                        }
+                    }
+                    children[i] = new Octree(childrenPoints, maxPoints, newBox);
                 }
             }
         }

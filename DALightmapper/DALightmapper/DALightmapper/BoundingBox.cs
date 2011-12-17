@@ -49,6 +49,31 @@ namespace DALightmapper
             center = (max + min) / 2;
         }
 
+        public BoundingBox(List<Photon> points)
+        {
+            float minX = points[0].position.X;
+            float minY = points[0].position.Y;
+            float minZ = points[0].position.Z;
+            float maxX = points[0].position.X;
+            float maxY = points[0].position.Y;
+            float maxZ = points[0].position.Z;
+
+            foreach (Photon v in points)
+            {
+                minX = Math.Min(v.position.X, minX);
+                minY = Math.Min(v.position.Y, minY);
+                minZ = Math.Min(v.position.Z, minZ);
+
+                maxX = Math.Max(v.position.X, maxX);
+                maxY = Math.Max(v.position.Y, maxY);
+                maxZ = Math.Max(v.position.Z, maxZ);
+            }
+
+            max = new Vector3(maxX, maxY, maxZ);
+            min = new Vector3(minX, minY, minZ);
+            center = (max + min) / 2;
+        }
+
         //Bounding box with offset and rotation from another bounding box
         public BoundingBox(BoundingBox bb, Vector3 offset, Quaternion rotation)
         {

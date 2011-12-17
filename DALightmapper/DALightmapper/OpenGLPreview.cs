@@ -23,11 +23,13 @@ namespace DALightmapper
     public partial class OpenGLPreview : Form
     {
         int currentMeshIndex;
+        bool showAll = true;
         String file;
         String drawString;
         Mesh[] meshes;
         Targa texture;
         Level level;
+        Patch[] patches;
         Showing currentlyShowing = Showing.Nothing;
 
         int textureIndex;
@@ -95,7 +97,7 @@ namespace DALightmapper
             int width = glControl1.Width;
             int height = glControl1.Height;
 
-            Mesh tris = meshes[currentMeshIndex];
+            Triangle[] tris = meshes[currentMeshIndex].tris;
 
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -110,7 +112,7 @@ namespace DALightmapper
 
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.getNumTris(); i++)
+            for (int i = 0; i < tris.Length; i++)
             {
                 GL.Vertex2(tris[i].u.X * width, tris[i].u.Y * height);
                 GL.Vertex2(tris[i].v.X * width, tris[i].v.Y * height);
@@ -151,7 +153,7 @@ namespace DALightmapper
             int width = glControl1.Width;
             int height = glControl1.Height;
 
-            Mesh tris = meshes[currentMeshIndex];
+            Triangle[] tris = meshes[currentMeshIndex].tris;
 
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
@@ -168,7 +170,7 @@ namespace DALightmapper
             GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.getNumTris(); i++)
+            for (int i = 0; i < tris.Length; i++)
             {
                 if (tris[i].isLightmapped)
                 {
@@ -304,37 +306,59 @@ namespace DALightmapper
         private void redrawLevel()
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+            GL.PolygonMode(MaterialFace.Front, PolygonMode.Line);
+            GL.PolygonMode(MaterialFace.Back, PolygonMode.Point);
             GL.Enable(EnableCap.DepthTest);
+            GL.Color3(Color.White);
             GL.Begin(BeginMode.Triangles);
             //render geometry
             foreach (ModelInstance m in level.lightmapModels)
             {
                 foreach (Triangle t in m.tris)
                 {
+                    //double cosine = Math.Abs(Vector3.Dot(colour, t.normal));
+                    //GL.Color3(cosine, cosine, cosine);
                     GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
                     GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
                     GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
                 }
             }
             GL.End();
+
+            GL.Color3(Color.Blue);
+            GL.PointSize(5);
+            GL.Begin(BeginMode.Points);
+            foreach (Patch p in patches)
+            {
+                GL.Vertex3(p.position);
+            }
+            GL.End();
             GL.Disable(EnableCap.DepthTest);
         }
         private void redraw3D()
         {
-            Mesh tris = meshes[currentMeshIndex];
+            List<Triangle> triangles = new List<Triangle>();
+            if (!showAll)
+                triangles.AddRange(meshes[currentMeshIndex].tris);
+            else
+            {
+                foreach (Mesh m in meshes)
+                {
+                    triangles.AddRange(m.tris);
+                }
+            }
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             GL.Enable(EnableCap.DepthTest);
             //GL.Enable(EnableCap.Texture2D);
             GL.Begin(BeginMode.Triangles);
-            for (int i = 0; i < tris.getNumTris(); i++)
+            foreach(Triangle tri in triangles)
             {
-                double cosine = Math.Abs(Vector3.Dot(colour, tris[i].normal));
+                double cosine = Math.Abs(Vector3.Dot(colour, tri.normal));
                 GL.Color3(cosine, cosine, cosine);
-                GL.Vertex3(tris[i].x.X, tris[i].x.Y, tris[i].x.Z);
-                GL.Vertex3(tris[i].y.X, tris[i].y.Y, tris[i].y.Z);
-                GL.Vertex3(tris[i].z.X, tris[i].z.Y, tris[i].z.Z);
+                GL.Vertex3(tri.x.X, tri.x.Y, tri.x.Z);
+                GL.Vertex3(tri.y.X, tri.y.Y, tri.y.Z);
+                GL.Vertex3(tri.z.X, tri.z.Y, tri.z.Z);
             }
             GL.End();
             GL.Disable(EnableCap.DepthTest);
@@ -421,10 +445,11 @@ namespace DALightmapper
         {
             if (mouseDown && (currentlyShowing == Showing.Model || currentlyShowing == Showing.Level))
             {
-                float side = 1000f;
+                float side = 500f;  //Vary this to change rotation speed, higher is slower
                 float diffX = (e.X - mouseOrigin.X);
                 float diffY = (e.Y - mouseOrigin.Y);
 
+                //Use cosine law on isosceles triangle, assume delta is the far side from the vertex we calculate the angle for
                 float angleX = (float)Math.Acos(((2 * side * side) - (diffX * diffX)) / (2 * side * side));
                 float angleY = (float)Math.Acos(((2 * side * side) - (diffY * diffY)) / (2 * side * side));
 
@@ -432,6 +457,7 @@ namespace DALightmapper
                     angleX *= -1;
                 if (diffY < 0)
                     angleY *= -1;
+
                 camera.rotateRight(angleX);
                 camera.rotateUp(angleY);
                 mouseOrigin = e.Location;
@@ -532,6 +558,24 @@ namespace DALightmapper
                 level = new Level(filePath);
                 currentlyShowing = Showing.Level;
                 level.readObjects();
+                List<Patch> patchList = new List<Patch>();
+                foreach (ModelInstance m in level.lightmapModels)
+                {
+                    for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                    {
+                        if (m.baseModel.meshes[i].isLightmapped)
+                        {
+                            //Make the lightmap
+                            LightMap temp = new LightMap(m, i);
+                            //For each patch instance in the lightmap
+                            foreach (Patch p in temp.patches)
+                            {
+                                patchList.Add(p);
+                            }
+                        }
+                    }
+                }
+                patches = patchList.ToArray();
             }
             //If its not the right type of file then print an error
             else
@@ -553,6 +597,11 @@ namespace DALightmapper
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             redrawText();
             glControl1.SwapBuffers();
+        }
+
+        private void btn_showAll_Click(object sender, EventArgs e)
+        {
+            showAll = !showAll;
         }
     }
 }

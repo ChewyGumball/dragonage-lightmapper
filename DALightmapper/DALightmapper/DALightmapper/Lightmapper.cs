@@ -16,6 +16,11 @@ using System.IO;
 
 namespace DALightmapper
 {
+    class Photon
+    {
+        public Vector3 position { get; set; }
+        public Vector3 colour { get; set; }
+    }
     class FinishedLightMappingEventArgs : EventArgs
     {
         String _message;
@@ -105,29 +110,7 @@ namespace DALightmapper
                     Settings.stream.AppendFormatLine("Done making visible set for {0} patches.", Verbosity.Medium, i);
             }
             // */
-            Settings.stream.AppendLine("Done making visible sets.");
-            //Initialize the loop counter so message can say how many bounces were rendered
-            int currentBounce = 0;
-
-            //Start the lightmapping process off by just rendering light sources
-            renderLights(level.lights,patches,scene);
-            Settings.stream.AppendLine("Done rendering lights.");
-            //Do some lightmapping
-            for(abort = false; currentBounce < Settings.numBounces; currentBounce ++)
-            {
-                //Find patch with highest exident light
-                int highestIndex = 0;
-
-                for (int i = 1; i < patches.Length; i++)
-                {
-                    if (patches[i].excidentLight.Length > patches[highestIndex].excidentLight.Length)
-                    {
-                        highestIndex = i;
-                    }
-                }
-                //Propogate it's light
-                propogate(patches[highestIndex], patches,scene);
-            }
+            
             
             
             //If the loop exited early fire the event saying so

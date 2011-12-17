@@ -10,17 +10,12 @@ namespace DALightmapper
     class Mesh
     {
         String _name;
-        Triangle[] _tris;
+        public Triangle[] tris { get; private set; }
         public Texel[,] texels { get; private set; }
         public BoundingBox bounds { get; private set; }
         public Boolean isLightmapped { get; private set; }
         public Boolean castsShadows { get; private set; }
         
-        public Triangle this[int i]
-        {
-            get{ return _tris[i];}
-        }
-
         public String getName()
         {
             return _name;
@@ -32,7 +27,7 @@ namespace DALightmapper
             castsShadows = shadows;
 
             _name = name;
-            _tris = triangles;
+            tris = triangles;
 
             //make the bounding box
             float minX = triangles[0].x.X;
@@ -72,7 +67,7 @@ namespace DALightmapper
                     Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)(j)) / height);
                     texels[i, j] = new Texel();
                     //See if this uv is on any triangle in the mesh
-                    foreach (Triangle t in _tris)
+                    foreach (Triangle t in tris)
                     { 
                         if (!t.isDegenerate() && t.isOnUVPixel(topLeft,bottomRight))
                         {
@@ -82,11 +77,6 @@ namespace DALightmapper
                     }
                 }
             }
-        }
-
-        public int getNumTris()
-        {
-            return _tris.Length;
         }
     }
 }
