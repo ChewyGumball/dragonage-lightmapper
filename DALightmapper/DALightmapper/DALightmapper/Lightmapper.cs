@@ -116,7 +116,7 @@ namespace DALightmapper
             //If the loop exited early fire the event saying so
             if (abort)
             {
-                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping after " + currentBounce + " bounces."), null, null);
+                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping early."), null, null);
             }
             //Otherwise fire the event saying lightmapping was finished completely
             else
@@ -167,105 +167,7 @@ namespace DALightmapper
             patches = patchList.ToArray();
         }
 
-        //Makes a list of visible sets for each patch based on the input models
-        private static Patch[] makeVisibleSet(Patch patch, Patch[] patchList, Partitioner scene)
-        {
-            List<Patch> visiblePatches = new List<Patch>();
-            //List<ModelInstance> intersectionTests = new List<ModelInstance>();
-
-            foreach (Patch p in patchList)
-            {
-                //Ignore the patch we are making the set for
-                if(p != patch)
-                {
-                    //Do simple facing test, < 0 means the direction to the patch is on the side of the patch we want
-                    Vector3 vectorToPatch = p.position - patch.position;
-                    if (Vector3.Dot(patch.normal, vectorToPatch) > 0)
-                    {
-                        if (scene.lineIsUnobstructed(patch.position, p.position))
-                        {
-                            visiblePatches.Add(p);
-                        }
-                    }
-                }
-            }
-
-            //Patch[] visibles = new Patch[visiblePatches.Count];
-            //visiblePatches.CopyTo(visibles);
-            visiblePatches.TrimExcess();
-            return visiblePatches.ToArray();
-        }
-
-        private static double[] calculateCoefficients(Patch patch, Patch[] visibleSet)
-        {
-            double[] coeffieients = new double[visibleSet.Length];
-            for (int i = 0; i < visibleSet.Length; i++)
-            {
-                Vector3 ray = visibleSet[i].position - patch.position;
-                //cosine law for emitted energy
-                double cosineStart = Math.Cos(Vector3.CalculateAngle(ray, patch.normal));
-
-                //falloff due to distance
-                double falloff = 1 / (Math.Pow(ray.Length, 2));
-
-                //cosine law for received energy
-                ray = patch.position - visibleSet[i].position;
-                double cosineEnd = Math.Cos(Vector3.CalculateAngle(ray, visibleSet[i].normal));
-                
-                coeffieients[i] = cosineStart * falloff * cosineEnd;
-            }
-
-            return coeffieients;
-        }
-
-        //Propogates light from a to a's visible set
-        private static void propogate(Patch a, Patch[] patchList, Partitioner scene)
-        {
-            Patch[] visibleSet = makeVisibleSet(a, patchList, scene);
-            double[] coefficients = calculateCoefficients(a, visibleSet);
-            for (int i = 0; i < visibleSet.Length; i++)
-            {
-                visibleSet[i].incidentLight += Vector3.Multiply(a.excidentLight, (float)coefficients[i]);
-            }
-            a.incidentLight = new Vector3();
-        }
-
-        //Initializes patches to the colour received only from visible lights to start the light mapping process
-        private static void renderLights(Light[] lights, Patch[] patches, Partitioner scene)
-        {
-
-            for (int i = 0; i < lights.Length; i++)
-            {
-                Patch lightPatch = new Patch(lights[i].position, new Vector3(), lights[i].intensity * lights[i].colour, new Vector3());
-                List<Patch> visiblePatches = new List<Patch>();
-
-                foreach (Patch p in patches)
-                {
-                    Vector3 vectorToPatch = lightPatch.position - p.position;
-                    if (Vector3.Dot(p.normal, vectorToPatch) > 0)
-                    {
-                        if (scene.lineIsUnobstructed(lightPatch.position, p.position))
-                        {
-                            visiblePatches.Add(p);
-                        }
-                    }
-                }
-
-                Patch[] visibleArray = visiblePatches.ToArray();
-                propogate(lightPatch,visibleArray,scene);
-            }        
-        }
-
-        private static double[] calculateLightCoefficients(Light light, Patch[] visibleArray)
-        {
-            double[] coefficients = new double[visibleArray.Length];
-            for (int i = 0; i < coefficients.Length; i++)
-            {
-                //THIS SHOULD TAKE INTO ACCOUNT PATCH NORMAL OR SOMETHING
-                coefficients[i] = light.influence(visibleArray[i]);
-            }
-            return coefficients;
-        }
+        
     
         private static void makeIntoTexture(LightMap l)
         {
