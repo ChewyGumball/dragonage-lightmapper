@@ -211,7 +211,8 @@ namespace DALightmapper
 
         public Boolean triangleIntersects(Triangle t)
         {
-            return false;
+            return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z) ||
+                    lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x));
         }
 
         public Boolean containsPoint(Vector3 p)

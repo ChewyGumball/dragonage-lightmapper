@@ -46,7 +46,7 @@
             this.rb_numBounces = new System.Windows.Forms.RadioButton();
             this.label6 = new System.Windows.Forms.Label();
             this.nmup_minEnergy = new System.Windows.Forms.NumericUpDown();
-            this.nmup_numBounces = new System.Windows.Forms.NumericUpDown();
+            this.nmup_numPhotons = new System.Windows.Forms.NumericUpDown();
             this.cb_useTrueAttenuation = new System.Windows.Forms.CheckBox();
             this.lbl_verbosity = new System.Windows.Forms.Label();
             this.cb_clearTempDir = new System.Windows.Forms.CheckBox();
@@ -57,7 +57,7 @@
             this.nmup_Cores = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_minEnergy)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nmup_numBounces)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).BeginInit();
             this.SuspendLayout();
@@ -209,9 +209,9 @@
             this.rb_numBounces.AutoSize = true;
             this.rb_numBounces.Location = new System.Drawing.Point(606, 198);
             this.rb_numBounces.Name = "rb_numBounces";
-            this.rb_numBounces.Size = new System.Drawing.Size(121, 17);
+            this.rb_numBounces.Size = new System.Drawing.Size(129, 17);
             this.rb_numBounces.TabIndex = 6;
-            this.rb_numBounces.Text = "Number of bounces:";
+            this.rb_numBounces.Text = "# of Photons per light:";
             this.rb_numBounces.UseVisualStyleBackColor = true;
             this.rb_numBounces.CheckedChanged += new System.EventHandler(this.rb_numBounces_CheckedChanged);
             // 
@@ -248,24 +248,24 @@
             0});
             this.nmup_minEnergy.ValueChanged += new System.EventHandler(this.nmup_minEnergy_ValueChanged);
             // 
-            // nmup_numBounces
+            // nmup_numPhotons
             // 
-            this.nmup_numBounces.Location = new System.Drawing.Point(760, 198);
-            this.nmup_numBounces.Maximum = new decimal(new int[] {
-            9999,
+            this.nmup_numPhotons.Location = new System.Drawing.Point(760, 198);
+            this.nmup_numPhotons.Maximum = new decimal(new int[] {
+            9999999,
             0,
             0,
             0});
-            this.nmup_numBounces.Name = "nmup_numBounces";
-            this.nmup_numBounces.ReadOnly = true;
-            this.nmup_numBounces.Size = new System.Drawing.Size(52, 20);
-            this.nmup_numBounces.TabIndex = 1;
-            this.nmup_numBounces.Value = new decimal(new int[] {
-            5,
+            this.nmup_numPhotons.Name = "nmup_numPhotons";
+            this.nmup_numPhotons.ReadOnly = true;
+            this.nmup_numPhotons.Size = new System.Drawing.Size(79, 20);
+            this.nmup_numPhotons.TabIndex = 1;
+            this.nmup_numPhotons.Value = new decimal(new int[] {
+            10000,
             0,
             0,
             0});
-            this.nmup_numBounces.ValueChanged += new System.EventHandler(this.nmup_numBounces_ValueChanged);
+            this.nmup_numPhotons.ValueChanged += new System.EventHandler(this.nmup_numBounces_ValueChanged);
             // 
             // cb_useTrueAttenuation
             // 
@@ -354,7 +354,7 @@
             this.Controls.Add(this.label6);
             this.Controls.Add(this.nmup_minEnergy);
             this.Controls.Add(this.lbl_verbosity);
-            this.Controls.Add(this.nmup_numBounces);
+            this.Controls.Add(this.nmup_numPhotons);
             this.Controls.Add(this.btn_tempFiles);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cb_useTrueAttenuation);
@@ -376,7 +376,7 @@
             this.Text = "SettingsWindow";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SettingsWindow_FormClosing);
             ((System.ComponentModel.ISupportInitialize)(this.nmup_minEnergy)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nmup_numBounces)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).EndInit();
             this.ResumeLayout(false);
@@ -400,7 +400,7 @@
         private System.Windows.Forms.TrackBar trb_Verbosity;
         private System.Windows.Forms.CheckBox cb_clearTempDir;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.NumericUpDown nmup_numBounces;
+        private System.Windows.Forms.NumericUpDown nmup_numPhotons;
         private System.Windows.Forms.CheckBox cb_useTrueAttenuation;
         private System.Windows.Forms.RadioButton rb_energyInSystem;
         private System.Windows.Forms.RadioButton rb_numBounces;

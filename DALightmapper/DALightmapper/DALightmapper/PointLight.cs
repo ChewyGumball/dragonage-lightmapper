@@ -1,11 +1,12 @@
 ﻿using OpenTK;
+using System;
 
 namespace DALightmapper
 {
     class PointLight : Light
     {
-        public PointLight(Vector3 pos, Vector3 col, float intense, LightType t)
-            : base(pos, col, intense, t)
+        public PointLight(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
+            : base(pos, col, intense, t, shoots)
         { }
         public override float influence(Patch patch)
         {
@@ -15,6 +16,14 @@ namespace DALightmapper
             Vector3 d = new Vector3(1, distance, (distance * distance));
             //Multiply the intensity by the attenuation
             return intensity / Vector3.Dot(d, attenuation);
+        }
+
+        public override Vector3 generateRandomDirection()
+        {
+            Vector3 temp = new Vector3((float)Ben.MathHelper.nextGaussian(), (float)Ben.MathHelper.nextGaussian(), (float)Ben.MathHelper.nextGaussian());
+            temp.Normalize();
+            return temp;
+
         }
     }
 }

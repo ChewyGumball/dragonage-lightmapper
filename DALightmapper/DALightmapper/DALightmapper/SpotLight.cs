@@ -5,35 +5,16 @@ namespace DALightmapper
 {
     class SpotLight : Light
     {
-        Vector3 _direction;
-        float _innerAngle;
-        float _outerAngle;
-        float _distance;
+        Vector3 direction { get; set; }
+        float innerAngle { get; set; }
+        float outerAngle { get; set; }
+        float distance { get; set; }
 
-        Vector3 direction
-        {
-            get { return _direction; }
-            set { _direction = value; }
-        }
-        float innerAngle
-        {
-            get { return _innerAngle; }
-            set { _innerAngle = value; }
-        }
-        float outerAngle
-        {
-            get { return _outerAngle; }
-            set { _outerAngle = value; }
-        }
-        float distance
-        {
-            get { return _distance; }
-            set { _distance = value; }
-        }
+        private static Vector3[] axes = { new Vector3(1,0,0), new Vector3(0,1,0), new Vector3(0,0,1) };
 
 
-        public SpotLight(Vector3 pos, Quaternion rot, Vector3 col, float intense, float inAngle, float outAngle, float dis, LightType t)
-            : base(pos, col, intense, t)
+        public SpotLight(Vector3 pos, Quaternion rot, Vector3 col, float intense, float inAngle, float outAngle, float dis, LightType t, Boolean shoots)
+            : base(pos, col, intense, t, shoots)
         {
             direction = rot.ToAxisAngle().Xyz;
             innerAngle = inAngle;
@@ -64,5 +45,32 @@ namespace DALightmapper
             //When between inner cone and outter cone, linear falloff*intensity*attenuation
             return (1 - (angle - innerAngle) / (outerAngle - innerAngle)) * intensity * Vector3.Dot(reach, attenuation);
         }
+
+        public override Vector3 generateRandomDirection()
+        {
+            //Find component closest to zero in direction
+            float diff = Math.Abs(direction.X);
+            Vector3 perpAxis = axes[0];
+            if (Math.Abs(direction.Y) < diff)
+            {
+                diff = Math.Abs(direction.Y);
+                perpAxis = axes[1];
+            }
+            if (Math.Abs(direction.Z) < diff)
+            {
+                diff = Math.Abs(direction.Z);
+                perpAxis = axes[2];
+            }
+
+            //Find a perpendicular vector
+            Vector3 perp = Vector3.Cross(direction, perpAxis);
+
+            float randomAngleA = (float)(outerAngle * Ben.MathHelper.nextRandom());
+            float randomAngleB = (float)(Math.PI * 2 * Ben.MathHelper.nextRandom());
+
+            Vector3 dir = Vector3.Transform(direction, Matrix4.CreateFromAxisAngle(perp, randomAngleA));
+
+            return Vector3.Transform(dir, Matrix4.CreateFromAxisAngle(perp, randomAngleB));
+        } 
     }
 }

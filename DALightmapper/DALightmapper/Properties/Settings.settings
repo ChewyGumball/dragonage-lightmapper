@@ -15,8 +15,8 @@
   &lt;string&gt;E:\Program Files (x86)\Steam\steamapps\common\dragon age origins\packages\core\data\modelhierarchies.erf&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
-    <Setting Name="numBounces" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">2000</Value>
+    <Setting Name="numPhotons" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">10000</Value>
     </Setting>
     <Setting Name="minEnergy" Type="System.Double" Scope="User">
       <Value Profile="(Default)">0.5</Value>

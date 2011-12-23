@@ -40,7 +40,7 @@ namespace DALightmapper
             tb_tempDirectory.Text = Settings.tempDirectory;
 
             nmup_minEnergy.Value = (decimal)Settings.minimumEnergy;
-            nmup_numBounces.Value = Settings.numBounces;
+            nmup_numPhotons.Value = Settings.numPhotonsPerLight;
             nmup_Cores.Maximum = Environment.ProcessorCount;
             nmup_Cores.Minimum = 1;
             nmup_Cores.Value = Settings.maxThreads;
@@ -54,7 +54,7 @@ namespace DALightmapper
 
         private void nmup_numBounces_ValueChanged(object sender, EventArgs e)
         {
-            Settings.numBounces = (int)nmup_numBounces.Value;
+            Settings.numPhotonsPerLight = (int)nmup_numPhotons.Value;
         }
 
         private void nmup_minEnergy_ValueChanged(object sender, EventArgs e)

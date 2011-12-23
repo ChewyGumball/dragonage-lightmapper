@@ -9,6 +9,7 @@ namespace DALightmapper
 {
     class Settings
     {
+        public static int tris = 0;
         //--Scene Variables--//
         public static int worldScale = 10;  //How much to scale up the world on import
         public static bool useTrueAttenuation = true;   //Whether to use d^-2 or a more linear fall off specified per light for lighting
@@ -24,7 +25,7 @@ namespace DALightmapper
         public static int maxThreads = 2;
 
         //--Light Mapping Variables--//
-        public static int numBounces = 2000;   //Number of bounces to calculate light for
+        public static int numPhotonsPerLight = 10000;   //Number of photons to shoot per light
         public static double minimumEnergy = 0.05; //The minimum energy required for lightmapping to continue
         public static Boolean useNumBounces = false;
         
@@ -62,7 +63,7 @@ namespace DALightmapper
                 erfFiles.Add(temp);
             }
 
-            numBounces = Properties.Settings.Default.numBounces;
+            numPhotonsPerLight = Properties.Settings.Default.numPhotons;
             verboseStatus = (Verbosity)Properties.Settings.Default.verbosity;
             minimumEnergy = Properties.Settings.Default.minEnergy;
             useTrueAttenuation = Properties.Settings.Default.trueAttenuation;
@@ -89,7 +90,7 @@ namespace DALightmapper
             Properties.Settings.Default.workingDirectory = workingDirectory;
             Properties.Settings.Default.tempDirectory = tempDirectory;
 
-            Properties.Settings.Default.numBounces = numBounces;
+            Properties.Settings.Default.numPhotons = numPhotonsPerLight;
             Properties.Settings.Default.verbosity = (int)verboseStatus;
             Properties.Settings.Default.minEnergy = minimumEnergy;
             Properties.Settings.Default.trueAttenuation = useTrueAttenuation;

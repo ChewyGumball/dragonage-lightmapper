@@ -20,6 +20,11 @@ namespace DALightmapper
     {
         public Vector3 position { get; set; }
         public Vector3 colour { get; set; }
+        public Photon(Vector3 p, Vector3 c)
+        {
+            position = p;
+            colour = c;
+        }
     }
     class FinishedLightMappingEventArgs : EventArgs
     {
@@ -50,9 +55,8 @@ namespace DALightmapper
         {
 
             Patch[] patches;
-            Patch[][] visibleSets;
-            double[][] coefficients;
             LightMap[] maps;
+            List<Photon> photons = new List<Photon>(); ;
 
             //The list of triangles which will be casting shadows
             //  This comes from the models which cast shadows, we don't care which models they come from
@@ -74,44 +78,45 @@ namespace DALightmapper
             //Make the lightmaps and patch instances
             makeLightmaps(receivingModels, out maps, out patches);
             Partitioner scene = new Octree(castingTriangles);
-            Settings.stream.AppendFormatLine("There are {0} patches in {1} lightmaps.", patches.Length, maps.Length);
-            //Make visible set for each patch
-            visibleSets = new Patch[patches.Length][];
-            coefficients = new double[patches.Length][];
-            
-            /*
+            Settings.stream.AppendFormatLine("There are {0} patches in {1} lightmaps with {2}/{3} tris in octree.", patches.Length, maps.Length,Settings.tris,castingTriangles.Count);
+
             ParallelOptions opts = new ParallelOptions();
             opts.MaxDegreeOfParallelism = Settings.maxThreads;
-            Parallel.For(0, patches.Length,opts, delegate(int i)
+
+            double reflectProbability = 0.5;
+
+            foreach (Light l in level.lights)
             {
-                visibleSets[i] = makeVisibleSet(patches[i], patches, scene);
-                if ((i % 100) == 0)
+                if (l.shootsPhotons)
                 {
-                    System.GC.Collect();
-                    Settings.stream.AppendFormatLine("Done making visible set for {0} patches.", i);
+                    for (int i = 0; i < Settings.numPhotonsPerLight; i++)
+                    //Parallel.For(0, Settings.numPhotonsPerLight, delegate(int i)
+                    {
+                        Vector3 direction = l.generateRandomDirection();
+                        //Settings.stream.AppendFormatLine("{0},{1},{2}", direction.X, direction.Y, direction.Z);
+                        Triangle t = scene.firstIntersection(l.position, l.position + (direction * 1000));
+                        if (t != null)
+                        {
+                            Settings.stream.AppendFormatLine("{0}", i);
+                            Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
+                            while (Ben.MathHelper.nextRandom() > reflectProbability)
+                            {
+                                direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(t.normal, (float)Math.PI));
+                                t = scene.firstIntersection(intersection, direction);
+                                if (t == null)
+                                    break;
+                                intersection = t.lineIntersectionPoint(intersection, intersection + (direction * 1000));
+                            }
+
+                            lock (photons)
+                            {
+                                photons.Add(new Photon(intersection, l.colour * (l.intensity / Settings.numPhotonsPerLight)));
+                            }
+                        }
+                    }//);
                 }
-
             }
-            );
-            //*/
-            /*
-            Task<Patch[]>[] calculations = new Task<Patch[]>[patches.Length];
-            for (int i = 0; i < patches.Length; i++)
-            {
-                Patch patch = patches[i];
-                calculations[i] = new Task<Patch[]>(() => makeVisibleSet(patch,patches,scene));
-                calculations[i].Start();
-            }
-
-            for (int i = 0; i < patches.Length; i++)
-            {
-                visibleSets[i] = calculations[i].Result;
-                if((i % 100) == 0)
-                    Settings.stream.AppendFormatLine("Done making visible set for {0} patches.", Verbosity.Medium, i);
-            }
-            // */
-            
-            
+                       
             
             //If the loop exited early fire the event saying so
             if (abort)

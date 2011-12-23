@@ -273,11 +273,11 @@ namespace DALightmapper
                     switch (type)
                     {
                         case LIGHT_AMBIENT:
-                            lights.Add(new AmbientLight(position, colour, intensity, lightEffect)); break;
+                            lights.Add(new AmbientLight(position, colour, intensity, lightEffect, false)); break;
                         case LIGHT_SPOT:
-                            lights.Add(new SpotLight(position, rotation, colour, intensity, inAngle, outAngle, distance, lightEffect)); break;
+                            lights.Add(new SpotLight(position, rotation, colour, intensity, inAngle, outAngle, distance, lightEffect, true)); break;
                         case LIGHT_POINT:
-                            lights.Add(new PointLight(position, colour, intensity, lightEffect)); break;
+                            lights.Add(new PointLight(position, colour, intensity, lightEffect, true)); break;
                     }
                 }
                 else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)

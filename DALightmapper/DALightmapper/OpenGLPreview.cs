@@ -129,7 +129,7 @@ namespace DALightmapper
 
             GL.Viewport(0, 0, Width, Height);
 
-            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1, 1, 1000);
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI/4), 1, 1, 1000);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
             GL.LoadMatrix(ref perspective);
@@ -227,7 +227,7 @@ namespace DALightmapper
             int width = glControl1.Width;
             int height = glControl1.Height;
 
-            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView(MathHelper.PiOver4, 1, 1, 1000);
+            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI/4), 1, 1, 1000);
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
             GL.LoadMatrix(ref perspective);

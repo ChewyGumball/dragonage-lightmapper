@@ -56,13 +56,13 @@ namespace DALightmapper.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2000")]
-        public int numBounces {
+        [global::System.Configuration.DefaultSettingValueAttribute("10000")]
+        public int numPhotons {
             get {
-                return ((int)(this["numBounces"]));
+                return ((int)(this["numPhotons"]));
             }
             set {
-                this["numBounces"] = value;
+                this["numPhotons"] = value;
             }
         }
         
