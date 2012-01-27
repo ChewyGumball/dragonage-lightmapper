@@ -136,17 +136,16 @@ namespace DALightmapper
 
         public Boolean lineIntersects(Vector3 start, Vector3 end)
         {
-            //   (x1,y1,y3) + t(x2,y2,z2) = (x,y,z)
+            //   (x1,y1,z1) + t(x2,y2,z2) = (x,y,z)
             //      x1 + tx2 = x
             //      t = (x-x1)/x2
             // if t <= 1 or t >= 0 
             //      if the point is on the bounding box return true
 
-            Vector3 transformedStart = start - center;
             Vector3 magnitude = end - start;
-            Vector3 diffMin = min - transformedStart;
-            Vector3 diffMax = max - transformedStart;
-            float t, u, x, y, z;
+            Vector3 diffMin = min - start;
+            Vector3 diffMax = max - start;
+            float t, u, x, y, z, a, b, c;
 
             //x planes
             //If the magnitude is 0, parallel to the plane, considering this not an intersection
@@ -155,17 +154,28 @@ namespace DALightmapper
             {
                 //t is for the min plane, u is for the max plane
                 t = diffMin.X / magnitude.X;
-                u = diffMax.X / magnitude.X;
 
                 //This part is the same for both planes, 
                 //  check if the intersection point is between the end points of the line
-                if ((t <= 1 && t >= 0) || (u <= 1 && u >= 0))
+                if (t <= 1 && t >= 0)
                 {
                     //Check the intersection point is on the bounding box
-                    y = transformedStart.Y + t * magnitude.Y;
-                    z = transformedStart.Z + t * magnitude.Z;
+                    y = start.Y + t * magnitude.Y;
+                    z = start.Z + t * magnitude.Z;
 
-                    if (y >= min.Y && y <= max.Y && z >= min.Z && z <= max.Z)
+                    if ((y >= min.Y && y <= max.Y && z >= min.Z && z <= max.Z))
+                    {
+                        return true;
+                    }
+                }
+
+                u = diffMax.X / magnitude.X;
+                if (u <= 1 && u >= 0)
+                {
+                    b = start.Y + u * magnitude.Y;
+                    c = start.Z + u * magnitude.Z;
+
+                    if (b >= min.Y && b <= max.Y && c >= min.Z && c <= max.Z)
                     {
                         return true;
                     }
@@ -176,29 +186,53 @@ namespace DALightmapper
             if (magnitude.Y != 0)
             {
                 t = diffMin.Y / magnitude.Y;
-                u = diffMax.Y / magnitude.Y;
-                if ((t <= 1 && t >= 0) || (u <= 1 && u >= 0))
+                if (t <= 1 && t >= 0)
                 {
-                    x = transformedStart.X + t * magnitude.X;
-                    z = transformedStart.Z + t * magnitude.Z;
+                    x = start.X + t * magnitude.X;
+                    z = start.Z + t * magnitude.Z;
 
                     if (x >= min.X && x <= max.X && z >= min.Z && z <= max.Z)
                     {
                         return true;
                     }
                 }
+
+                u = diffMax.Y / magnitude.Y;
+                if (u <= 1 && u >= 0)
+                {
+                    a = start.X + u * magnitude.X;
+                    c = start.Z + u * magnitude.Z;
+
+                    if (a >= min.X && a <= max.X && c >= min.Z && c <= max.Z)
+                    {
+                        return true;
+                    }
+                }
             }
+
             //z planes
             if (magnitude.Z != 0)
             {
                 t = diffMin.Z / magnitude.Z;
-                u = diffMax.Z / magnitude.Z;
-                if ((t <= 1 && t >= 0) || (u <= 1 && u >= 0))
+                if (t <= 1 && t >= 0)
                 {
-                    x = transformedStart.X + t * magnitude.X;
-                    y = transformedStart.Y + t * magnitude.Y;
+                    x = start.X + t * magnitude.X;
+                    y = start.Y + t * magnitude.Y;
 
-                    if (x >= min.X && x <= max.X && y >= min.Y && y <= max.Y)
+
+                    if (x >= min.X && x <= max.X && y >= min.Y && y <= max.Y) 
+                    {
+                        return true;
+                    }
+                }
+
+                u = diffMax.Z / magnitude.Z;
+                if (u <= 1 && u >= 0)
+                {
+                    a = start.X + u * magnitude.X;
+                    b = start.Y + u * magnitude.Y;
+
+                    if (a >= min.X && a <= max.X && b >= min.Y && b <= max.Y)
                     {
                         return true;
                     }
@@ -211,8 +245,21 @@ namespace DALightmapper
 
         public Boolean triangleIntersects(Triangle t)
         {
-            return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z) ||
-                    lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x));
+            Vector3 topA = max;
+            Vector3 topB = new Vector3(max.X,min.Y,max.Z);
+            Vector3 topC = new Vector3(min.X,min.Y,max.Z);
+            Vector3 topD = new Vector3(min.X,max.Y,max.Z);
+
+            Vector3 bottomA = new Vector3(max.X,max.Y,min.Z);
+            Vector3 bottomB = new Vector3(max.X,min.Y,min.Z);
+            Vector3 bottomC = min;
+            Vector3 bottomD = new Vector3(min.X,max.Y,min.Z);
+
+            return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z)) || // Triangle vertex is inside box
+                   (lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x))  || // Triangle edge intersects box
+                   (t.lineIntersects(topA,topB) || t.lineIntersects(topB,topC) || t.lineIntersects (topC,topD) || t.lineIntersects(topD,topA)) || // Top edges of box intersect triangle
+                   (t.lineIntersects(bottomA,bottomB) || t.lineIntersects(bottomB,bottomC) || t.lineIntersects (bottomC,bottomD) || t.lineIntersects(bottomD,bottomA)) || // Bottom edges of box intersect triangle
+                   (t.lineIntersects(topA,bottomA) || t.lineIntersects(topB,bottomB) || t.lineIntersects(topC, bottomC) || t.lineIntersects(topD,bottomD)); //Middle edges of box intersect triangle */
         }
 
         public Boolean containsPoint(Vector3 p)
@@ -229,6 +276,40 @@ namespace DALightmapper
         public Boolean containsTriangle(Triangle t)
         {
             return containsPoint(t.x) && containsPoint(t.y) && containsPoint(t.z);
+        }
+        
+        public Boolean sphereIntersect(Vector3 point, double distance)
+        {
+            BoundingBox b = new BoundingBox(point, (float)distance, (float)distance, (float)distance);
+            return boxIntersects(b);
+        }
+
+        public Boolean boxIntersects(BoundingBox b)
+        {
+            Vector3 topA = max;
+            Vector3 topB = new Vector3(max.X, min.Y, max.Z);
+            Vector3 topC = new Vector3(min.X, min.Y, max.Z);
+            Vector3 topD = new Vector3(min.X, max.Y, max.Z);
+
+            Vector3 bottomA = new Vector3(max.X, max.Y, min.Z);
+            Vector3 bottomB = new Vector3(max.X, min.Y, min.Z);
+            Vector3 bottomC = min;
+            Vector3 bottomD = new Vector3(min.X, max.Y, min.Z);
+
+            Vector3 otherTopA = b.max;
+            Vector3 otherTopB = new Vector3(b.max.X, b.min.Y, b.max.Z);
+            Vector3 otherTopC = new Vector3(b.min.X, b.min.Y, b.max.Z);
+            Vector3 otherTopD = new Vector3(b.min.X, b.max.Y, b.max.Z);
+
+            Vector3 otherBottomA = new Vector3(b.max.X, b.max.Y, b.min.Z);
+            Vector3 otherBottomB = new Vector3(b.max.X, b.min.Y, b.min.Z);
+            Vector3 otherBottomC = b.min;
+            Vector3 otherBottomD = new Vector3(b.min.X, b.max.Y, b.min.Z);
+
+            return b.containsPoint(topA) || b.containsPoint(topB) || b.containsPoint(topC) || b.containsPoint(topD) ||
+                    b.containsPoint(bottomA) || b.containsPoint(bottomB) || b.containsPoint(bottomC) || b.containsPoint(bottomD) ||
+                    containsPoint(otherTopA) || containsPoint(otherTopB) || b.containsPoint(otherTopC) || b.containsPoint(otherTopD) ||
+                    containsPoint(otherBottomA) || containsPoint(otherBottomB) || b.containsPoint(otherBottomC) || b.containsPoint(otherBottomD);
         }
 
         private Boolean lessThanOrEqual(Vector3 a, Vector3 b)

@@ -149,5 +149,17 @@ namespace DALightmapper.Properties {
                 this["maxThreads"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0.2")]
+        public double gatherRadius {
+            get {
+                return ((double)(this["gatherRadius"]));
+            }
+            set {
+                this["gatherRadius"] = value;
+            }
+        }
     }
 }

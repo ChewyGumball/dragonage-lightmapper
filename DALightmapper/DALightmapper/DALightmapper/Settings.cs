@@ -9,7 +9,6 @@ namespace DALightmapper
 {
     class Settings
     {
-        public static int tris = 0;
         //--Scene Variables--//
         public static int worldScale = 10;  //How much to scale up the world on import
         public static bool useTrueAttenuation = true;   //Whether to use d^-2 or a more linear fall off specified per light for lighting
@@ -26,6 +25,7 @@ namespace DALightmapper
 
         //--Light Mapping Variables--//
         public static int numPhotonsPerLight = 10000;   //Number of photons to shoot per light
+        public static double gatherRadius = 0.2;         //Radius of sphere to sample photons for a patch
         public static double minimumEnergy = 0.05; //The minimum energy required for lightmapping to continue
         public static Boolean useNumBounces = false;
         
@@ -64,6 +64,7 @@ namespace DALightmapper
             }
 
             numPhotonsPerLight = Properties.Settings.Default.numPhotons;
+            gatherRadius = Properties.Settings.Default.gatherRadius;
             verboseStatus = (Verbosity)Properties.Settings.Default.verbosity;
             minimumEnergy = Properties.Settings.Default.minEnergy;
             useTrueAttenuation = Properties.Settings.Default.trueAttenuation;
@@ -91,6 +92,7 @@ namespace DALightmapper
             Properties.Settings.Default.tempDirectory = tempDirectory;
 
             Properties.Settings.Default.numPhotons = numPhotonsPerLight;
+            Properties.Settings.Default.gatherRadius = gatherRadius;
             Properties.Settings.Default.verbosity = (int)verboseStatus;
             Properties.Settings.Default.minEnergy = minimumEnergy;
             Properties.Settings.Default.trueAttenuation = useTrueAttenuation;

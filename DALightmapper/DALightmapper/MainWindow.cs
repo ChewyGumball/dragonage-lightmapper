@@ -39,9 +39,9 @@ namespace DALightmapper
                 {
                     Directory.CreateDirectory(Settings.workingDirectory);
                 }
-                if (!Directory.Exists(Settings.tempDirectory))
+                if (!Directory.Exists(Settings.tempDirectory + "\\lightmaps"))
                 {
-                    Directory.CreateDirectory(Settings.tempDirectory);
+                    Directory.CreateDirectory(Settings.tempDirectory + "\\lightmaps");
                 }
             }
             catch (UnauthorizedAccessException)

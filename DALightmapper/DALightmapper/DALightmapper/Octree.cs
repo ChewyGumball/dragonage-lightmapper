@@ -6,10 +6,22 @@ namespace DALightmapper
 {
     class Octree : Partitioner
     {
-        private Octree[] children;
-        private BoundingBox bounds;
-        private List<Triangle> tris;
+        public Octree[] children;
+        public BoundingBox bounds;
+        public List<Triangle> tris;
+        public List<Triangle> unused;
         private List<Photon> points;
+
+        public int getUnused()
+        {
+            int childrenUnused = 0;
+            if (children.Length > 0)
+            {
+                foreach (Octree o in children)
+                    childrenUnused += o.getUnused();
+            }
+            return childrenUnused + unused.Count;
+        }
 
         private static Vector3[] offsets =   {
                                                 new Vector3(-0.5f,-0.5f,-0.5f),
@@ -24,7 +36,7 @@ namespace DALightmapper
 
         public Octree(List<Triangle> triangles)
         {
-            build(triangles, 20, new BoundingBox(triangles));
+            build(triangles, 100, new BoundingBox(triangles));
         }
 
         public Octree(List<Photon> p)
@@ -48,8 +60,7 @@ namespace DALightmapper
             if (triangles.Count <= maxTriangles)
             {
                 tris = triangles;
-                //Settings.stream.AppendFormatLine("There are {0} tris in this box.", triangles.Count);
-                Settings.tris++;
+                unused = new List<Triangle>();
                 children = new Octree[0];
             }
             else
@@ -58,6 +69,7 @@ namespace DALightmapper
                 children = new Octree[8];
                 BoundingBox newBox;
                 List<Triangle> childrenTriangles;
+                List<Triangle> used = new List<Triangle>();
                 Vector3 lengths = (bounds.max - bounds.min) /2;
                 Vector3 halfLengths = lengths / 2;
                 for (int i = 0; i < 8; i++)
@@ -70,10 +82,24 @@ namespace DALightmapper
                         if (newBox.triangleIntersects(t))
                         {
                             childrenTriangles.Add(t);
-                            //triangles.Remove(t);
+                            if (!used.Contains(t))
+                            {
+                                used.Add(t);
+                            }
                         }
                     }
                     children[i] = new Octree(childrenTriangles, maxTriangles, newBox);
+                }
+                unused = new List<Triangle>();
+                foreach (Triangle t in triangles)
+                {
+                    if (!used.Contains(t))
+                        unused.Add(t);
+                }
+                if (unused.Count > 0)
+                {
+                    //throw new Exception("SHIT");
+                    System.Console.WriteLine("There were {0} unused triangles.", unused.Count);
                 }
             }
         }
@@ -199,6 +225,35 @@ namespace DALightmapper
 
             //The line was not obstructed in any child so return true
             return nearest;
+        }
+
+        public List<Photon> getWithinDistanceSquared(Vector3 point, double distance)
+        {
+            List<Photon> photons = new List<Photon>();
+
+            if (bounds.sphereIntersect(point, distance))
+            {
+                if (points.Count > 0)
+                {
+                    foreach (Photon p in points)
+                    {
+                        Vector3 diff = p.position - point;
+                        if(diff.LengthSquared >= distance)
+                        {
+                            photons.Add(p);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Octree o in children)
+                    {
+                        photons.AddRange(o.getWithinDistanceSquared(point, distance));
+                    }
+                }
+            }
+
+            return photons;
         }
     }
 }

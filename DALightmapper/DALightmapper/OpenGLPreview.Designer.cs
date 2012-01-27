@@ -41,10 +41,11 @@
             this.lbl_meshNum = new System.Windows.Forms.Label();
             this.btn_showLightmap = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.button2 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             this.btn_showAll = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btn_Partition = new System.Windows.Forms.Button();
+            this.btn_Patches = new System.Windows.Forms.Button();
+            this.btn_Wireframe = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -179,35 +180,6 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Model";
             // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.button2);
-            this.groupBox2.Controls.Add(this.button1);
-            this.groupBox2.Location = new System.Drawing.Point(3, 521);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(168, 43);
-            this.groupBox2.TabIndex = 14;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Level";
-            // 
-            // button2
-            // 
-            this.button2.Location = new System.Drawing.Point(87, 14);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(75, 23);
-            this.button2.TabIndex = 1;
-            this.button2.Text = "Patches";
-            this.button2.UseVisualStyleBackColor = true;
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(6, 14);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "Wireframe";
-            this.button1.UseVisualStyleBackColor = true;
-            // 
             // btn_showAll
             // 
             this.btn_showAll.Location = new System.Drawing.Point(191, 14);
@@ -217,6 +189,48 @@
             this.btn_showAll.Text = "All";
             this.btn_showAll.UseVisualStyleBackColor = true;
             this.btn_showAll.Click += new System.EventHandler(this.btn_showAll_Click);
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.btn_Partition);
+            this.groupBox2.Controls.Add(this.btn_Patches);
+            this.groupBox2.Controls.Add(this.btn_Wireframe);
+            this.groupBox2.Location = new System.Drawing.Point(3, 521);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(203, 43);
+            this.groupBox2.TabIndex = 14;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Level";
+            // 
+            // btn_Partition
+            // 
+            this.btn_Partition.Location = new System.Drawing.Point(137, 14);
+            this.btn_Partition.Name = "btn_Partition";
+            this.btn_Partition.Size = new System.Drawing.Size(60, 23);
+            this.btn_Partition.TabIndex = 2;
+            this.btn_Partition.Text = "Partition";
+            this.btn_Partition.UseVisualStyleBackColor = true;
+            this.btn_Partition.Click += new System.EventHandler(this.btn_Partition_Click);
+            // 
+            // btn_Patches
+            // 
+            this.btn_Patches.Location = new System.Drawing.Point(76, 14);
+            this.btn_Patches.Name = "btn_Patches";
+            this.btn_Patches.Size = new System.Drawing.Size(54, 23);
+            this.btn_Patches.TabIndex = 1;
+            this.btn_Patches.Text = "Patches";
+            this.btn_Patches.UseVisualStyleBackColor = true;
+            this.btn_Patches.Click += new System.EventHandler(this.btn_Patches_Click);
+            // 
+            // btn_Wireframe
+            // 
+            this.btn_Wireframe.Location = new System.Drawing.Point(6, 14);
+            this.btn_Wireframe.Name = "btn_Wireframe";
+            this.btn_Wireframe.Size = new System.Drawing.Size(64, 23);
+            this.btn_Wireframe.TabIndex = 0;
+            this.btn_Wireframe.Text = "Wireframe";
+            this.btn_Wireframe.UseVisualStyleBackColor = true;
+            this.btn_Wireframe.Click += new System.EventHandler(this.btn_Wireframe_Click);
             // 
             // OpenGLPreview
             // 
@@ -259,8 +273,9 @@
         private System.Windows.Forms.Button btn_showLightmap;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btn_Patches;
+        private System.Windows.Forms.Button btn_Wireframe;
         private System.Windows.Forms.Button btn_showAll;
+        private System.Windows.Forms.Button btn_Partition;
     }
 }

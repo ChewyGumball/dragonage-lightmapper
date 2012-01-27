@@ -257,7 +257,6 @@
             0,
             0});
             this.nmup_numPhotons.Name = "nmup_numPhotons";
-            this.nmup_numPhotons.ReadOnly = true;
             this.nmup_numPhotons.Size = new System.Drawing.Size(79, 20);
             this.nmup_numPhotons.TabIndex = 1;
             this.nmup_numPhotons.Value = new decimal(new int[] {

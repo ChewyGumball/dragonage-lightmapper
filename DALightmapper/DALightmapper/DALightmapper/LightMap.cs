@@ -58,7 +58,7 @@ namespace DALightmapper
             {
                 for (int j = 0; j < height; j++)
                 {
-                    texture[i, j] = new Pixel(texels[i, j].excidentLight * 50);
+                    texture[i, j] = new Pixel((texels[i, j].excidentLight) * 255);
                 }
             }
             return texture;

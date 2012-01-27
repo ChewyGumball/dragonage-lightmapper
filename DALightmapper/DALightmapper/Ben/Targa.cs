@@ -18,7 +18,7 @@ namespace Ben
         { }
 
         public Pixel(Vector3 v)
-            : this((byte)v.X, (byte)v.Y, (byte)v.Z, 255)
+            : this((byte)v.X, (byte)v.Y, (byte)v.Z)
         { }
 
         public Pixel(Vector4 v)

@@ -24,6 +24,9 @@ namespace DALightmapper
     {
         int currentMeshIndex;
         bool showAll = true;
+        bool showPatches = false;
+        bool showOctree = false;
+        bool showWireframe = true;
         String file;
         String drawString;
         Mesh[] meshes;
@@ -31,6 +34,7 @@ namespace DALightmapper
         Level level;
         Patch[] patches;
         Showing currentlyShowing = Showing.Nothing;
+        Octree octree;
 
         int textureIndex;
         Bitmap bitmap;
@@ -188,8 +192,8 @@ namespace DALightmapper
             int textureIndex = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, textureIndex);
             GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (float)TextureEnvMode.Modulate);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Nearest);
 
             GL.ClearColor(Color.MidnightBlue);
             GL.Enable(EnableCap.Texture2D);
@@ -310,29 +314,105 @@ namespace DALightmapper
             GL.PolygonMode(MaterialFace.Back, PolygonMode.Point);
             GL.Enable(EnableCap.DepthTest);
             GL.Color3(Color.White);
-            GL.Begin(BeginMode.Triangles);
-            //render geometry
-            foreach (ModelInstance m in level.lightmapModels)
+            if (showWireframe)
             {
-                foreach (Triangle t in m.tris)
+                GL.Begin(BeginMode.Triangles);
+                //render geometry
+                foreach (ModelInstance m in level.lightmapModels)
                 {
-                    //double cosine = Math.Abs(Vector3.Dot(colour, t.normal));
-                    //GL.Color3(cosine, cosine, cosine);
-                    GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
-                    GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
-                    GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
+                    foreach (Triangle t in m.tris)
+                    {
+                        //double cosine = Math.Abs(Vector3.Dot(colour, t.normal));
+                        //GL.Color3(cosine, cosine, cosine);
+                        GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
+                        GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
+                        GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
+                    }
                 }
+                GL.End();
             }
-            GL.End();
-
-            GL.Color3(Color.Blue);
-            GL.PointSize(5);
-            GL.Begin(BeginMode.Points);
-            foreach (Patch p in patches)
+            if (showPatches)
             {
-                GL.Vertex3(p.position);
+                GL.Color3(Color.Blue);
+                GL.PointSize(5);
+                GL.Begin(BeginMode.Points);
+                foreach (Patch p in patches)
+                {
+                    GL.Vertex3(p.position);
+                }
+                GL.End();
             }
-            GL.End();
+            if (showOctree)
+            {
+                Queue<Octree> octs = new Queue<Octree>();
+                octs.Enqueue(octree);
+                while (octs.Count > 0)
+                {
+                    Octree current = octs.Dequeue();
+                    foreach (Octree o in current.children)
+                        octs.Enqueue(o);
+
+                    //Draw bounding box
+                    BoundingBox b = current.bounds;
+                    GL.Color3(Color.GreenYellow);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+                    GL.Begin(BeginMode.Quads);
+                    GL.Vertex3(b.max.X, b.max.Y, b.max.Z); 
+                    GL.Vertex3(b.max.X, b.max.Y, b.min.Z); 
+                    GL.Vertex3(b.max.X, b.min.Y, b.min.Z);
+                    GL.Vertex3(b.max.X, b.min.Y, b.max.Z); 
+                    
+                    GL.Vertex3(b.max.X, b.max.Y, b.max.Z); 
+                    GL.Vertex3(b.max.X, b.max.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.max.Y, b.min.Z); 
+                    GL.Vertex3(b.min.X, b.max.Y, b.max.Z); 
+                    
+                    GL.Vertex3(b.max.X, b.min.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.min.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.min.Y, b.max.Z); 
+                    GL.Vertex3(b.max.X, b.min.Y, b.max.Z);
+
+                    GL.Vertex3(b.max.X, b.max.Y, b.max.Z); 
+                    GL.Vertex3(b.min.X, b.max.Y, b.max.Z); 
+                    GL.Vertex3(b.min.X, b.min.Y, b.max.Z);
+                    GL.Vertex3(b.max.X, b.min.Y, b.max.Z); 
+                    
+                    GL.Vertex3(b.min.X, b.max.Y, b.max.Z); 
+                    GL.Vertex3(b.min.X, b.max.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.min.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.min.Y, b.max.Z);
+
+                    GL.Vertex3(b.max.X, b.max.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.max.Y, b.min.Z);
+                    GL.Vertex3(b.min.X, b.min.Y, b.min.Z);
+                    GL.Vertex3(b.max.X, b.min.Y, b.min.Z); 
+                    GL.End();
+                    
+                    //GL.Disable(EnableCap.DepthTest);
+                    GL.Color3(Color.Blue);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
+                    GL.Begin(BeginMode.Triangles);
+                    foreach (Triangle t in current.unused)
+                    {
+                        GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
+                        GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
+                        GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
+                    }
+                    GL.End();
+                    GL.Color3(Color.White);
+                    GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+                    GL.Begin(BeginMode.Triangles);
+                    foreach (Triangle t in current.unused)
+                    {
+                        GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
+                        GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
+                        GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
+                    }
+                    GL.End();
+                    //GL.Enable(EnableCap.DepthTest);
+                }
+               
+            }
             GL.Disable(EnableCap.DepthTest);
         }
         private void redraw3D()
@@ -559,6 +639,7 @@ namespace DALightmapper
                 currentlyShowing = Showing.Level;
                 level.readObjects();
                 List<Patch> patchList = new List<Patch>();
+                List<Triangle> tris = new List<Triangle>();
                 foreach (ModelInstance m in level.lightmapModels)
                 {
                     for (int i = 0; i < m.baseModel.meshes.Length; i++)
@@ -574,7 +655,10 @@ namespace DALightmapper
                             }
                         }
                     }
+                    if (m.baseModel.castsShadows)
+                        tris.AddRange(m.tris);
                 }
+                octree = new Octree(tris);
                 patches = patchList.ToArray();
             }
             //If its not the right type of file then print an error
@@ -602,6 +686,21 @@ namespace DALightmapper
         private void btn_showAll_Click(object sender, EventArgs e)
         {
             showAll = !showAll;
+        }
+
+        private void btn_Partition_Click(object sender, EventArgs e)
+        {
+            showOctree = !showOctree;
+        }
+
+        private void btn_Patches_Click(object sender, EventArgs e)
+        {
+            showPatches = !showPatches;
+        }
+
+        private void btn_Wireframe_Click(object sender, EventArgs e)
+        {
+            showWireframe = !showWireframe;
         }
     }
 }

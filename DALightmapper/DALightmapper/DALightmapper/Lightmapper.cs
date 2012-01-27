@@ -77,32 +77,32 @@ namespace DALightmapper
 
             //Make the lightmaps and patch instances
             makeLightmaps(receivingModels, out maps, out patches);
-            Partitioner scene = new Octree(castingTriangles);
-            Settings.stream.AppendFormatLine("There are {0} patches in {1} lightmaps with {2}/{3} tris in octree.", patches.Length, maps.Length,Settings.tris,castingTriangles.Count);
-
+            Octree scene = new Octree(castingTriangles);
+            Settings.stream.AppendFormatLine("There are {0} patches in {1} lightmaps with {2}/{3} tris in octree.", patches.Length, maps.Length,scene.getUnused(),castingTriangles.Count);
+            Settings.stream.AppendFormatLine("Starting Lightmapping on {0} cores with {1} photons per light.", Settings.maxThreads, Settings.numPhotonsPerLight);
             ParallelOptions opts = new ParallelOptions();
             opts.MaxDegreeOfParallelism = Settings.maxThreads;
 
-            double reflectProbability = 0.5;
+            double reflectProbability = 0.8;
 
             foreach (Light l in level.lights)
             {
                 if (l.shootsPhotons)
                 {
-                    for (int i = 0; i < Settings.numPhotonsPerLight; i++)
-                    //Parallel.For(0, Settings.numPhotonsPerLight, delegate(int i)
+                    //for (int i = 0; i < Settings.numPhotonsPerLight; i++)
+                    Parallel.For(0, Settings.numPhotonsPerLight, opts, delegate(int i)
                     {
                         Vector3 direction = l.generateRandomDirection();
                         //Settings.stream.AppendFormatLine("{0},{1},{2}", direction.X, direction.Y, direction.Z);
                         Triangle t = scene.firstIntersection(l.position, l.position + (direction * 1000));
                         if (t != null)
                         {
-                            Settings.stream.AppendFormatLine("{0}", i);
+                            //Settings.stream.AppendFormatLine("{0}", i);
                             Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
                             while (Ben.MathHelper.nextRandom() > reflectProbability)
                             {
                                 direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(t.normal, (float)Math.PI));
-                                t = scene.firstIntersection(intersection, direction);
+                                t = scene.firstIntersection(intersection, intersection + (direction * 1000));
                                 if (t == null)
                                     break;
                                 intersection = t.lineIntersectionPoint(intersection, intersection + (direction * 1000));
@@ -110,14 +110,37 @@ namespace DALightmapper
 
                             lock (photons)
                             {
-                                photons.Add(new Photon(intersection, l.colour * (l.intensity / Settings.numPhotonsPerLight)));
+                                photons.Add(new Photon(intersection, l.colour));
                             }
                         }
-                    }//);
+                    });
                 }
             }
-                       
-            
+            Settings.stream.AppendLine("Done.");
+
+            Settings.stream.AppendFormatLine("Making photon map with {0} photons.", photons.Count);
+            Partitioner photonMap = new Octree(photons);
+            Settings.stream.AppendLine("Done.");
+
+            Settings.stream.AppendFormatLine("Gathering photons for lightmaps.");
+            foreach (LightMap l in maps)
+            {
+                Parallel.For(0,l.patches.Count,opts,delegate(int i) 
+                {
+                    Patch p = l.patches[i];
+                    List<Photon> gather = photonMap.getWithinDistanceSquared(p.position, Settings.gatherRadius * Settings.gatherRadius);
+                    foreach (Photon photon in gather)
+                    {
+                        p.incidentLight += photon.colour;
+                    }
+                    if (gather.Count > 0)
+                    {
+                        p.incidentLight /= gather.Count;
+                        //Settings.stream.AppendFormatLine("There were {0} photons gathered. Excident light = {1}.", gather.Count, p.excidentLight);
+                    }
+                });
+            }
+            Settings.stream.AppendLine("Done.");
             //If the loop exited early fire the event saying so
             if (abort)
             {
