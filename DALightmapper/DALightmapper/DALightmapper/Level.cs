@@ -12,15 +12,8 @@ using Ben;
 namespace DALightmapper
 {
 
-    class Level
+    public class Level
     {
-        //Event to signal asynchronous reads have finished 
-        public event FinishedReadingEventHandler FinishedReading;
-
-        ModelInstance[] _lightmapModels = null;
-        BiowareModel[] _models = null;
-        Light[] _lights = null;
-
         ERF diskFile;
         GFF headerFile;
 
@@ -28,32 +21,25 @@ namespace DALightmapper
         {
             get { return diskFile.path; }
         }
-        public ModelInstance[] lightmapModels
-        {
-            get { return _lightmapModels; }
-        }
-        public BiowareModel[] models
-        {
-            get { return _models; }
-        }
-        public Light[] lights
-        {
-            get { return _lights; }
-        }
-
+        public ModelInstance[] lightmapModels { get; private set; }
+        public BiowareModel[] models { get; private set; }
+        public Light[] lights { get; private set; }
         #region Index Values
 
         //Struct index values (mostly list indecies)
         private static readonly int TOP_LEVEL_STRUCT_INDEX = 0;
         private static readonly int TERRAIN_CHUNK_LIST_INDEX = 3;
         private static readonly int ROOM_LIST_INDEX = 1;
-        private static readonly int ROOM_OBJECT_LIST_INDEX = 2;
         private static readonly int ENVIRONMENT_LIST_INDEX = 1;
+        private static readonly int ROOM_POSITION_INDEX = 0;
+        private static readonly int ROOM_ROTATION_INDEX = 1;
+        private static readonly int ROOM_OBJECT_LIST_INDEX = 2;
+        private static readonly int ROOM_ID_INDEX = 3;
 
         //Light index values (within struct)
         private static readonly int LIGHT_POSITION_INDEX = 0;
         private static readonly int LIGHT_ROTATION_INDEX = 1;
-        private static readonly int LIGHT_NAME_INDEX = 4;
+      //  private static readonly int LIGHT_NAME_INDEX = 4;
         private static readonly int LIGHT_COLOUR_INDEX = 5;
         private static readonly int LIGHT_TYPE_INDEX = 6;
         private static readonly int LIGHT_EFFECT_INDEX = 9;
@@ -79,8 +65,8 @@ namespace DALightmapper
         private static readonly int MODEL_LIGHTMAPVALUE_INDEX = 13;
 
         //Model static constant values
-        private static readonly int MODEL_LIGHTMAPPABLE = -1;
-        private static readonly int MODEL_NOTLIGHTMAPPABLE = 0;
+      //  private static readonly int MODEL_LIGHTMAPPABLE = -1;
+      //  private static readonly int MODEL_NOTLIGHTMAPPABLE = 0;
 
         //Property index values (within struct)
         private static readonly int PROPERTY_VALUE_INDEX = 1;
@@ -111,19 +97,13 @@ namespace DALightmapper
 
             if (headerIndex < 0)
             {
-                throw(new Exception("Could not find the header file in "+filePath+"! Please make sure it is a level file."));
+                throw new Exception("Could not find the header file in "+filePath+"! Please make sure it is a level file.");
             }
 
             //Initialize the header file
             headerFile = new GFF(filePath, diskFile.resourceOffsets[headerIndex]);
             //Set up the struct definitions (for sanity!)
             setStructDefinitions();
-        }
-
-        public void readObjectsAsync()
-        {
-            readObjects();
-            FinishedReading.BeginInvoke(new FinishedReadingEventArgs(true,"Finished Reading Level Data.",this),null,null);
         }
 
         public void readObjects()
@@ -162,8 +142,8 @@ namespace DALightmapper
             //If this is an outdoor level this is the list of models and lights
             if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN)
             {
-                modelList.AddRange(readPropModels(objectList));
-                lightList.AddRange(readLights(objectList));
+                modelList.AddRange(readPropModels(objectList, new Vector3(), new Quaternion(), 0));
+                lightList.AddRange(readLights(objectList, new Vector3(), new Quaternion(), 0));
             }
 
             //if its an indoor room we have to go farther into the data
@@ -173,7 +153,7 @@ namespace DALightmapper
                 file.BaseStream.Seek(headerFile.dataOffset + objectList[0], SeekOrigin.Begin);
 
                 //now get the reference to the room list and make it
-                file.BaseStream.Seek(areaStruct.fields[1].index, SeekOrigin.Current);
+                file.BaseStream.Seek(areaStruct.fields[ROOM_LIST_INDEX].index, SeekOrigin.Current);
                 reference = file.ReadInt32();
                 file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
                 GenericList roomList = new GenericList(file);
@@ -181,29 +161,44 @@ namespace DALightmapper
                 //for each room in the list
                 for (int i = 0; i < roomList.length; i++)
                 {
-                    //seek to the object list
-                    file.BaseStream.Seek(headerFile.dataOffset + roomList[i] + roomStruct.fields[ROOM_OBJECT_LIST_INDEX].index, SeekOrigin.Begin);
-                    reference = file.ReadInt32();
-                    file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
-                    //Make the list of objects in the room
-                    objectList = new GenericList(file);
-                    //Add the models and lights to the lists
-                    modelList.AddRange(readPropModels(objectList));
-                    lightList.AddRange(readLights(objectList));
+                    if (headerFile.structs[(int)roomList.type[i].id].type == GFFSTRUCTTYPE.EVN_ROOM)
+                    {
+                        //get the room position
+                        file.BaseStream.Seek(headerFile.dataOffset + roomList[i] + roomStruct.fields[ROOM_POSITION_INDEX].index, SeekOrigin.Begin);
+                        Vector3 position = new Vector3(file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+
+                        //get the room orientation
+                        file.BaseStream.Seek(headerFile.dataOffset + roomList[i] + roomStruct.fields[ROOM_ROTATION_INDEX].index, SeekOrigin.Begin);
+                        Quaternion orientation = new Quaternion(file.ReadSingle(), file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+
+                        //get the room id
+                        file.BaseStream.Seek(headerFile.dataOffset + roomList[i] + roomStruct.fields[ROOM_ID_INDEX].index, SeekOrigin.Begin);
+                        int id = file.ReadInt32();
+
+                        //seek to the object list
+                        file.BaseStream.Seek(headerFile.dataOffset + roomList[i] + roomStruct.fields[ROOM_OBJECT_LIST_INDEX].index, SeekOrigin.Begin);
+                        reference = file.ReadInt32();
+                        file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
+                        //Make the list of objects in the room
+                        objectList = new GenericList(file);
+                        //Add the models and lights to the lists
+                        modelList.AddRange(readPropModels(objectList, position, orientation, id));
+                        lightList.AddRange(readLights(objectList, position, orientation, id));
+                    }
                 }
             }
 
             //Make the models array
-            _models = modelList.ToArray();
+            models = modelList.ToArray();
             //Complete the models with model hierarchies
             createMeshHierarchies();
 
             //Make the lights array
-            _lights = lightList.ToArray();
+            lights = lightList.ToArray();
 
         }
 
-        private List<Light> readLights(GenericList objectList)
+        private List<Light> readLights(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
         {
             List<Light> lights = new List<Light>();
             BinaryReader file = headerFile.getReader();
@@ -232,10 +227,12 @@ namespace DALightmapper
                     //get the position
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_POSITION_INDEX].index,SeekOrigin.Begin);
                     position = new Vector3(file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+                    position += roomOffset;
 
                     //get the rotation
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_ROTATION_INDEX].index, SeekOrigin.Begin);
                     rotation = new Quaternion(file.ReadSingle(), file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+                    rotation *= roomOrientation;
 
                     //get the colour
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_COLOUR_INDEX].index, SeekOrigin.Begin);
@@ -291,7 +288,7 @@ namespace DALightmapper
                     int reference = file.ReadInt32();
                     file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
 
-                    lights.AddRange(readLights(new GenericList(file)));
+                    lights.AddRange(readLights(new GenericList(file), roomOffset, roomOrientation, roomID));
                 }
             }
             return lights;
@@ -350,7 +347,7 @@ namespace DALightmapper
             return terrainModels;
         }
 
-        private List<BiowareModel> readPropModels(GenericList objectList)
+        private List<BiowareModel> readPropModels(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
         {
             List<BiowareModel> propModels = new List<BiowareModel>();
             BinaryReader file = headerFile.getReader();
@@ -378,10 +375,12 @@ namespace DALightmapper
                     //get position
                     file.BaseStream.Seek(currentPosition + modelStruct.fields[MODEL_POSITION_INDEX].index, SeekOrigin.Begin);
                     position = new Vector3(file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+                    position += roomOffset;
 
                     //get the rotation
                     file.BaseStream.Seek(currentPosition + modelStruct.fields[MODEL_ROTATION_INDEX].index, SeekOrigin.Begin);
                     rotation = new Quaternion(file.ReadSingle(), file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+                    rotation *= roomOrientation;
 
                     //get the property List reference
                     file.BaseStream.Seek(currentPosition + modelStruct.fields[MODEL_PROPERTY_INDEX].index + propertyStruct.fields[PROPERTY_CHILDREN_INDEX].index, SeekOrigin.Begin);
@@ -404,7 +403,7 @@ namespace DALightmapper
                     modelID = file.ReadUInt32();
 
                     //add the model to the models list (as normal models)
-                    propModels.Add(new BiowareModel(position,rotation,modelFileName,modelID, false));
+                    propModels.Add(new BiowareModel(position,rotation,modelFileName,modelID, roomID, false));
                 }
                 else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)
                 {
@@ -417,7 +416,7 @@ namespace DALightmapper
                     reference = file.ReadInt32();
                     file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
 
-                    propModels.AddRange(readPropModels(new GenericList(file)));
+                    propModels.AddRange(readPropModels(new GenericList(file), roomOffset, roomOrientation, roomID));
                 }
             }
             return propModels;
@@ -463,7 +462,7 @@ namespace DALightmapper
             //These models well be used for lightmapping, they are simplified and cleaner 
             Model[] realModels = new Model[modelHierarchies.Count];
             //These are the model instances of the above models
-            _lightmapModels = new ModelInstance[models.Length];
+            lightmapModels = new ModelInstance[models.Length];
 
             //Create the models
             for (int i = 0; i < modelHierarchies.Count; i++)
@@ -483,7 +482,7 @@ namespace DALightmapper
                     BiowareModel m = models[j];
 
                     // if the model is a prop model or the model is terrain and it hasn't been set yet
-                    if (m.modelFileName == mh.mmhName || (m.isTerrain && _lightmapModels[i] == null))
+                    if (m.modelFileName == mh.mmhName || (m.isTerrain && lightmapModels[i] == null))
                     {
                         //Set the hierarchy in the bioware model
                         m.hierarchy = mh;
@@ -491,7 +490,7 @@ namespace DALightmapper
                         if (realModels[i].isLightmapped || realModels[i].castsShadows)
                         {
                             //Create the lightmap model
-                            _lightmapModels[j] = new ModelInstance(m.modelFileName, realModels[i], m.position, m.rotation, m.modelID);
+                            lightmapModels[j] = new ModelInstance(m.modelFileName, realModels[i], m.position, m.rotation, m.modelID, m.roomID);
                         }
                     }
                 }

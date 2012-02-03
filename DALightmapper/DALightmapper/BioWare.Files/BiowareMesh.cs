@@ -13,7 +13,7 @@ using DALightmapper;
 
 namespace Bioware.Files
 {
-    enum Usage : uint
+    public enum Usage : uint
     {
         /// Position
         POSITION = 0,
@@ -47,7 +47,7 @@ namespace Bioware.Files
         UNUSED = 0xffffffff
     }
 
-    abstract class BiowareMesh
+    public abstract class BiowareMesh
     {
         protected GFF binaryFile;
 
@@ -77,11 +77,11 @@ namespace Bioware.Files
             Mesh[] meshes = new Mesh[_chunks.Length];
             for (int i = 0; i < meshes.Length; i++)
             {
-                meshes[i] = new Mesh(_chunks[i].name, _chunks[i].tris, _chunks[i].receives, _chunks[i].casts);
+                meshes[i] = new Mesh(_chunks[i].name, _chunks[i].tris, _chunks[i].receives, _chunks[i].casts, _chunks[i].chunkOffset, _chunks[i].id);
             }
             return new Model(name, meshes);
         }
-
+        
         public abstract void readData();
     }
 }

@@ -6,9 +6,9 @@ using System.IO;
 namespace Bioware.Structs
 {
     //Enum for bit descriptions as per the GFF wiki
-    enum Bit16 : ushort { one = 0x8000, two = 0x4000, three = 0x2000, four = 0x1000, five = 0x0800, six = 0x0400, seven = 0x0200, eight = 0x0100, nine = 0x0080, ten = 0x0040, eleven = 0x0020, twelve = 0x0010, thirteen = 0x0008, fourteen = 0x0004, fifteen = 0x0002, sixteen = 0x0001 };
+    public enum Bit16 : ushort { one = 0x8000, two = 0x4000, three = 0x2000, four = 0x1000, five = 0x0800, six = 0x0400, seven = 0x0200, eight = 0x0100, nine = 0x0080, ten = 0x0040, eleven = 0x0020, twelve = 0x0010, thirteen = 0x0008, fourteen = 0x0004, fifteen = 0x0002, sixteen = 0x0001 };
 
-    class GFFFieldDefinition
+    public class GFFFieldDefinition
     {
         GFFID _label;   //ID of the field
         GFFFieldFlags _flags;   //The flags and type of this field

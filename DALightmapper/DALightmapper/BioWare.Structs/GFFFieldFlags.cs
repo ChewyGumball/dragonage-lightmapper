@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Bioware.Structs
 {
-    class GFFFieldFlags
+    public class GFFFieldFlags
     {
         GFFFIELDTYPE _id;   //Type of field
         bool _isList;   //Whether its a pointer to a list

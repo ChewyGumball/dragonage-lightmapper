@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
@@ -66,7 +65,6 @@ namespace DALightmapper
         private void setMeshNum(int i)
         {
             currentMeshIndex = i;
-            lbl_meshNum.Text = (currentMeshIndex + 1) +"/" + meshes.Length;
         }
 
         private void openFileDialog1_FileOk(object sender, CancelEventArgs e)
@@ -91,7 +89,7 @@ namespace DALightmapper
                 case Showing.Level:
                     displayLevel(); break;
                 default:
-                    lbl_progressStatus.Text = "Unknown currently showing status...?" + currentlyShowing; break;
+                    drawString = "Unknown currently showing status...?" + currentlyShowing; break;
 
             }
         }
@@ -311,7 +309,7 @@ namespace DALightmapper
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.PolygonMode(MaterialFace.Front, PolygonMode.Line);
-            GL.PolygonMode(MaterialFace.Back, PolygonMode.Point);
+            GL.PolygonMode(MaterialFace.Back, PolygonMode.Line);
             GL.Enable(EnableCap.DepthTest);
             GL.Color3(Color.White);
             if (showWireframe)
@@ -434,8 +432,6 @@ namespace DALightmapper
             GL.Begin(BeginMode.Triangles);
             foreach(Triangle tri in triangles)
             {
-                double cosine = Math.Abs(Vector3.Dot(colour, tri.normal));
-                GL.Color3(cosine, cosine, cosine);
                 GL.Vertex3(tri.x.X, tri.x.Y, tri.x.Z);
                 GL.Vertex3(tri.y.X, tri.y.Y, tri.y.Z);
                 GL.Vertex3(tri.z.X, tri.z.Y, tri.z.Z);
@@ -606,7 +602,7 @@ namespace DALightmapper
             //Try and find the model file
             if (extention == ".mmh")
             {
-                GFF tempGFF = new GFF(filePath, 0);
+                GFF tempGFF = new GFF(filePath);
                 ModelHierarchy mh = new ModelHierarchy(tempGFF);
                 currentlyShowing = Showing.Model;
                 meshes = mh.mesh.toModel().meshes;
@@ -618,7 +614,7 @@ namespace DALightmapper
             }
             else if (extention == ".msh")
             {
-                GFF tempGFF = new GFF(filePath, 0);
+                GFF tempGFF = new GFF(filePath);
                 ModelMesh mm = new ModelMesh(tempGFF);
                 currentlyShowing = Showing.Model;
                 meshes = mm.toModel().meshes;
@@ -664,7 +660,7 @@ namespace DALightmapper
             //If its not the right type of file then print an error
             else
             {
-                lbl_progressStatus.Text = "This is not a valid model (.mmh or .msh), texture (.tga), or level (.lvl) file!";
+                drawString = "This is not a valid model (.mmh or .msh), texture (.tga), or level (.lvl) file!";
             }
             refreshView();
         }

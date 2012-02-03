@@ -4,13 +4,14 @@ using OpenTK;
 
 namespace DALightmapper
 {
-    class ModelInstance
+    public class ModelInstance
     {
         public String name { get; private set; }
         public Model baseModel { get; private set; }
         public Vector3 position { get; private set; }
         public Quaternion rotation { get; private set; }
         public uint id { get; private set; }
+        public int roomID { get; private set; }
         public BoundingBox[] bounds { get; private set; }
         public List<Triangle> tris
         {
@@ -28,13 +29,14 @@ namespace DALightmapper
             }
         }
 
-        public ModelInstance (String n, Model baseM, Vector3 pos, Quaternion rot, uint modelId)
+        public ModelInstance (String n, Model baseM, Vector3 pos, Quaternion rot, uint modelId, int rID)
         {
             name = n;
             baseModel = baseM;
             position = pos;
             rotation = rot;
             id = modelId;
+            roomID = rID;
             //Need to make bounding boxes
             bounds = new BoundingBox[baseModel.meshes.Length];
             for (int i = 0; i < bounds.Length; i++)

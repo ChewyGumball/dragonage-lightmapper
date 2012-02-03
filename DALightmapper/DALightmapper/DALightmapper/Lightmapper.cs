@@ -16,7 +16,7 @@ using System.IO;
 
 namespace DALightmapper
 {
-    class Photon
+    public class Photon
     {
         public Vector3 position { get; set; }
         public Vector3 colour { get; set; }
@@ -26,23 +26,23 @@ namespace DALightmapper
             colour = c;
         }
     }
-    class FinishedLightMappingEventArgs : EventArgs
+    public class FinishedLightMappingEventArgs : EventArgs
     {
-        String _message;
+        public String message { get; private set; }
+        public bool successful { get; private set; }
 
-        public String message
+        public FinishedLightMappingEventArgs(String m, bool success)
         {
-            get { return _message; }
-        }
-
-        public FinishedLightMappingEventArgs(String message)
-        {
-            _message = message;
+            message = m;
+            successful = success;
         }
     }
+    public class LightmappingAbortedException : Exception
+    {
+        public LightmappingAbortedException() : base() { }
+    }
 
-
-    static class Lightmapper
+    public static class Lightmapper
     {
         public static bool abort { get; set; }
 
@@ -51,12 +51,17 @@ namespace DALightmapper
         public static event FinishedLightMappingEventHandler FinishedLightMapping;
 
         // Runs the light map process
-        public static void runLightmaps(Level level)
+        public static void runLightmaps(String path)
         {
+            Level level = IO.readLevel(path);
+            if (level == null)
+            {
+                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping, no level file.", false), null, null);
+                return;
+            }
 
-            Patch[] patches;
-            LightMap[] maps;
-            List<Photon> photons = new List<Photon>(); ;
+            List<LightMap> maps;
+            List<Photon> photons;
 
             //The list of triangles which will be casting shadows
             //  This comes from the models which cast shadows, we don't care which models they come from
@@ -73,31 +78,97 @@ namespace DALightmapper
                     castingTriangles.AddRange(m.tris);
             }
 
+            //We keep an index in the lightmap into this array so we can identify which map goes to which model
             ModelInstance[] receivingModels = receivingModelsList.ToArray();
 
-            //Make the lightmaps and patch instances
-            makeLightmaps(receivingModels, out maps, out patches);
-            Octree scene = new Octree(castingTriangles);
-            Settings.stream.AppendFormatLine("There are {0} patches in {1} lightmaps with {2}/{3} tris in octree.", patches.Length, maps.Length,scene.getUnused(),castingTriangles.Count);
-            Settings.stream.AppendFormatLine("Starting Lightmapping on {0} cores with {1} photons per light.", Settings.maxThreads, Settings.numPhotonsPerLight);
-            ParallelOptions opts = new ParallelOptions();
-            opts.MaxDegreeOfParallelism = Settings.maxThreads;
+            //Make the lightmaps
+            maps = makeLightmaps(receivingModels);
+            //Make the triangle partitioner
+            Partitioner scene = new Octree(castingTriangles);
 
-            double reflectProbability = 0.8;
+            //Shoot the photons
+            Settings.stream.AppendFormatText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
+            photons = firePhotons(level.lights, scene);            
+            Settings.stream.AppendLine("Done");
 
-            foreach (Light l in level.lights)
+            //Make the photon map
+            Settings.stream.AppendFormatText("Making photon map with {0} photons . . . ", photons.Count);
+            Partitioner photonMap = new Octree(photons);
+            Settings.stream.AppendLine("Done");
+
+            //Gather the photons for each patch in each map
+            Settings.stream.AppendFormatText("Gathering photons for lightmaps . . . ");
+            gatherPhotons(maps,photonMap);
+            Settings.stream.AppendLine("Done");
+
+            //Make the lightmaps
+            Settings.stream.SetProgressBarMaximum(maps.Count);
+            Settings.stream.AppendText("Creating light map textures . . . ");
+            foreach (LightMap l in maps)
+            {
+                l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
+                Settings.stream.UpdateProgress();
+            }
+            Settings.stream.AppendLine("Done");
+
+            //Fire the event saying lightmapping was finished completely
+            FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Successfully finished light mapping.", true), null, null);
+        }
+
+        //Makes lightmaps for the input model instances
+        private static List<LightMap> makeLightmaps(ModelInstance[] models)
+        {
+            List<Patch> patchList = new List<Patch>();
+            List<LightMap> lightmapList = new List<LightMap>();
+            //Make lightmaps
+            foreach (ModelInstance m in models)
+            {
+                //for each mesh in the model instance
+                for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                {
+                    if (m.baseModel.meshes[i].isLightmapped)
+                    {
+                        //Add the lightmap to the list of lightmaps
+                        lightmapList.Add(new LightMap(m, i));
+                    }
+                }
+            }
+
+            return lightmapList;
+        }
+
+        private static List<Photon> firePhotons(Light[] lights, Partitioner scene)
+        {
+            int numPhotons = 0;
+            foreach (Light l in lights)
             {
                 if (l.shootsPhotons)
                 {
-                    //for (int i = 0; i < Settings.numPhotonsPerLight; i++)
-                    Parallel.For(0, Settings.numPhotonsPerLight, opts, delegate(int i)
+                    numPhotons += Settings.numPhotonsPerLight;
+                }
+            }
+            Settings.stream.SetProgressBarMaximum(numPhotons);
+
+            ParallelOptions opts = new ParallelOptions();
+            opts.MaxDegreeOfParallelism = Settings.maxThreads;
+
+            List<Photon> photons = new List<Photon>();
+            double reflectProbability = 0.8;
+
+            foreach (Light l in lights)
+            {
+                if (l.shootsPhotons)
+                {
+                    Parallel.For(0, Settings.numPhotonsPerLight, opts, delegate(int i, ParallelLoopState state)
                     {
+                        if (abort)
+                        {
+                            state.Stop();
+                        }
                         Vector3 direction = l.generateRandomDirection();
-                        //Settings.stream.AppendFormatLine("{0},{1},{2}", direction.X, direction.Y, direction.Z);
                         Triangle t = scene.firstIntersection(l.position, l.position + (direction * 1000));
                         if (t != null)
                         {
-                            //Settings.stream.AppendFormatLine("{0}", i);
                             Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
                             while (Ben.MathHelper.nextRandom() > reflectProbability)
                             {
@@ -113,20 +184,39 @@ namespace DALightmapper
                                 photons.Add(new Photon(intersection, l.colour));
                             }
                         }
+                        Settings.stream.UpdateProgress();
                     });
+
+                    if (abort)
+                    {
+                        FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping while firing photons.", false), null, null);
+                        throw new LightmappingAbortedException();
+                    }
                 }
             }
-            Settings.stream.AppendLine("Done.");
-
-            Settings.stream.AppendFormatLine("Making photon map with {0} photons.", photons.Count);
-            Partitioner photonMap = new Octree(photons);
-            Settings.stream.AppendLine("Done.");
-
-            Settings.stream.AppendFormatLine("Gathering photons for lightmaps.");
+            return photons;
+        }
+        private static void gatherPhotons(List<LightMap> maps, Partitioner photonMap)
+        {
+            int numPatches = 0;
             foreach (LightMap l in maps)
             {
-                Parallel.For(0,l.patches.Count,opts,delegate(int i) 
+                numPatches += l.patches.Count;
+            }
+            Settings.stream.SetProgressBarMaximum(numPatches);
+
+            ParallelOptions opts = new ParallelOptions();
+            opts.MaxDegreeOfParallelism = Settings.maxThreads;
+
+            foreach (LightMap l in maps)
+            {
+                Parallel.For(0, l.patches.Count, opts, delegate(int i, ParallelLoopState state)
                 {
+                    if (abort)
+                    {
+                        state.Stop();
+                    }
+
                     Patch p = l.patches[i];
                     List<Photon> gather = photonMap.getWithinDistanceSquared(p.position, Settings.gatherRadius * Settings.gatherRadius);
                     foreach (Photon photon in gather)
@@ -136,70 +226,16 @@ namespace DALightmapper
                     if (gather.Count > 0)
                     {
                         p.incidentLight /= gather.Count;
-                        //Settings.stream.AppendFormatLine("There were {0} photons gathered. Excident light = {1}.", gather.Count, p.excidentLight);
                     }
+                    Settings.stream.UpdateProgress();
                 });
-            }
-            Settings.stream.AppendLine("Done.");
-            //If the loop exited early fire the event saying so
-            if (abort)
-            {
-                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping early."), null, null);
-            }
-            //Otherwise fire the event saying lightmapping was finished completely
-            else
-            {
-                foreach (LightMap l in maps)
+
+                if (abort)
                 {
-                    makeIntoTexture(l);
-                }
-                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Successfully finished light mapping."), null, null);
-            }
-        }
-        private static int GetObjectSize(object TestObject)
-        {
-            BinaryFormatter bf = new BinaryFormatter();
-            MemoryStream ms = new MemoryStream();
-            byte[] Array;
-            bf.Serialize(ms, TestObject);
-            Array = ms.ToArray();
-            return Array.Length;
-        }
-        //Makes lightmaps for the input model instances
-        private static void makeLightmaps(ModelInstance[] models, out LightMap[] maps, out Patch[] patches)
-        {
-            List<Patch> patchList = new List<Patch>();
-            List<LightMap> lightmapList = new List<LightMap>();
-            //Make lightmaps
-            foreach (ModelInstance m in models)
-            {
-                //for each mesh in the model instance
-                for (int i = 0; i < m.baseModel.meshes.Length; i++)
-                {
-                    if (m.baseModel.meshes[i].isLightmapped)
-                    {
-                        //Make the lightmap
-                        LightMap temp = new LightMap(m, i);
-                        //For each patch instance in the lightmap
-                        foreach (Patch p in temp.patches)
-                        {
-                            patchList.Add(p);
-                        }
-                        //Add the lightmap to the list of lightmaps
-                        lightmapList.Add(temp);
-                    }
+                    FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping while gathering photons.", false), null, null);
+                    throw new LightmappingAbortedException();
                 }
             }
-
-            maps = lightmapList.ToArray();
-            patches = patchList.ToArray();
-        }
-
-        
-    
-        private static void makeIntoTexture(LightMap l)
-        {
-            l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
         }
     }
 }

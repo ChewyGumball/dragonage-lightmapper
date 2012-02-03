@@ -9,7 +9,7 @@ using DALightmapper;
 
 namespace Bioware.Files
 {
-    class TerrainMesh : BiowareMesh
+    public class TerrainMesh : BiowareMesh
     {
         #region Index Values and Struct Definitions
         //These are constant for all files
@@ -316,7 +316,7 @@ namespace Bioware.Files
         public BiowareModel toModel(uint modelID)
         {
             //Initialize the model without a mesh
-            BiowareModel terrainModel = new BiowareModel(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1), binaryFile.path, modelID, true);
+            BiowareModel terrainModel = new BiowareModel(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1), binaryFile.path, modelID, 0, true);
             //Make an array to hold all the triangles
             
             //Set the mesh for the model

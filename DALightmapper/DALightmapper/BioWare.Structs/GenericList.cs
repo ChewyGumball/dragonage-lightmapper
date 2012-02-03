@@ -6,7 +6,7 @@ using Ben;
 
 namespace Bioware.Structs
 {
-    class GenericList
+    public class GenericList
     {
         GFFFieldFlags[] _flags;
         uint[] _offsets;

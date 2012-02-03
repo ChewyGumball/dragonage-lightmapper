@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using OpenTK;
@@ -12,7 +11,7 @@ using Ben;
 
 namespace DALightmapper
 {
-    class LightMap
+    public class LightMap
     {
         public int width { get; private set; }
         public int height { get; private set; }
@@ -53,7 +52,7 @@ namespace DALightmapper
 
         public Targa makeIntoTexture(String directory)
         {
-            Targa texture = new Targa(directory + "\\" + model.id + model.name + index + ".tga", (short)width, (short)height);
+            Targa texture = new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".tga", (short)width, (short)height);
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)

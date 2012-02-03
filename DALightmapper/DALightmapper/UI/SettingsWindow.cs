@@ -25,7 +25,6 @@ namespace DALightmapper
 
             cb_useTrueAttenuation.Checked = Settings.useTrueAttenuation;
             cb_clearTempDir.Checked = Settings.cleanUpTempFiles;
-            rb_numBounces.Checked = Settings.useNumBounces;
 
             foreach (String s in Settings.filePaths)
             {
@@ -39,7 +38,6 @@ namespace DALightmapper
             tb_workingDirectory.Text = Settings.workingDirectory;
             tb_tempDirectory.Text = Settings.tempDirectory;
 
-            nmup_minEnergy.Value = (decimal)Settings.minimumEnergy;
             nmup_numPhotons.Value = Settings.numPhotonsPerLight;
             nmup_Cores.Maximum = Environment.ProcessorCount;
             nmup_Cores.Minimum = 1;
@@ -47,21 +45,11 @@ namespace DALightmapper
 
         }
 
-        private void rb_numBounces_CheckedChanged(object sender, EventArgs e)
-        {
-            Settings.useNumBounces = rb_numBounces.Checked;
-        }
-
         private void nmup_numBounces_ValueChanged(object sender, EventArgs e)
         {
             Settings.numPhotonsPerLight = (int)nmup_numPhotons.Value;
         }
-
-        private void nmup_minEnergy_ValueChanged(object sender, EventArgs e)
-        {
-            Settings.minimumEnergy = (double)nmup_minEnergy.Value;
-        }
-
+        
         private void cb_useTrueAttenuation_CheckedChanged(object sender, EventArgs e)
         {
             Settings.useTrueAttenuation = cb_useTrueAttenuation.Checked;
@@ -70,6 +58,7 @@ namespace DALightmapper
         private void trb_Verbosity_Scroll(object sender, EventArgs e)
         {
             Settings.verboseStatus = (Verbosity)trb_Verbosity.Value;
+            Settings.stream.verbosity = Settings.verboseStatus;
             lbl_verbosity.Text = Settings.verboseStatus.ToString();
         }
 
@@ -132,6 +121,7 @@ namespace DALightmapper
         private void SettingsWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
+            Settings.saveSettings();
             Hide();
         }
 

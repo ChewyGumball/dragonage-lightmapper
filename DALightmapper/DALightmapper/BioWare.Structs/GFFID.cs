@@ -1,7 +1,7 @@
 ﻿namespace Bioware.Structs
 {
 
-    enum GFFID
+    public enum GFFID
     {
         GFF_INVALIDENTRY = 0, // Invalid Entry | Invalid Entry
 

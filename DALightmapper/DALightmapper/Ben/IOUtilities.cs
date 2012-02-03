@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Ben
 {
-    class IOUtilities
+    public class IOUtilities
     {
         //Used to abbreviate file sizes
         private static readonly float kilobyte = 1024;
@@ -31,7 +31,7 @@ namespace Ben
 
         public static String readECStringWithLength(BinaryReader file, int length)
         {
-            return Encoding.Unicode.GetString(file.ReadBytes(length)).Trim('\0');
+            return Encoding.Unicode.GetString(file.ReadBytes(length)).Trim('\0').Trim();
         }
 
         //--------------------------------------------------------------------//

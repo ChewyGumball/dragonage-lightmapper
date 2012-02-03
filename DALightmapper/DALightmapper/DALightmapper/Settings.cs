@@ -7,7 +7,7 @@ using Bioware.Files;
 
 namespace DALightmapper
 {
-    class Settings
+    public class Settings
     {
         //--Scene Variables--//
         public static int worldScale = 10;  //How much to scale up the world on import
@@ -36,8 +36,6 @@ namespace DALightmapper
         //--Paths to Required Files--// 
         public static String tempDirectory;
         public static String workingDirectory;
-        public static String toolsetPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\tools";  //The path to the toolset
-        public static String overrideFolderPath = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\dragon age origins\\packages\\core\\override";   //The path to the override folder in which to look for files if they aren't in the erf
 
         public static List<String> filePaths = null;
         public static List<ERF> erfFiles = null;
@@ -53,14 +51,28 @@ namespace DALightmapper
 
             foreach (String s in Properties.Settings.Default.filePaths)
             {
-                filePaths.Add(s);
+                if (Directory.Exists(s))
+                {
+                    filePaths.Add(s);
+                }
+                else
+                {
+                    stream.AppendFormatLine("Could not find directory \"{0}\", it has been removed from the path list.", s);
+                }
             }
 
             foreach (String s in Properties.Settings.Default.erfFiles)
             {
-                ERF temp = new ERF(s);
-                temp.readKeyData();
-                erfFiles.Add(temp);
+                if (File.Exists(s))
+                {
+                    ERF temp = new ERF(s);
+                    temp.readKeyData();
+                    erfFiles.Add(temp);
+                }
+                else
+                {
+                    stream.AppendFormatLine("Could not find ERF \"{0}\", It has been removed from the ERF list.", s);
+                }
             }
 
             numPhotonsPerLight = Properties.Settings.Default.numPhotons;

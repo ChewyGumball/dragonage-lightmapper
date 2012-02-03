@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using OpenTK;
 
 using Ben;
 
@@ -9,7 +10,7 @@ using DALightmapper;
 
 namespace Bioware.Files
 {
-    class ModelHierarchy
+    public class ModelHierarchy
     {
         #region Index Values
         private static readonly int MMH_NAME_INDEX = 0;
@@ -18,15 +19,17 @@ namespace Bioware.Files
         private static readonly int TOP_LEVEL_CHILDREN_INDEX = 6;
 
         private static readonly int GOB_CHILDREN_INDEX = 3;
+        private static readonly int TRANSLATION_ATTRIBUTE = 1;
 
-        private static readonly int MSH_CHUNK_MESH_NAME_INDEX = 0;
+       // private static readonly int MSH_CHUNK_MESH_NAME_INDEX = 0;
         private static readonly int MSH_CHUNK_MATERIAL_INDEX = 1;
         private static readonly int MSH_CHUNK_ID_INDEX = 3;
         private static readonly int MSH_CHUNK_GROUP_NAME_INDEX = 4;
-        private static readonly int MSH_CHUNK_CASTS_RUNTIME_INDEX = 5;
+       // private static readonly int MSH_CHUNK_CASTS_RUNTIME_INDEX = 5;
         private static readonly int MSH_CHUNK_CASTS_BAKED_INDEX = 6;
         private static readonly int MSH_CHUNK_RECEIVES_BAKED_INDEX = 10;
-        private static readonly int MSH_CHUNK_RECEIVES_RUNTIME_INDEX = 11;
+       // private static readonly int MSH_CHUNK_RECEIVES_RUNTIME_INDEX = 11;
+        private static readonly int MSH_CHUNK_CHILDREN_INDEX = 16;
         #endregion
 
         private int meshChunkInfoIndex;
@@ -72,11 +75,11 @@ namespace Bioware.Files
 
             //Get the name of the mmh file
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[MMH_NAME_INDEX].index, SeekOrigin.Begin);
-            _mmhName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
+            _mmhName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()).ToLower();
 
             //Get the name of the msh file
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[MSH_NAME_INDEX].index, SeekOrigin.Begin);
-            _mshName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
+            _mshName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()).ToLower();
 
             //Get the total number of bones in the mmh
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[TOTAL_BONES_INDEX].index, SeekOrigin.Begin);
@@ -148,6 +151,11 @@ namespace Bioware.Files
                     file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_MATERIAL_INDEX].index, SeekOrigin.Begin);
                     currentMeshChunk.materialObjectName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
 
+                    //Get the chunk ID
+                    file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_ID_INDEX].index, SeekOrigin.Begin);
+                    currentMeshChunk.id = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
+                    
+
                     //Get whether it casts shadows
                     file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_CASTS_BAKED_INDEX].index, SeekOrigin.Begin);
                     currentMeshChunk.casts = file.ReadByte() == 1;
@@ -155,6 +163,15 @@ namespace Bioware.Files
                     //Get whether it receives shadows
                     file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_RECEIVES_BAKED_INDEX].index, SeekOrigin.Begin);
                     currentMeshChunk.receives = currentMeshChunk.usesTwoTexCoords? file.ReadByte() == 1 : false;
+
+                    //Get translation offset
+                    file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_CHILDREN_INDEX].index, SeekOrigin.Begin);
+                    reference = file.ReadInt32();
+                    file.BaseStream.Seek(binaryFile.dataOffset + reference, SeekOrigin.Begin);
+                    GenericList attributes = new GenericList(file);
+
+                    file.BaseStream.Seek(binaryFile.dataOffset + attributes[TRANSLATION_ATTRIBUTE], SeekOrigin.Begin);
+                    currentMeshChunk.chunkOffset = new Vector3(file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
                 }
             }
         }

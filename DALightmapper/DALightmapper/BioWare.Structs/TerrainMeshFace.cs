@@ -4,7 +4,7 @@ using Bioware.Files;
 
 namespace Bioware.Structs
 {
-    class TerrainMeshFace
+    public class TerrainMeshFace
     {
 
         private const int ID_INDEX = 0;

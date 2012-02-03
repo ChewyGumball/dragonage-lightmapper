@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using OpenTK;
 
 namespace Ben
 {
-    class Camera
+    public class Camera
     {
         public Vector3 position { get; set; }
         public Matrix4 matrix { get { return Matrix4.CreateTranslation(position) * Matrix4.CreateRotationZ(-rightAngle) * Matrix4.CreateRotationX(-upAngle); } }

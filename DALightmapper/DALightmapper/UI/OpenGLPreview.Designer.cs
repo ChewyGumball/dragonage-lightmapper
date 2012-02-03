@@ -35,10 +35,8 @@
             this.tb_path = new System.Windows.Forms.TextBox();
             this.btn_load = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.lbl_progressStatus = new System.Windows.Forms.Label();
             this.btn_prev = new System.Windows.Forms.Button();
             this.btn_next = new System.Windows.Forms.Button();
-            this.lbl_meshNum = new System.Windows.Forms.Label();
             this.btn_showLightmap = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btn_showAll = new System.Windows.Forms.Button();
@@ -119,14 +117,6 @@
             this.openFileDialog1.Filter = "Model Hierarchy|*.mmh|Mesh|*.msh|Targa|*.tga|Level|*.lvl";
             this.openFileDialog1.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialog1_FileOk);
             // 
-            // lbl_progressStatus
-            // 
-            this.lbl_progressStatus.AutoSize = true;
-            this.lbl_progressStatus.Location = new System.Drawing.Point(255, 551);
-            this.lbl_progressStatus.Name = "lbl_progressStatus";
-            this.lbl_progressStatus.Size = new System.Drawing.Size(0, 13);
-            this.lbl_progressStatus.TabIndex = 8;
-            // 
             // btn_prev
             // 
             this.btn_prev.Location = new System.Drawing.Point(236, 14);
@@ -146,14 +136,6 @@
             this.btn_next.Text = ">";
             this.btn_next.UseVisualStyleBackColor = true;
             this.btn_next.Click += new System.EventHandler(this.btn_next_Click);
-            // 
-            // lbl_meshNum
-            // 
-            this.lbl_meshNum.AutoSize = true;
-            this.lbl_meshNum.Location = new System.Drawing.Point(195, 552);
-            this.lbl_meshNum.Name = "lbl_meshNum";
-            this.lbl_meshNum.Size = new System.Drawing.Size(0, 13);
-            this.lbl_meshNum.TabIndex = 11;
             // 
             // btn_showLightmap
             // 
@@ -239,8 +221,6 @@
             this.ClientSize = new System.Drawing.Size(518, 595);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.lbl_meshNum);
-            this.Controls.Add(this.lbl_progressStatus);
             this.Controls.Add(this.btn_load);
             this.Controls.Add(this.tb_path);
             this.Controls.Add(this.btn_choose);
@@ -266,10 +246,8 @@
         private System.Windows.Forms.TextBox tb_path;
         private System.Windows.Forms.Button btn_load;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.Label lbl_progressStatus;
         private System.Windows.Forms.Button btn_prev;
         private System.Windows.Forms.Button btn_next;
-        private System.Windows.Forms.Label lbl_meshNum;
         private System.Windows.Forms.Button btn_showLightmap;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;

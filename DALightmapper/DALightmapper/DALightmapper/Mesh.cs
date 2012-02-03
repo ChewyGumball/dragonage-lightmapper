@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using OpenTK;
 
 namespace DALightmapper
 {
-    class Mesh
+    public class Mesh
     {
         String _name;
+        public String id { get; private set; }
         public Triangle[] tris { get; private set; }
         public Texel[,] texels { get; private set; }
         public BoundingBox bounds { get; private set; }
@@ -21,13 +21,18 @@ namespace DALightmapper
             return _name;
         }
 
-        public Mesh(String name, Triangle[] triangles, Boolean lightmap, Boolean shadows)
+        public Mesh(String name, Triangle[] triangles, Boolean lightmap, Boolean shadows, Vector3 offset, String chunkID)
         {
+            id = chunkID;
             isLightmapped = lightmap;
             castsShadows = shadows;
 
             _name = name;
-            tris = triangles;
+            tris = new Triangle[triangles.Length];
+            for (int i = 0; i < triangles.Length; i++)
+            {
+                tris[i] = new Triangle(triangles[i], offset);
+            }
 
             //make the bounding box
             float minX = triangles[0].x.X;

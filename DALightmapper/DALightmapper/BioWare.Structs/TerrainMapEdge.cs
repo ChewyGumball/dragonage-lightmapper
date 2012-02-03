@@ -4,7 +4,7 @@ using Bioware.Files;
 
 namespace Bioware.Structs
 {
-    class TerrainMapEdge
+    public class TerrainMapEdge
     {
         private const int ID_INDEX = 0;
         private const int START_VERTEX_INDEX = 1;

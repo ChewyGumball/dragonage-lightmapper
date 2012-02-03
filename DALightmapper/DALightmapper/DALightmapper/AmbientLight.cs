@@ -3,7 +3,7 @@ using OpenTK;
 
 namespace DALightmapper
 {
-    class AmbientLight : Light
+    public class AmbientLight : Light
     {
         public AmbientLight(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
             : base(pos, col, intense, t, shoots )

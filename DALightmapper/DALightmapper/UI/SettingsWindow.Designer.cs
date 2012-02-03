@@ -42,10 +42,6 @@
             this.btn_addERFFile = new System.Windows.Forms.Button();
             this.btn_removeFilePath = new System.Windows.Forms.Button();
             this.btn_addFilePath = new System.Windows.Forms.Button();
-            this.rb_energyInSystem = new System.Windows.Forms.RadioButton();
-            this.rb_numBounces = new System.Windows.Forms.RadioButton();
-            this.label6 = new System.Windows.Forms.Label();
-            this.nmup_minEnergy = new System.Windows.Forms.NumericUpDown();
             this.nmup_numPhotons = new System.Windows.Forms.NumericUpDown();
             this.cb_useTrueAttenuation = new System.Windows.Forms.CheckBox();
             this.lbl_verbosity = new System.Windows.Forms.Label();
@@ -56,7 +52,8 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.nmup_Cores = new System.Windows.Forms.NumericUpDown();
             this.label7 = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.nmup_minEnergy)).BeginInit();
+            this.btn_Save = new System.Windows.Forms.Button();
+            this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).BeginInit();
@@ -192,65 +189,9 @@
             this.btn_addFilePath.UseVisualStyleBackColor = true;
             this.btn_addFilePath.Click += new System.EventHandler(this.btn_addFilePath_Click);
             // 
-            // rb_energyInSystem
-            // 
-            this.rb_energyInSystem.AutoSize = true;
-            this.rb_energyInSystem.Checked = true;
-            this.rb_energyInSystem.Location = new System.Drawing.Point(606, 222);
-            this.rb_energyInSystem.Name = "rb_energyInSystem";
-            this.rb_energyInSystem.Size = new System.Drawing.Size(148, 17);
-            this.rb_energyInSystem.TabIndex = 7;
-            this.rb_energyInSystem.TabStop = true;
-            this.rb_energyInSystem.Text = "Energy in system is below:";
-            this.rb_energyInSystem.UseVisualStyleBackColor = true;
-            // 
-            // rb_numBounces
-            // 
-            this.rb_numBounces.AutoSize = true;
-            this.rb_numBounces.Location = new System.Drawing.Point(606, 198);
-            this.rb_numBounces.Name = "rb_numBounces";
-            this.rb_numBounces.Size = new System.Drawing.Size(129, 17);
-            this.rb_numBounces.TabIndex = 6;
-            this.rb_numBounces.Text = "# of Photons per light:";
-            this.rb_numBounces.UseVisualStyleBackColor = true;
-            this.rb_numBounces.CheckedChanged += new System.EventHandler(this.rb_numBounces_CheckedChanged);
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(590, 182);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(121, 13);
-            this.label6.TabIndex = 5;
-            this.label6.Text = "Stop light mapping after:";
-            // 
-            // nmup_minEnergy
-            // 
-            this.nmup_minEnergy.DecimalPlaces = 3;
-            this.nmup_minEnergy.Location = new System.Drawing.Point(760, 222);
-            this.nmup_minEnergy.Maximum = new decimal(new int[] {
-            100000,
-            0,
-            0,
-            0});
-            this.nmup_minEnergy.Minimum = new decimal(new int[] {
-            5,
-            0,
-            0,
-            131072});
-            this.nmup_minEnergy.Name = "nmup_minEnergy";
-            this.nmup_minEnergy.Size = new System.Drawing.Size(80, 20);
-            this.nmup_minEnergy.TabIndex = 4;
-            this.nmup_minEnergy.Value = new decimal(new int[] {
-            100000,
-            0,
-            0,
-            0});
-            this.nmup_minEnergy.ValueChanged += new System.EventHandler(this.nmup_minEnergy_ValueChanged);
-            // 
             // nmup_numPhotons
             // 
-            this.nmup_numPhotons.Location = new System.Drawing.Point(760, 198);
+            this.nmup_numPhotons.Location = new System.Drawing.Point(703, 181);
             this.nmup_numPhotons.Maximum = new decimal(new int[] {
             9999999,
             0,
@@ -280,7 +221,7 @@
             // lbl_verbosity
             // 
             this.lbl_verbosity.AutoSize = true;
-            this.lbl_verbosity.Location = new System.Drawing.Point(449, 187);
+            this.lbl_verbosity.Location = new System.Drawing.Point(515, 165);
             this.lbl_verbosity.Name = "lbl_verbosity";
             this.lbl_verbosity.Size = new System.Drawing.Size(0, 13);
             this.lbl_verbosity.TabIndex = 3;
@@ -301,7 +242,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(422, 137);
+            this.label4.Location = new System.Drawing.Point(488, 115);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(99, 13);
             this.label4.TabIndex = 1;
@@ -310,7 +251,7 @@
             // trb_Verbosity
             // 
             this.trb_Verbosity.LargeChange = 2;
-            this.trb_Verbosity.Location = new System.Drawing.Point(422, 153);
+            this.trb_Verbosity.Location = new System.Drawing.Point(488, 131);
             this.trb_Verbosity.Maximum = 4;
             this.trb_Verbosity.Name = "trb_Verbosity";
             this.trb_Verbosity.Size = new System.Drawing.Size(99, 45);
@@ -325,7 +266,7 @@
             // 
             // nmup_Cores
             // 
-            this.nmup_Cores.Location = new System.Drawing.Point(513, 222);
+            this.nmup_Cores.Location = new System.Drawing.Point(684, 204);
             this.nmup_Cores.Name = "nmup_Cores";
             this.nmup_Cores.Size = new System.Drawing.Size(38, 20);
             this.nmup_Cores.TabIndex = 14;
@@ -334,24 +275,40 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(422, 224);
+            this.label7.Location = new System.Drawing.Point(593, 206);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(84, 13);
             this.label7.TabIndex = 15;
             this.label7.Text = "Maximum Cores:";
+            // 
+            // btn_Save
+            // 
+            this.btn_Save.Location = new System.Drawing.Point(765, 248);
+            this.btn_Save.Name = "btn_Save";
+            this.btn_Save.Size = new System.Drawing.Size(75, 23);
+            this.btn_Save.TabIndex = 16;
+            this.btn_Save.Text = "Save";
+            this.btn_Save.UseVisualStyleBackColor = true;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(590, 183);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(110, 13);
+            this.label6.TabIndex = 17;
+            this.label6.Text = "# of photons per light:";
             // 
             // SettingsWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(851, 273);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.btn_Save);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.nmup_Cores);
-            this.Controls.Add(this.rb_energyInSystem);
             this.Controls.Add(this.cb_clearTempDir);
-            this.Controls.Add(this.rb_numBounces);
-            this.Controls.Add(this.label6);
-            this.Controls.Add(this.nmup_minEnergy);
             this.Controls.Add(this.lbl_verbosity);
             this.Controls.Add(this.nmup_numPhotons);
             this.Controls.Add(this.btn_tempFiles);
@@ -374,7 +331,6 @@
             this.Name = "SettingsWindow";
             this.Text = "SettingsWindow";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.SettingsWindow_FormClosing);
-            ((System.ComponentModel.ISupportInitialize)(this.nmup_minEnergy)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).EndInit();
@@ -401,10 +357,6 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NumericUpDown nmup_numPhotons;
         private System.Windows.Forms.CheckBox cb_useTrueAttenuation;
-        private System.Windows.Forms.RadioButton rb_energyInSystem;
-        private System.Windows.Forms.RadioButton rb_numBounces;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.NumericUpDown nmup_minEnergy;
         private System.Windows.Forms.Label lbl_verbosity;
         private System.Windows.Forms.Button btn_tempFiles;
         private System.Windows.Forms.Label label5;
@@ -413,5 +365,7 @@
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.NumericUpDown nmup_Cores;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button btn_Save;
+        private System.Windows.Forms.Label label6;
     }
 }

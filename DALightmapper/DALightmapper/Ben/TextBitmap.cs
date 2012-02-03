@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using OpenTK;
@@ -10,7 +9,7 @@ using OpenTK.Graphics.OpenGL;
 
 namespace Ben
 {
-    class TextBitmap
+    public class TextBitmap
     {
         public String text { get; private set; }
         Bitmap bitmap;

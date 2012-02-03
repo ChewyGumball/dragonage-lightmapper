@@ -5,7 +5,7 @@ using Bioware.Files;
 
 namespace Bioware.Structs
 {
-    class TerrainMapFace
+    public class TerrainMapFace
     {
         private const int EDGE_LIST_INDEX = 0;
         private const int ID_INDEX = 1;

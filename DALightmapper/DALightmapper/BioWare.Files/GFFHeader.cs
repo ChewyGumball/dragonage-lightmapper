@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Bioware.Files
 {
-    class GFFHeader
+    public class GFFHeader
     {
         String _magicNumber;
         String _versionNumber;

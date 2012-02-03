@@ -4,7 +4,7 @@ using OpenTK;
 
 namespace DALightmapper
 {
-    class Octree : Partitioner
+    public class Octree : Partitioner
     {
         public Octree[] children;
         public BoundingBox bounds;
@@ -36,7 +36,7 @@ namespace DALightmapper
 
         public Octree(List<Triangle> triangles)
         {
-            build(triangles, 100, new BoundingBox(triangles));
+            build(triangles, 20, new BoundingBox(triangles));
         }
 
         public Octree(List<Photon> p)

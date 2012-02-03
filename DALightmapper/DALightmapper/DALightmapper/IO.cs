@@ -13,7 +13,7 @@ using Ben;
 namespace DALightmapper
 {
     delegate void FinishedReadingEventHandler(FinishedReadingEventArgs e);
-    class FinishedReadingEventArgs : EventArgs
+    public class FinishedReadingEventArgs : EventArgs
     {
         String _message;
         Boolean _successful;
@@ -42,10 +42,6 @@ namespace DALightmapper
 
     class IO
     {
-
-        //The stream to which updates should be sent
-        StatusStream stream;
-
         //If set to true, reading should be aborted and donereading event should fire false
         static Boolean _abort;
         public static Boolean abort
@@ -56,27 +52,16 @@ namespace DALightmapper
 
         //List of temporary files created during IO
         static List<BiowareFile> tempFiles = new List<BiowareFile>();
-        public int numTempFiles
+        public static int numTempFiles
         {
             get { return tempFiles.Count; }
         }
 
-        //Constructor
-        public IO(StatusStream statStream)
-        {
-            stream = statStream;
-        }
-        public IO()
-        {
-            stream = new StatusStream();
-            stream.attachToConsole();
-        }
-
         //Reads in the data needed for a level
         //Currently reads more than lvl files for testing purposes NEED TO CLEAN UP 
-        public void readLevelAsync(String path, FinishedReadingEventHandler handler)
+        public static Level readLevel(String path)
         {
-            Level levelFile;
+            Level levelFile = null;
 
             _abort = false;
 
@@ -89,46 +74,49 @@ namespace DALightmapper
             {
                 if (extention == ".gff" || extention == ".msh" || extention == ".mmh" || extention == ".tmsh")
                 {
-                    stream.AppendText("Displaying GFF structs and fields:\n", Verbosity.Low);
-                    GFF temp = new GFF(fileName, 0);
+                    Settings.stream.AppendLine(Verbosity.Low, "Displaying GFF structs and fields:");
+                    GFF temp = new GFF(fileName);
                     for (int i = 0; i < temp.structs.Length; i++)
                     {
-                        stream.AppendLine(i+". "+temp.structs[i].definition.ToString(),Verbosity.Low);
-                        stream.indent++;
+                        Settings.stream.AppendFormatLine(Verbosity.Low,"{0}. {1}",i,temp.structs[i].definition.ToString());
+                        Settings.stream.indent++;
                         for (int j = 0; j < temp.structs[i].fields.Length; j++)
                         {
-                            stream.AppendLine(j+". "+temp.structs[i].fields[j].ToString(),Verbosity.Low);
+                            Settings.stream.AppendFormatLine(Verbosity.Low, "{0}. {1}", j, temp.structs[i].fields[j].ToString());
                         }
-                        stream.indent--;
+                        Settings.stream.indent--;
                    }
                     temp.Close();
                 }
                 else if (extention == ".lvl")
                 {
                     levelFile = new Level(fileName);
-                    levelFile.FinishedReading += handler;
-                    new Thread(levelFile.readObjectsAsync).Start();
+                    levelFile.readObjects();
                 }
                 else if (extention == ".erf")
                 {
-                    stream.AppendLine("This is an ERF, attempting to read key data",Verbosity.Warnings);
+                    Settings.stream.AppendLine(Verbosity.Low, "This is an ERF, attempting to read key data");
                     ERF thing = new ERF(fileName);
                     thing.readKeyData();
-                    stream.AppendLine("Read in key data, " + thing.resourceCount + " files found", Verbosity.Warnings);
+                    Settings.stream.AppendLine(Verbosity.Low, "Read in key data, " + thing.resourceCount + " files found");
+                    Settings.stream.indent++;
                     for (int i = 0; i < thing.resourceCount; i++)
                     {
-                        stream.AppendLine("\t " + thing.resourceNames[i] + ": " + thing.resourceLengths[i] + " " + thing.resourceOffsets[i], Verbosity.Warnings);
+                        Settings.stream.AppendFormatLine(Verbosity.Low, "{0}: {1} at offset {2}", thing.resourceNames[i], IOUtilities.ToByteString(thing.resourceLengths[i]), thing.resourceOffsets[i]);
                     }
+                    Settings.stream.indent--;
                 }
                 else
                 {
-                    handler.Invoke(new FinishedReadingEventArgs(false, "File with extention \"" + extention + "\" is not a valid file type.", null));
+                    Settings.stream.AppendFormatLine("{0} is not a valid extension ({1}).",extention,fileName);
                 }
             }
             else
             {
-                handler.Invoke(new FinishedReadingEventArgs(false, fileName + " is not a valid file.",null));
+                Settings.stream.AppendFormatLine("{0} is not a valid file.", fileName);
             }
+
+            return levelFile;
         }
 
         public static void addTempFile(BiowareFile fileObject)
@@ -139,14 +127,14 @@ namespace DALightmapper
             }
         }
 
-        public void cleanUpTempFiles()
+        public static void cleanUpTempFiles()
         {
             for (int i = 0; i < tempFiles.Count; i++)
             {
                 tempFiles[i].Close();
             }
 
-            stream.AppendText("Cleaned up " + tempFiles.Count + " files.\n", Verbosity.Medium);
+            Settings.stream.AppendFormatLine(Verbosity.Medium, "Closed {0} files.", tempFiles.Count);
             tempFiles.Clear();
         }
 
@@ -160,7 +148,7 @@ namespace DALightmapper
             String tempPath = Settings.tempDirectory + "\\" + filename;
             if (File.Exists(tempPath))
             {
-                tempGFF = new GFF(tempPath, 0);
+                tempGFF = new GFF(tempPath);
             }
             else
             {
@@ -178,7 +166,7 @@ namespace DALightmapper
                     String fullPath = path + "\\" + filename;
                     if (File.Exists(fullPath))
                     {
-                        tempGFF = new GFF(fullPath, 0);
+                        tempGFF = new GFF(fullPath);
                     }
                 }
             }

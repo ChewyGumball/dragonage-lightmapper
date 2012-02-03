@@ -5,7 +5,7 @@ namespace DALightmapper
 {
     public enum LightType { Static, Baked }
 
-    abstract class Light
+    public abstract class Light
     {
         public float intensity { get; set; } //Intensity of the light
         public Vector3 colour { get; set; } //Colour of the light (RGB)

@@ -6,7 +6,7 @@ using Bioware.Files;
 
 namespace Bioware.Structs
 {
-    class TerrainMapVertex
+    public class TerrainMapVertex
     {
         private const int ID_INDEX = 0;
         private const int POSITION_INDEX = 1;

@@ -3,7 +3,7 @@ using System;
 
 namespace DALightmapper
 {
-    class PointLight : Light
+    public class PointLight : Light
     {
         public PointLight(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
             : base(pos, col, intense, t, shoots)

@@ -8,7 +8,7 @@ using DALightmapper;
 
 namespace Bioware.Files
 {
-    class ERF : BiowareFile
+    public class ERF : BiowareFile
     {
         uint _resourceCount;        //# of files in the erf
         String[] _resourceNames;    //The names of those files
@@ -68,7 +68,8 @@ namespace Bioware.Files
 
         public int indexOf(String fileName)
         {
-            return Array.BinarySearch(_resourceNames, fileName);
+            int index = Array.IndexOf(resourceNames, fileName);
+            return index;
         }
 
         //Tests to see if the input filename is present in this erf

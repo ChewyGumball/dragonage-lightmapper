@@ -4,7 +4,7 @@ using OpenTK;
 
 namespace DALightmapper
 {
-    class Model
+    public class Model
     {
         String _name;
         Mesh[] _meshes;

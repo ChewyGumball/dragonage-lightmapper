@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace Ben
 {
-    class MathHelper
+    public class MathHelper
     {
         static Random random = new Random();
         static Boolean haveNextNextGaussian= false;

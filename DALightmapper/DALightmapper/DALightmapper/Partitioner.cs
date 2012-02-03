@@ -4,7 +4,7 @@ using OpenTK;
 
 namespace DALightmapper
 {
-    interface Partitioner
+    public interface Partitioner
     {
         void build(List<Triangle> triangles, int maxTriangles, BoundingBox box);
         Triangle firstIntersection(Vector3 start, Vector3 direction);

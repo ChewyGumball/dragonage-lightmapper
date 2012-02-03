@@ -1,6 +1,6 @@
 ﻿namespace Bioware.Structs
 {
-    enum GFFFIELDTYPE : ushort
+    public enum GFFFIELDTYPE : ushort
     {
         UINT8 = 0,
         INT8 = 1,

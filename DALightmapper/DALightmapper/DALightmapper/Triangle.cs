@@ -8,7 +8,7 @@ using Bioware.Structs;
 
 namespace DALightmapper
 {
-    class Triangle
+    public class Triangle
     {
         Vector3[] _mVerts;
         Vector2[] _tVerts;
@@ -126,17 +126,24 @@ namespace DALightmapper
             set { textureID = value; }
         }
 
+        public Triangle(Triangle t, Vector3 offset)
+        {
+            _mVerts = new Vector3[3] {t.x + offset, t.y + offset, t.z + offset};
+            _tVerts = new Vector2[3] { t.u, t.v, t.w };
+            lightMapInverseMatrix = new Vector2[2];
+            calculateNormal();
+            if (t.isLightmapped)
+            {
+                isLightmapped = true;
+                _lVerts = new Vector2[3] { t.a, t.b, t.c };
+                calculateInverseMatrix();
+            }
+        }
         public Triangle(Vector3 x, Vector3 y, Vector3 z, Vector2 u, Vector2 v, Vector2 w)
         {
-            _mVerts = new Vector3[3];
-            _tVerts = new Vector2[3];
+            _mVerts = new Vector3[3] {x,y,z};
+            _tVerts = new Vector2[3] {u,v,w};
             lightMapInverseMatrix = new Vector2[2];
-            _mVerts[0] = x;
-            _mVerts[1] = y;
-            _mVerts[2] = z;
-            _tVerts[0] = u;
-            _tVerts[1] = v;
-            _tVerts[2] = w;
             calculateNormal();
             isLightmapped = false;
         }
@@ -145,18 +152,21 @@ namespace DALightmapper
             : this(x, y, z, u, v, w)
         {
             isLightmapped = true;
-            _lVerts = new Vector2[3];
-            _lVerts[0] = a;
-            _lVerts[1] = b;
-            _lVerts[2] = c;
+            _lVerts = new Vector2[3] {a,b,c};
             calculateInverseMatrix();
         }
 
         public bool isOnUVPixel(Vector2 topLeft, Vector2 bottomRight)
         {
+            if (!isLightmapped)
+            {
+                return false;
+            }
+
             Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
             Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
 
+            //Completely above, left, below, or right of the triangle
             if ((a.Y >= topLeft.Y && b.Y >= topLeft.Y && c.Y >= topLeft.Y) ||
                (a.X <= topLeft.X && b.X <= topLeft.X && c.X <= topLeft.X) ||
                (a.Y <= bottomRight.Y && b.Y <= bottomRight.Y && c.Y <= bottomRight.Y) ||
@@ -203,6 +213,11 @@ namespace DALightmapper
 
         public bool uvIsOnThisTriangle(Vector2 coord)
         {
+            if (!isLightmapped)
+            {
+                return false;
+            }
+
             Vector2 convertedCoord = convertToTextureBasis(coord);
             //If the points are >= 0 and add up to <= 1 then its on the triangle.
             //   Remove the = to ignore the edges
@@ -222,8 +237,8 @@ namespace DALightmapper
 
             List<Vector2> points = new List<Vector2>();
 
-            if (a.Y == -1f && b.X == 1f && b.Y == 0.9995117f && c.X == 1f && topLeft.X == 0.96875f && topLeft.Y == 0.9375f && bottomRight.X == 1f && bottomRight.Y == 0.90625f)
-                System.Console.Write("SHIP");
+            //if (a.Y == -1f && b.X == 1f && b.Y == 0.9995117f && c.X == 1f && topLeft.X == 0.96875f && topLeft.Y == 0.9375f && bottomRight.X == 1f && bottomRight.Y == 0.90625f)
+            //    System.Console.Write("SHIP");
 
             //A minimum of 3 points and a maximum of 7 points of the 19 tested below should be added to the list
             if (pointIsBetween(a, topLeft, bottomRight))
@@ -269,6 +284,7 @@ namespace DALightmapper
             if (intersects(c, b, bottomLeft, bottomRight))
                 points.Add(intersectionPoint(c, b, bottomLeft, bottomRight));
 
+            /*
             if (points.Count < 3 || points.Count > 7)
             {
                 if (pointIsBetween(a, topLeft, bottomRight))
@@ -315,6 +331,7 @@ namespace DALightmapper
                     System.Console.WriteLine("c b intersects bottom");
                 throw new Exception(String.Format("There are {0} points in the list. a={1} b={2} c={3} topLeft={4} bottomRight={5}", points.Count,a,b,c,topLeft,bottomRight));
             }
+            //*/
 
             //Find the middle
             foreach (Vector2 v in points)
@@ -331,7 +348,7 @@ namespace DALightmapper
                                                     Vector3.Multiply(Vector3.Subtract(z, x), convertedCoord.Y));
 
             //Add the direction vector to the origin point to get the point we need
-            return Vector3.Add(directionVector, x);
+            return directionVector + x;
         }
 
         public bool lineIntersects(Vector3 start, Vector3 end)
@@ -360,7 +377,7 @@ namespace DALightmapper
 
                     Vector3 a = y - x;
                     Vector3 b = z - x;
-                    Vector3 intersection = start + param * (end - start);
+                    Vector3 intersection = start + (param * (end - start));
 
                     float adota = Vector3.Dot(a, a);
                     float bdotb = Vector3.Dot(b, b);
@@ -412,7 +429,14 @@ namespace DALightmapper
 
         private bool pointIsBetween(Vector2 a, Vector2 topLeft, Vector2 bottomRight)
         {
-            return a.X >= topLeft.X && a.X <= bottomRight.X && a.Y <= topLeft.Y && a.Y >= bottomRight.Y;
+            if (!isLightmapped)
+            {
+                return false;
+            }
+            else
+            {
+                return a.X >= topLeft.X && a.X <= bottomRight.X && a.Y <= topLeft.Y && a.Y >= bottomRight.Y;
+            }
         }
 
         private Vector2 convertToTextureBasis(Vector2 coord)

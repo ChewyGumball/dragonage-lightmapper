@@ -13,7 +13,7 @@ using DALightmapper;
 
 namespace Bioware.Files
 {
-    class ModelMesh:BiowareMesh
+    public class ModelMesh:BiowareMesh
     {
         public ModelMesh(GFF gffFile)
             : base(gffFile)

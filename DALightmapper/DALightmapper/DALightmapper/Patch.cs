@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using OpenTK;
 
 namespace DALightmapper
 {
-    [Serializable]
-    class Patch
+    public class Patch
     {
         public Vector3 emmission { get; private set; }
         //public Vector3 reflectance { get; private set; }

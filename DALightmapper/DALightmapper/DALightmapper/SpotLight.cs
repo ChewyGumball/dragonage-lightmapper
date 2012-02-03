@@ -3,7 +3,7 @@ using System;
 
 namespace DALightmapper
 {
-    class SpotLight : Light
+    public class SpotLight : Light
     {
         Vector3 direction { get; set; }
         float innerAngle { get; set; }

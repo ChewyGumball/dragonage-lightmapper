@@ -41,12 +41,14 @@
             this.btn_Stop = new System.Windows.Forms.Button();
             this.btn_Clear = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
+            this.pg_Status = new System.Windows.Forms.ProgressBar();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_Start
             // 
-            this.btn_Start.Location = new System.Drawing.Point(256, 363);
+            this.btn_Start.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_Start.Location = new System.Drawing.Point(256, 411);
             this.btn_Start.Name = "btn_Start";
             this.btn_Start.Size = new System.Drawing.Size(75, 23);
             this.btn_Start.TabIndex = 0;
@@ -56,6 +58,8 @@
             // 
             // lb_Files
             // 
+            this.lb_Files.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.lb_Files.FormattingEnabled = true;
             this.lb_Files.Location = new System.Drawing.Point(66, 30);
             this.lb_Files.Name = "lb_Files";
@@ -85,14 +89,14 @@
             // settingsToolStripMenuItem
             // 
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
             this.settingsToolStripMenuItem.Click += new System.EventHandler(this.settingsToolStripMenuItem_Click);
             // 
             // previewToolStripMenuItem
             // 
             this.previewToolStripMenuItem.Name = "previewToolStripMenuItem";
-            this.previewToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.previewToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.previewToolStripMenuItem.Text = "Preview";
             this.previewToolStripMenuItem.Click += new System.EventHandler(this.previewToolStripMenuItem_Click);
             // 
@@ -118,22 +122,29 @@
             // 
             // tb_Status
             // 
+            this.tb_Status.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+                        | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.tb_Status.BackColor = System.Drawing.SystemColors.Control;
             this.tb_Status.Location = new System.Drawing.Point(5, 131);
             this.tb_Status.Multiline = true;
             this.tb_Status.Name = "tb_Status";
             this.tb_Status.ReadOnly = true;
             this.tb_Status.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.tb_Status.Size = new System.Drawing.Size(411, 225);
+            this.tb_Status.Size = new System.Drawing.Size(411, 253);
             this.tb_Status.TabIndex = 5;
+            this.tb_Status.TabStop = false;
+            this.tb_Status.WordWrap = false;
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.FileName = "openFileDialog1";
             this.openFileDialog1.Multiselect = true;
             // 
             // btn_Stop
             // 
-            this.btn_Stop.Location = new System.Drawing.Point(337, 362);
+            this.btn_Stop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btn_Stop.Enabled = false;
+            this.btn_Stop.Location = new System.Drawing.Point(337, 411);
             this.btn_Stop.Name = "btn_Stop";
             this.btn_Stop.Size = new System.Drawing.Size(75, 23);
             this.btn_Stop.TabIndex = 6;
@@ -143,7 +154,8 @@
             // 
             // btn_Clear
             // 
-            this.btn_Clear.Location = new System.Drawing.Point(13, 363);
+            this.btn_Clear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.btn_Clear.Location = new System.Drawing.Point(5, 411);
             this.btn_Clear.Name = "btn_Clear";
             this.btn_Clear.Size = new System.Drawing.Size(75, 23);
             this.btn_Clear.TabIndex = 7;
@@ -151,11 +163,22 @@
             this.btn_Clear.UseVisualStyleBackColor = true;
             this.btn_Clear.Click += new System.EventHandler(this.btn_Clear_Click);
             // 
+            // pg_Status
+            // 
+            this.pg_Status.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.pg_Status.Enabled = false;
+            this.pg_Status.Location = new System.Drawing.Point(5, 387);
+            this.pg_Status.Name = "pg_Status";
+            this.pg_Status.Size = new System.Drawing.Size(407, 21);
+            this.pg_Status.TabIndex = 8;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(417, 406);
+            this.ClientSize = new System.Drawing.Size(417, 438);
+            this.Controls.Add(this.pg_Status);
             this.Controls.Add(this.btn_Clear);
             this.Controls.Add(this.btn_Stop);
             this.Controls.Add(this.tb_Status);
@@ -165,6 +188,7 @@
             this.Controls.Add(this.btn_Start);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
+            this.MinimumSize = new System.Drawing.Size(271, 271);
             this.Name = "MainWindow";
             this.Text = "MainWindow";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
@@ -184,11 +208,12 @@
         private System.Windows.Forms.Button btn_Add;
         private System.Windows.Forms.Button btn_Remove;
         private System.Windows.Forms.TextBox tb_Status;
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.Button btn_Stop;
         private System.Windows.Forms.Button btn_Clear;
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem previewToolStripMenuItem;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
+        private System.Windows.Forms.ProgressBar pg_Status;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
     }
 }

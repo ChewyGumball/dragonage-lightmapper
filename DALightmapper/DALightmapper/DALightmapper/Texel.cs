@@ -4,7 +4,7 @@ using OpenTK;
 
 namespace DALightmapper
 {
-    class Texel
+    public class Texel
     {
         public List<Patch> patches {get; private set;}
         public Vector3 excidentLight

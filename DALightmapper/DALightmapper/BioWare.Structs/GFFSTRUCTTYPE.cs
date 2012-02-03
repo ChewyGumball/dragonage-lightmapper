@@ -1,8 +1,11 @@
 ﻿namespace Bioware.Structs
 {
-    enum GFFSTRUCTTYPE
+    public enum GFFSTRUCTTYPE
     {
         MESH_CHUNK = 1802397795, //Mesh Chunk
+        MMH_OFFSET = 1819505268, //Offset from parent node
+        MMH_ORIENTATION = 1635020658, //Orientation from parent node
+        MMH_SCALE = 1818321779, //Scale from parent node
         BOUNDS = 1935961698, //Bounding box
         VERTEX_DECLARATOR = 1818453348,  //Vertex Declarator
         MSH_TOP_STRUCT = 1752393069,  //Top struct of an msh file

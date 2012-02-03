@@ -5,7 +5,7 @@ using Bioware.Files;
 
 namespace Bioware.Structs
 {
-    class BiowareStruct
+    public class BiowareStruct
     {
         GFFStructDefinition _definition;
         GFF _binaryFile;

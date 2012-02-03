@@ -4,7 +4,7 @@ using Ben;
 
 namespace Bioware.Files
 {
-    class BiowareFile
+    public class BiowareFile
     {
         bool isOpen;
         protected BinaryReader file;

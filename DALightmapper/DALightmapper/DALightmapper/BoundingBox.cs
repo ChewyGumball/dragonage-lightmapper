@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 using OpenTK;
 
 namespace DALightmapper
 {
-    class BoundingBox
+    public class BoundingBox
     {
         public Vector3 max { get; set;}
         public Vector3 min { get; set; }

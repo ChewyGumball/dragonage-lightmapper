@@ -5,7 +5,7 @@ using Ben;
 
 namespace Bioware.Files
 {
-    class GFF : BiowareFile
+    public class GFF : BiowareFile
     {
         GFFHeader _header;
         BiowareStruct[] _structs;
@@ -47,6 +47,8 @@ namespace Bioware.Files
             }
             Close();
         }
+
+        public GFF(String filename) : this(filename, 0) { }
 
         public override void OpenR()
         {

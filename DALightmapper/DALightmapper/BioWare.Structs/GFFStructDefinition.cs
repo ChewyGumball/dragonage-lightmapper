@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Bioware.Structs
 {
-    class GFFStructDefinition
+    public class GFFStructDefinition
     {
         GFFSTRUCTTYPE _id;
         uint _fieldCount;

@@ -9,7 +9,7 @@ using OpenTK;
 
 namespace Ben
 {
-    struct Pixel
+    public struct Pixel
     {
         public byte r, g, b, a;
 
@@ -34,7 +34,7 @@ namespace Ben
         }
     }
 
-    class Targa
+    public class Targa
     {
         #region types
         private const byte noData = 0;

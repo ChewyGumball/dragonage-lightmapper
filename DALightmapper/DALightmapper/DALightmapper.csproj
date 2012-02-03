@@ -24,9 +24,10 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationRevision>1</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -41,23 +42,36 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoStdLib>false</NoStdLib>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>
   <PropertyGroup>
     <TargetZone>LocalIntranet</TargetZone>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>false</GenerateManifests>
+    <GenerateManifests>true</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>DALightmapper.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestCertificateThumbprint>2ADFD98338E9B773AB5F1A06B6D6B14493EAD6F3</ManifestCertificateThumbprint>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ManifestKeyFile>DALightmapper_TemporaryKey.pfx</ManifestKeyFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
@@ -103,10 +117,10 @@
     <Compile Include="DALightmapper\Octree.cs" />
     <Compile Include="DALightmapper\Partitioner.cs" />
     <Compile Include="DALightmapper\Texel.cs" />
-    <Compile Include="MainWindow.cs">
+    <Compile Include="UI\MainWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MainWindow.Designer.cs">
+    <Compile Include="UI\MainWindow.Designer.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="BioWare.Files\BiowareMesh.cs" />
@@ -117,10 +131,10 @@
     <Compile Include="BioWare.Files\ModelHierarchy.cs" />
     <Compile Include="DALightmapper\ModelInstance.cs" />
     <Compile Include="BioWare.Files\ModelMesh.cs" />
-    <Compile Include="OpenGLPreview.cs">
+    <Compile Include="UI\OpenGLPreview.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="OpenGLPreview.Designer.cs">
+    <Compile Include="UI\OpenGLPreview.Designer.cs">
       <DependentUpon>OpenGLPreview.cs</DependentUpon>
     </Compile>
     <Compile Include="DALightmapper\Patch.cs" />
@@ -138,17 +152,17 @@
     <Compile Include="BioWare.Structs\TerrainMeshFace.cs" />
     <Compile Include="BioWare.Structs\TerrainMeshVertex.cs" />
     <Compile Include="DALightmapper\Triangle.cs" />
-    <Compile Include="Settings.cs" />
-    <Compile Include="SettingsWindow.cs">
+    <Compile Include="UI\Settings.cs" />
+    <Compile Include="UI\SettingsWindow.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SettingsWindow.Designer.cs">
+    <Compile Include="UI\SettingsWindow.Designer.cs">
       <DependentUpon>SettingsWindow.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="MainWindow.resx">
+    <EmbeddedResource Include="UI\MainWindow.resx">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="OpenGLPreview.resx">
+    <EmbeddedResource Include="UI\OpenGLPreview.resx">
       <DependentUpon>OpenGLPreview.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -161,10 +175,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="SettingsWindow.resx">
+    <EmbeddedResource Include="UI\SettingsWindow.resx">
       <DependentUpon>SettingsWindow.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="app.config" />
+    <None Include="UI\app.config" />
+    <None Include="UI\DALightmapper_TemporaryKey.pfx" />
     <None Include="Properties\app.manifest">
       <SubType>Designer</SubType>
     </None>
