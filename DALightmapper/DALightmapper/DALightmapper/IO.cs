@@ -40,7 +40,7 @@ namespace DALightmapper
         }
     }
 
-    class IO
+    public class IO
     {
         //If set to true, reading should be aborted and donereading event should fire false
         static Boolean _abort;
@@ -85,7 +85,15 @@ namespace DALightmapper
                             Settings.stream.AppendFormatLine(Verbosity.Low, "{0}. {1}", j, temp.structs[i].fields[j].ToString());
                         }
                         Settings.stream.indent--;
-                   }
+                    }
+                    if (extention == ".mmh")
+                    {
+                        ModelHierarchy m = new ModelHierarchy(temp);
+                    }
+                    else if (extention == ".msh")
+                    {
+                        ModelMesh m = new ModelMesh(temp);
+                    }
                     temp.Close();
                 }
                 else if (extention == ".lvl")
