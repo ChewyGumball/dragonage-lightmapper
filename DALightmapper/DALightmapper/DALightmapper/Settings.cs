@@ -26,11 +26,8 @@ namespace DALightmapper
         //--Light Mapping Variables--//
         public static int numPhotonsPerLight = 10000;   //Number of photons to shoot per light
         public static double gatherRadius = 0.2;         //Radius of sphere to sample photons for a patch
-        public static double minimumEnergy = 0.05; //The minimum energy required for lightmapping to continue
         public static Boolean useNumBounces = false;
         
-        public static float renderThreshold = 0.5f; //The threshold above which a pixel will be rendered instead of lerped
-        public static int lerpStartStride = 4;  //The stride to start lerping with
         public static int pixelsPerUnit = 10;   //Number of pixels per unit length to use when making lightmap textures
 
         //--Paths to Required Files--// 
@@ -78,7 +75,6 @@ namespace DALightmapper
             numPhotonsPerLight = Properties.Settings.Default.numPhotons;
             gatherRadius = Properties.Settings.Default.gatherRadius;
             verboseStatus = (Verbosity)Properties.Settings.Default.verbosity;
-            minimumEnergy = Properties.Settings.Default.minEnergy;
             useTrueAttenuation = Properties.Settings.Default.trueAttenuation;
             cleanUpTempFiles = Properties.Settings.Default.clearTempFiles;
             maxThreads = Properties.Settings.Default.maxThreads;
@@ -106,7 +102,6 @@ namespace DALightmapper
             Properties.Settings.Default.numPhotons = numPhotonsPerLight;
             Properties.Settings.Default.gatherRadius = gatherRadius;
             Properties.Settings.Default.verbosity = (int)verboseStatus;
-            Properties.Settings.Default.minEnergy = minimumEnergy;
             Properties.Settings.Default.trueAttenuation = useTrueAttenuation;
             Properties.Settings.Default.clearTempFiles = cleanUpTempFiles;
             Properties.Settings.Default.maxThreads = maxThreads;

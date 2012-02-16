@@ -42,6 +42,7 @@ namespace Bioware.Files
         int _numBones;
         private BiowareMesh _mesh;
 
+        public Boolean isFXModel { get; private set; }
         public String mmhName
         {
             get { return _mmhName; }
@@ -86,10 +87,14 @@ namespace Bioware.Files
             _numBones = file.ReadInt32();
 
             //Apparently fx models have an extra field...
-            int extra = binaryFile.structs[0].fields.Length == 8 ? 1 : 0;
+            isFXModel = binaryFile.structs[0].fields.Length == 8;
+            if (isFXModel)
+            {
+                return;
+            }
 
             //Get the children list (should only contain GOB)
-            file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[TOP_LEVEL_CHILDREN_INDEX + extra].index, SeekOrigin.Begin);
+            file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[TOP_LEVEL_CHILDREN_INDEX].index, SeekOrigin.Begin);
             reference = file.ReadInt32();
             file.BaseStream.Seek(binaryFile.dataOffset + reference, SeekOrigin.Begin);
             GenericList childrenList = new GenericList(file);

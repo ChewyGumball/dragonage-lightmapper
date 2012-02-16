@@ -18,11 +18,11 @@ namespace Ben
         { }
 
         public Pixel(Vector3 v)
-            : this((byte)v.X, (byte)v.Y, (byte)v.Z)
+            : this((byte)v.Z, (byte)v.Y, (byte)v.X)
         { }
 
         public Pixel(Vector4 v)
-            : this((byte)v.X, (byte)v.Y, (byte)v.Z, (byte)v.W)
+            : this((byte)v.Z, (byte)v.Y, (byte)v.X, (byte)v.W)
         { }
 
         public Pixel(byte blue, byte green, byte red, byte alpha)
@@ -31,6 +31,46 @@ namespace Ben
             g = green;
             b = blue;
             a = alpha;
+        }
+
+        public static Pixel operator +(Pixel a, Pixel b)
+        {
+            int newr = Math.Min(255, Math.Max(a.r + b.r, 0));
+            int newg = Math.Min(255, Math.Max(a.g + b.g, 0));
+            int newb = Math.Min(255, Math.Max(a.b + b.b, 0));
+            int newa = Math.Min(255, Math.Max(a.a + b.a, 0));
+
+            return new Pixel((byte)newb, (byte)newg, (byte)newr, (byte)newa);
+        }
+
+        public static Pixel operator *(Pixel a, int b)
+        {
+            return b * a;
+        }
+
+        public static Pixel operator *(int a, Pixel b)
+        {
+            int newr = Math.Min(255, Math.Max(a * b.r, 0));
+            int newg = Math.Min(255, Math.Max(a * b.g, 0));
+            int newb = Math.Min(255, Math.Max(a * b.b, 0));
+            int newa = Math.Min(255, Math.Max(a * b.a, 0));
+
+            return new Pixel((byte)newb, (byte)newg, (byte)newr, (byte)newa);
+        }
+
+        public static Pixel operator /(Pixel a, int b)
+        {
+            return b / a;
+        }
+
+        public static Pixel operator /(int a, Pixel b)
+        {
+            int newr = Math.Min(255, Math.Max(b.r / a, 0));
+            int newg = Math.Min(255, Math.Max(b.g / a, 0));
+            int newb = Math.Min(255, Math.Max(b.b / a, 0));
+            int newa = Math.Min(255, Math.Max(b.a / a, 0));
+
+            return new Pixel((byte)newb, (byte)newg, (byte)newr, (byte)newa);
         }
     }
 
@@ -66,7 +106,7 @@ namespace Ben
         Pixel[] pixels;
 
 
-        String filename { get; set; }
+        public String filename { get; set; }
 
         public Pixel this[int i, int j]
         {
@@ -98,6 +138,49 @@ namespace Ben
             : this(pix, w, h, bpp, "")
         { }
 
+
+        public void applyFilter(int[,] filter)
+        {
+            int filterWidth = filter.GetLength(0);
+            int filterHeight = filter.GetLength(1);
+
+            int halfWidth = filterWidth / 2;
+            int halfHeight = filterHeight / 2;
+
+            Pixel[] newPixels = new Pixel[pixels.Length]; 
+
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    int weight = 0;
+                    int newR = 0;
+                    int newG = 0;
+                    int newB = 0;
+                    for (int filterX = 0; filterX < filterWidth; filterX++)
+                    {
+                        for (int filterY = 0; filterY < filterHeight; filterY++)
+                        {
+                            int curX = x - halfWidth + filterX;
+                            int curY = y - halfHeight + filterY;
+                            if ((curX >= 0 && curX < width) && (curY >= 0 && curY < height))
+                            {
+                                newR += filter[filterX, filterY] * this[curX, curY].r;
+                                newG += filter[filterX, filterY] * this[curX, curY].g;
+                                newB += filter[filterX, filterY] * this[curX, curY].b;
+                            }
+                            weight += filter[filterX, filterY];
+                        }
+                    }
+                    if (weight != 0)
+                    {
+                        newPixels[y * width + x] = new Pixel((byte)(newB / weight), (byte)(newG / weight), (byte)(newR / weight));
+                    }
+                }
+            }
+
+            pixels = newPixels;
+        }
 
         public void readFromFile()
         {

@@ -319,9 +319,6 @@ namespace Bioware.Files
             BiowareModel terrainModel = new BiowareModel(new Vector3(0, 0, 0), new Quaternion(0, 0, 0, 1), binaryFile.path, modelID, 0, true);
             //Make an array to hold all the triangles
             
-            //Set the mesh for the model
-            ModelHierarchy terrainHierarchy = new ModelHierarchy(this,name);
-            terrainModel.hierarchy = terrainHierarchy;
             return terrainModel;
         }
 

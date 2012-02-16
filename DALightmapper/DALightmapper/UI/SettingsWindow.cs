@@ -129,6 +129,12 @@ namespace DALightmapper
         {
             Settings.maxThreads = (int)nmup_Cores.Value;
             ThreadPool.SetMaxThreads(Settings.maxThreads, Settings.maxThreads);
+            Settings.stream.AppendFormatLine("MaxThreads = {0}", Settings.maxThreads);
+        }
+
+        private void btn_Save_Click(object sender, EventArgs e)
+        {
+            Settings.saveSettings();
         }
     }
 }

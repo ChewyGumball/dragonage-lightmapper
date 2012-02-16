@@ -28,6 +28,7 @@ namespace DALightmapper
         public Patch(Vector3 pos, Vector3 norm, Vector3 emm, Vector3 refl)
         {
             emmission = emm;
+            incidentLight = new Vector3();
             //reflectance = refl;
             normal = norm;
             position = pos;

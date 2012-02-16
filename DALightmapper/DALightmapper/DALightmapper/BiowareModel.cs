@@ -12,7 +12,6 @@ namespace DALightmapper
 {
     public class BiowareModel
     {
-        public ModelHierarchy hierarchy { get; set; }
         public BiowareMesh mesh { get; private set; }
         public Vector3 position { get; private set; }
         public Quaternion rotation { get; private set; }

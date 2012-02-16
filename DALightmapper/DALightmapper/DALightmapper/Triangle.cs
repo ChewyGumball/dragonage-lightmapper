@@ -163,22 +163,23 @@ namespace DALightmapper
                 return false;
             }
 
-            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
-            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
-
             //Completely above, left, below, or right of the triangle
             if ((a.Y >= topLeft.Y && b.Y >= topLeft.Y && c.Y >= topLeft.Y) ||
                (a.X <= topLeft.X && b.X <= topLeft.X && c.X <= topLeft.X) ||
                (a.Y <= bottomRight.Y && b.Y <= bottomRight.Y && c.Y <= bottomRight.Y) ||
                (a.X >= bottomRight.X && b.X >= bottomRight.X && c.X >= bottomRight.X))
+            {
                 return false;
-
+            }
 
             //if a corner of the triangle is on the pixel
             if (pointIsBetween(a, topLeft, bottomRight) ||
                 pointIsBetween(b, topLeft, bottomRight) ||
                 pointIsBetween(c, topLeft, bottomRight))
                 return true;
+            
+            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
+            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
 
             //if a corner of the pixel is on the triangle 
             if (uvIsOnThisTriangle(topLeft) ||
@@ -353,69 +354,41 @@ namespace DALightmapper
 
         public bool lineIntersects(Vector3 start, Vector3 end)
         {
-            //Find intersection of line and plane containing triangle
-            float denominator = Vector3.Dot(normal, end - start);
+            Vector3 edge1 = y - x;
+            Vector3 edge2 = z - x;
 
-            //If the denominator is 0 then it is parallel
-            if (denominator == 0)
+            Vector3 direction = end - start;
+
+            Vector3 crossed = Vector3.Cross(direction, edge2);
+
+            float determinant = Vector3.Dot(edge1, crossed);
+
+            if (determinant > 0)
             {
-                return false;
-            }
-            else
-            {
-                float numerator = Vector3.Dot(normal, x - start);
-                float param = numerator / denominator;
-
-                //The triangle is past the end or before the start
-                if (param > 1 || param < 0)
+                Vector3 distance = start - x;
+                float u = Vector3.Dot(distance, crossed);
+                if (u > 0 && u < determinant)
                 {
-                    return false;
-                }
-                else
-                {
-                    //Find coefficients of triangle vectors to get to that point
-
-                    Vector3 a = y - x;
-                    Vector3 b = z - x;
-                    Vector3 intersection = start + (param * (end - start));
-
-                    float adota = Vector3.Dot(a, a);
-                    float bdotb = Vector3.Dot(b, b);
-                    float adotb = Vector3.Dot(a, b);
-                    float intdota = Vector3.Dot(intersection, a);
-                    float intdotb = Vector3.Dot(intersection, b);
-
-                    float denominator2 = (adotb * adotb) - (adota * bdotb);
-
-                    //This is a degenerate triangle
-                    if (denominator2 == 0)
+                    crossed = Vector3.Cross(distance, edge1);
+                    float v = Vector3.Dot(direction, crossed);
+                    if (v > 0 && (u + v) < determinant)
                     {
-                        return false;
-                    }
-                    else
-                    {
-                        //Find the combination of vectors to get the intersection point
-                        float u = ((adotb * intdota) - (adota * intdotb)) / denominator2;
-                        float t = ((adotb * intdotb) - (bdotb * intdota)) / denominator2;
-                        float sum = t + u;
-
-                        //if the sum of the parameters is not between 0 and 1 then outside the triangle
-                        if (sum > 1 || sum < 0)
-                        {
-                            return false;
-                        }
+                        return true;
                     }
                 }
             }
-            return true;
+
+            return false;
         }
 
         public Vector3 lineIntersectionPoint(Vector3 start, Vector3 end)
         {
+            /*
             if(!lineIntersects(start,end))
             {
                 throw new Exception(String.Format("The line from {0} to {1} does not intersect this triangle ({2},{3},{4}).", start, end, x, y, z));
             }
+            //*/
             //Find intersection of line and plane containing triangle
             float denominator = Vector3.Dot(normal, end - start);
             float numerator = Vector3.Dot(normal, x - start);

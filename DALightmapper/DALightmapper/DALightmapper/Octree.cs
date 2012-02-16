@@ -36,17 +36,17 @@ namespace DALightmapper
 
         public Octree(List<Triangle> triangles)
         {
-            build(triangles, 20, new BoundingBox(triangles));
+            build(triangles, 100, 15, new BoundingBox(triangles));
         }
 
         public Octree(List<Photon> p)
         {
-            build(p, 20, new BoundingBox(p));
+            build(p, 100, new BoundingBox(p));
         }
 
-        public Octree(List<Triangle> triangles, int maxTriangles, BoundingBox box)
+        public Octree(List<Triangle> triangles, int maxTriangles, int maxDepth, BoundingBox box)
         {
-            build(triangles, maxTriangles, box);
+            build(triangles, maxTriangles, maxDepth, box);
         }
 
         public Octree(List<Photon> p, int maxPoints, BoundingBox box)
@@ -54,10 +54,10 @@ namespace DALightmapper
             build(p, maxPoints, box);
         }
         
-        public void build(List<Triangle> triangles, int maxTriangles, BoundingBox box)
+        public void build(List<Triangle> triangles, int maxTriangles, int maxDepth, BoundingBox box)
         {
             bounds = box;
-            if (triangles.Count <= maxTriangles)
+            if (triangles.Count <= maxTriangles || maxDepth == 0)
             {
                 tris = triangles;
                 unused = new List<Triangle>();
@@ -88,7 +88,7 @@ namespace DALightmapper
                             }
                         }
                     }
-                    children[i] = new Octree(childrenTriangles, maxTriangles, newBox);
+                    children[i] = new Octree(childrenTriangles, maxTriangles, maxDepth -1, newBox);
                 }
                 unused = new List<Triangle>();
                 foreach (Triangle t in triangles)
@@ -230,7 +230,6 @@ namespace DALightmapper
         public List<Photon> getWithinDistanceSquared(Vector3 point, double distance)
         {
             List<Photon> photons = new List<Photon>();
-
             if (bounds.sphereIntersect(point, distance))
             {
                 if (points.Count > 0)
@@ -252,7 +251,6 @@ namespace DALightmapper
                     }
                 }
             }
-
             return photons;
         }
     }

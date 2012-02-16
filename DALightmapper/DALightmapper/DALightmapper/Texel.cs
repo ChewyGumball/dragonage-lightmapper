@@ -9,7 +9,19 @@ namespace DALightmapper
         public List<Patch> patches {get; private set;}
         public Vector3 excidentLight
         {
-            get { Vector3 temp = new Vector3(); foreach (Patch p in patches) temp += p.excidentLight; return temp / patches.Count; }
+            get
+            {
+                Vector3 temp = new Vector3();
+                foreach (Patch p in patches)
+                {
+                    temp += p.excidentLight;
+                }
+                if (patches.Count > 0)
+                {
+                    temp /= patches.Count;
+                }
+                return temp;
+            }
         }
 
         public Texel()

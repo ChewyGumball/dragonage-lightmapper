@@ -21,9 +21,12 @@ namespace DALightmapper
         {
             get { return diskFile.path; }
         }
-        public ModelInstance[] lightmapModels { get; private set; }
-        public BiowareModel[] models { get; private set; }
-        public Light[] lights { get; private set; }
+        public List<ModelInstance> lightmapModels { get; private set; }
+        public List<BiowareModel> models { get; private set; }
+        public List<Light> lights { get; private set; }
+
+        private Dictionary<String, Model> baseModels;
+
         #region Index Values
 
         //Struct index values (mostly list indecies)
@@ -102,6 +105,8 @@ namespace DALightmapper
 
             //Initialize the header file
             headerFile = new GFF(filePath, diskFile.resourceOffsets[headerIndex]);
+            baseModels = new Dictionary<String, Model>();
+            lightmapModels = new List<ModelInstance>();
             //Set up the struct definitions (for sanity!)
             setStructDefinitions();
         }
@@ -113,14 +118,14 @@ namespace DALightmapper
 
             //If the level is outdoors, read the models and the terrain mesh, otherwise just read in the models
             //      the file is layed out differently for outdoors and indoor environments
-            List<BiowareModel> modelList = new List<BiowareModel>();
-            List<Light> lightList = new List<Light>(); ;
+            models = new List<BiowareModel>();
+            lights = new List<Light>(); ;
             GenericList objectList;
 
             //If this is an outdoor level read in the terrain
             if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN)
             {
-                modelList.AddRange(readTerrainModels());
+                models.AddRange(readTerrainModels());
             }
 
             //then make the generic list for lights and models
@@ -142,8 +147,8 @@ namespace DALightmapper
             //If this is an outdoor level this is the list of models and lights
             if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_TERRAIN)
             {
-                modelList.AddRange(readPropModels(objectList, new Vector3(), new Quaternion(), 0));
-                lightList.AddRange(readLights(objectList, new Vector3(), new Quaternion(), 0));
+                lightmapModels.AddRange(readPropModels(objectList, new Vector3(), new Quaternion(), 0));
+                lights.AddRange(readLights(objectList, new Vector3(), new Quaternion(), 0));
             }
 
             //if its an indoor room we have to go farther into the data
@@ -182,20 +187,12 @@ namespace DALightmapper
                         //Make the list of objects in the room
                         objectList = new GenericList(file);
                         //Add the models and lights to the lists
-                        modelList.AddRange(readPropModels(objectList, position, orientation, id));
-                        lightList.AddRange(readLights(objectList, position, orientation, id));
+                        lightmapModels.AddRange(readPropModels(objectList, position, orientation, id));
+                        lights.AddRange(readLights(objectList, position, orientation, id));
                     }
                 }
             }
-
-            //Make the models array
-            models = modelList.ToArray();
-            //Complete the models with model hierarchies
-            createMeshHierarchies();
-
-            //Make the lights array
-            lights = lightList.ToArray();
-
+            generatePatches(baseModels);
         }
 
         private List<Light> readLights(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
@@ -347,9 +344,9 @@ namespace DALightmapper
             return terrainModels;
         }
 
-        private List<BiowareModel> readPropModels(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
+        private List<ModelInstance> readPropModels(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
         {
-            List<BiowareModel> propModels = new List<BiowareModel>();
+            List<ModelInstance> propModels = new List<ModelInstance>();
             BinaryReader file = headerFile.getReader();
             long currentPosition;   //position of beginning of model struct (for offsets within struct
 
@@ -402,8 +399,36 @@ namespace DALightmapper
                     file.BaseStream.Seek(currentPosition + modelStruct.fields[MODEL_ID_INDEX].index,SeekOrigin.Begin);
                     modelID = file.ReadUInt32();
 
-                    //add the model to the models list (as normal models)
-                    propModels.Add(new BiowareModel(position,rotation,modelFileName,modelID, roomID, false));
+                    //If the model isnt in the dictionary already
+                    if (!baseModels.ContainsKey(modelFileName))
+                    {
+                        //Find the mmh file
+                        GFF tempGFF = IO.findGFFFile(modelFileName);
+                        //If the file was not found
+                        if (tempGFF != null)
+                        {
+                            ModelHierarchy h = new ModelHierarchy(tempGFF);
+                            //Only add it if its not a effects model
+                            if (!h.isFXModel)
+                            {
+                                baseModels.Add(modelFileName, h.mesh.toModel());
+                            }
+                        }
+                        else
+                        {
+                            //Print an error  
+                            Settings.stream.AppendFormatLine("Could not find model file \"{0}\".",modelFileName);
+                        }
+                    }
+
+                    //If its not in the dictionary this time then we just ignore it
+                    if(baseModels.ContainsKey(modelFileName))
+                    {
+                        if (baseModels[modelFileName].isLightmapped || baseModels[modelFileName].castsShadows)
+                        {
+                            propModels.Add(new ModelInstance(modelFileName, baseModels[modelFileName], position, rotation, modelID, roomID));
+                        }
+                    }
                 }
                 else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)
                 {
@@ -422,93 +447,18 @@ namespace DALightmapper
             return propModels;
         }
 
-        private void createMeshHierarchies()
-        {
-            //Create a list of model hierarchies
-            List<ModelHierarchy> modelHierarchies = new List<ModelHierarchy>();
-
-            //Get all the (unique) names for the model files (.mmh)
-            HashSet<String> modelNames = new HashSet<String>();
-            foreach (BiowareModel m in models)
-            {
-                if (!m.isTerrain)
-                    modelNames.Add(m.modelFileName);
-                else
-                {
-                    modelHierarchies.Add(m.hierarchy);
-                }
-            }
-
-
-            GFF tempGFF;    //temporary gff file for reading purposes
-
-            //For each of the names find the model files in the erf(or wherever)
-            foreach(String name in modelNames)
-            {
-                //Find the mmh file
-                tempGFF = IO.findGFFFile(name);
-                //If the file was not found
-                if (tempGFF == null)
-                {
-                    //Print an error and throw an exception Todo: CHANGE TO JUST CUSTOM EXCEPTION 
-                    Console.WriteLine("Could not find model file \"{0}\".", name);
-                    throw new Exception("COULD NOT FIND MODEL FILE, LOOK AT CONSOLE!!!!!!");
-                }
-
-                //Add the model hierarchy to the list
-                modelHierarchies.Add(new ModelHierarchy(tempGFF));
-            }
-
-            //These models well be used for lightmapping, they are simplified and cleaner 
-            Model[] realModels = new Model[modelHierarchies.Count];
-            //These are the model instances of the above models
-            lightmapModels = new ModelInstance[models.Length];
-
-            //Create the models
-            for (int i = 0; i < modelHierarchies.Count; i++)
-            {
-                realModels[i] = modelHierarchies[i].mesh.toModel();                
-            }
-
-            generatePatches(realModels);
-
-            //Go through the hierarchies
-            for(int i = 0;i<modelHierarchies.Count;i++)
-            {
-                ModelHierarchy mh = modelHierarchies[i];
-                //And for each model
-                for(int j = 0;j<models.Length;j++)
-                {
-                    BiowareModel m = models[j];
-
-                    // if the model is a prop model or the model is terrain and it hasn't been set yet
-                    if (m.modelFileName == mh.mmhName || (m.isTerrain && lightmapModels[i] == null))
-                    {
-                        //Set the hierarchy in the bioware model
-                        m.hierarchy = mh;
-
-                        if (realModels[i].isLightmapped || realModels[i].castsShadows)
-                        {
-                            //Create the lightmap model
-                            lightmapModels[j] = new ModelInstance(m.modelFileName, realModels[i], m.position, m.rotation, m.modelID, m.roomID);
-                        }
-                    }
-                }
-            }
-        }
-
         //Generates patches for each base mesh
         // Should either intelligently size lightmaps based on area or read in from files somewhere
-        private void generatePatches(Model[] models)
+        private void generatePatches(Dictionary<String,Model> models)
         {
             //TEMPORARY!!!!! 
-            foreach (Model model in models)
+            foreach (Model model in models.Values)
             {
                 foreach (Mesh mesh in model.meshes)
                 {
                     if (mesh.isLightmapped)
                     {
-                        mesh.generatePatches(16, 16);
+                        mesh.generatePatches(64, 64);
                     }
                 }
             }

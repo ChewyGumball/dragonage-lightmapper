@@ -30,17 +30,6 @@ namespace DALightmapper
             Settings.initializeSettings();
             oglPreviewWindow = new OpenGLPreview();
             settingsWindow = new SettingsWindow();
-
-            String a = "fhi_floorstoneedge_0.mmh";
-            String b = "fhi_floorstone_0.mmh";
-            String c = "fhi_floorstone3x3_0.mmh";
-            String d = "fhi_floorstoneedge_0.phy";
-
-            Settings.stream.AppendFormatLine("{0} to {1} = {2}", a, b, a.CompareTo(b));
-            Settings.stream.AppendFormatLine("{0} to {1} = {2}", b, c, b.CompareTo(c));
-            Settings.stream.AppendFormatLine("{0} to {1} = {2}", c, d, c.CompareTo(d));
-            Settings.stream.AppendFormatLine("{0} to {1} = {2}", d, a, d.CompareTo(a));
-
             
             try
             {

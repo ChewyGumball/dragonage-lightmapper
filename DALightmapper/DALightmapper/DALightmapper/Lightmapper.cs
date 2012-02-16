@@ -53,12 +53,14 @@ namespace DALightmapper
         // Runs the light map process
         public static void runLightmaps(String path)
         {
+            Settings.stream.AppendText("Loading level . . . ");
             Level level = IO.readLevel(path);
             if (level == null)
             {
                 FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping, no level file.", false), null, null);
                 return;
             }
+            Settings.stream.AppendLine("Done");
 
             List<LightMap> maps;
             List<Photon> photons;
@@ -83,8 +85,11 @@ namespace DALightmapper
 
             //Make the lightmaps
             maps = makeLightmaps(receivingModels);
+
+            Settings.stream.AppendText("Partitioning level . . . ");
             //Make the triangle partitioner
             Partitioner scene = new Octree(castingTriangles);
+            Settings.stream.AppendLine("Done");
 
             //Shoot the photons
             Settings.stream.AppendFormatText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
@@ -106,7 +111,19 @@ namespace DALightmapper
             Settings.stream.AppendText("Creating light map textures . . . ");
             foreach (LightMap l in maps)
             {
-                l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
+                int[,] boxFilter = {
+                                    {1,1,1},
+                                    {1,1,1},
+                                    {1,1,1}
+                                   };
+                int[,] gaussFilter = {
+                                    {1,2,1},
+                                    {2,4,2},
+                                    {1,2,1}
+                                   };
+                Targa lightMap = l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps");
+                lightMap.applyFilter(gaussFilter);
+                lightMap.writeToFile();
                 Settings.stream.UpdateProgress();
             }
             Settings.stream.AppendLine("Done");
@@ -137,7 +154,7 @@ namespace DALightmapper
             return lightmapList;
         }
 
-        private static List<Photon> firePhotons(Light[] lights, Partitioner scene)
+        private static List<Photon> firePhotons(List<Light> lights, Partitioner scene)
         {
             int numPhotons = 0;
             foreach (Light l in lights)
@@ -227,6 +244,8 @@ namespace DALightmapper
                     {
                         p.incidentLight /= gather.Count;
                     }
+
+                    //p.incidentLight *= 100;
                     Settings.stream.UpdateProgress();
                 });
 

@@ -62,6 +62,56 @@ namespace DALightmapper
         //Make patches for a lightmap with dimensions [width,height]
         public void generatePatches(int width, int height)
         {
+            //*
+            texels = new Texel[width, height];
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    texels[i, j] = new Texel();
+                }
+            }
+
+            foreach (Triangle t in tris)
+            {
+                int minX = (int)((t.a.X * width) % width);
+                int minY = (int)((t.a.Y * height) % height);
+                int maxX = minX;
+                int maxY = minY;
+
+                int nextX = (int)((t.b.X * width) % width);
+                int nextY = (int)((t.b.Y * height) % height);
+
+                maxX = Math.Max(maxX, nextX);
+                maxY = Math.Max(maxY, nextY);
+                minX = Math.Min(minX, nextX);
+                minY = Math.Min(minY, nextY);
+
+                nextX = (int)((t.c.X * width) % width);
+                nextY = (int)((t.c.Y * height) % height);
+
+                maxX = Math.Max(maxX, nextX);
+                maxY = Math.Max(maxY, nextY);
+                minX = Math.Min(minX, nextX);
+                minY = Math.Min(minY, nextY);
+
+                for (int i = minX; i < maxX; i++)
+                {
+                    for (int j = minY; j < maxY; j++)
+                    {
+                        Vector2 topLeft = new Vector2(((float)i) / width, ((float)j + 1) / height);
+                        Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)(j)) / height);
+                        if (!t.isDegenerate() && t.isOnUVPixel(topLeft, bottomRight))
+                        {
+                           // Console.WriteLine("HEY");
+                            //                              Position                   normal     emmision             reflection     
+                            texels[i, j].add(new Patch(t.uvTo3d(topLeft, bottomRight), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f)));
+                        }
+                    }
+                }
+            }
+            //*/
+            /*
             texels = new Texel[width,height];
             //For each pixel
             for (int i = 0; i < width; i++)
@@ -82,6 +132,7 @@ namespace DALightmapper
                     }
                 }
             }
+            //*/
         }
     }
 }
