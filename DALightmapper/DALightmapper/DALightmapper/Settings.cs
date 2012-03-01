@@ -31,20 +31,17 @@ namespace DALightmapper
         public static int pixelsPerUnit = 10;   //Number of pixels per unit length to use when making lightmap textures
 
         //--Paths to Required Files--// 
-        public static String tempDirectory;
-        public static String workingDirectory;
+        public static String tempDirectory = "";
+        public static String workingDirectory = "";
 
-        public static List<String> filePaths = null;
-        public static List<ERF> erfFiles = null;
+        public static List<String> filePaths = new List<String>();
+        public static List<ERF> erfFiles = new List<ERF>();
                
         //Initializes the variables saved in an ini file leaving the others at default value
         public static void initializeSettings()
         {
             workingDirectory = Properties.Settings.Default.workingDirectory;
             tempDirectory = Properties.Settings.Default.tempDirectory;
-
-            filePaths = new List<String>();
-            erfFiles = new List<ERF>();
 
             foreach (String s in Properties.Settings.Default.filePaths)
             {

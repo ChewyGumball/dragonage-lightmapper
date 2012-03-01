@@ -38,7 +38,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -46,7 +46,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -98,8 +98,8 @@
     <Compile Include="Ben\MathHelper.cs" />
     <Compile Include="Ben\Targa.cs" />
     <Compile Include="Ben\TextBitmap.cs" />
+    <Compile Include="BioWare.Files\MaterialObject.cs" />
     <Compile Include="DALightmapper\AmbientLight.cs" />
-    <Compile Include="BioWare.Files\BiowareFile.cs" />
     <Compile Include="BioWare.Structs\BiowareStruct.cs" />
     <Compile Include="DALightmapper\BoundingBox.cs" />
     <Compile Include="BioWare.Files\ERF.cs" />
@@ -112,6 +112,7 @@
     <Compile Include="BioWare.Structs\GFFID.cs" />
     <Compile Include="BioWare.Structs\GFFStructDefinition.cs" />
     <Compile Include="BioWare.Structs\GFFSTRUCTTYPE.cs" />
+    <Compile Include="DALightmapper\FindableFile.cs" />
     <Compile Include="DALightmapper\IO.cs" />
     <Compile Include="Ben\IOUtilities.cs" />
     <Compile Include="DALightmapper\Level.cs" />

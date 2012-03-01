@@ -73,9 +73,7 @@ namespace Bioware.Files
         }
 
         public TerrainMesh(GFF binaryFile):base(binaryFile)
-        {
-            _isTerrainMesh = true;
-        }
+        { }
 
         public override void  readData()
         {
@@ -83,7 +81,7 @@ namespace Bioware.Files
             long startOfList;
 
             //Get the binary reader
-            BinaryReader file = binaryFile.getReader();
+            BinaryReader file = binaryFile.openReader();
             //Set up the struct definitions
             setStructDefinitions();
 
@@ -284,9 +282,9 @@ namespace Bioware.Files
                 //Add it to the list
                 _faces.Add(tempMeshFace);
             }
-            binaryFile.Close();
+            file.Close();
 
-            _chunks = new MeshChunk[1]; 
+            chunks = new MeshChunk[1]; 
             Triangle[] tris = new Triangle[faces.Count];
             //Hold temporary vertex values
             Vector3 x, y, z;
@@ -308,9 +306,9 @@ namespace Bioware.Files
                 //Make the triangle
                 tris[i] = new Triangle(x, y, z, u, v, w, u, v, w);
             }
-            _chunks[0] = new MeshChunk(tris);
-            _chunks[0].casts = true;
-            _chunks[0].receives = true;
+            chunks[0] = new MeshChunk(tris);
+            chunks[0].casts = true;
+            chunks[0].receives = true;
         }
 
         public BiowareModel toModel(uint modelID)

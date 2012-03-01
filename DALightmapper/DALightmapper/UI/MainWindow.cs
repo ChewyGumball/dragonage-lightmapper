@@ -81,12 +81,6 @@ namespace DALightmapper
         //Processes the next job
         private void proccessNextJob()
         {
-            if (currentJob > 0 && Settings.cleanUpTempFiles && IO.numTempFiles > 0)
-            {
-                Settings.stream.AppendLine("Closing temp files first.");
-                IO.cleanUpTempFiles();
-            }
-
             Settings.stream.AppendLine();
             if (currentJob >= lb_Files.Items.Count)
             {
@@ -223,7 +217,6 @@ namespace DALightmapper
             {
                 try
                 {
-                    IO.cleanUpTempFiles();
                     Directory.Delete(Settings.tempDirectory, true);
                 }
                 catch (Exception ex)

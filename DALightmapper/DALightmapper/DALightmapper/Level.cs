@@ -114,7 +114,7 @@ namespace DALightmapper
         public void readObjects()
         {
             int reference;      //used for storing the reference to things in files
-            BinaryReader file = headerFile.getReader();
+            BinaryReader file = headerFile.openReader();
 
             //If the level is outdoors, read the models and the terrain mesh, otherwise just read in the models
             //      the file is layed out differently for outdoors and indoor environments
@@ -198,7 +198,7 @@ namespace DALightmapper
         private List<Light> readLights(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
         {
             List<Light> lights = new List<Light>();
-            BinaryReader file = headerFile.getReader();
+            BinaryReader file = headerFile.openReader();
             long currentPosition;   //position of begining of light struct (for offsets within struct)
 
             int type;       //point = 0, ambient = 1, spot = 2                      -The type of the light
@@ -294,7 +294,7 @@ namespace DALightmapper
         private List<BiowareModel> readTerrainModels()
         {
 
-            BinaryReader file = headerFile.getReader();
+            BinaryReader file = headerFile.openReader();
 
             int numSectors, reference;
             long startOfList;
@@ -347,7 +347,7 @@ namespace DALightmapper
         private List<ModelInstance> readPropModels(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)
         {
             List<ModelInstance> propModels = new List<ModelInstance>();
-            BinaryReader file = headerFile.getReader();
+            BinaryReader file = headerFile.openReader();
             long currentPosition;   //position of beginning of model struct (for offsets within struct
 
             GenericList propertyList;   //to hold the list of properties of the model
@@ -403,7 +403,7 @@ namespace DALightmapper
                     if (!baseModels.ContainsKey(modelFileName))
                     {
                         //Find the mmh file
-                        GFF tempGFF = IO.findGFFFile(modelFileName);
+                        GFF tempGFF = IO.findFile<GFF>(modelFileName);
                         //If the file was not found
                         if (tempGFF != null)
                         {
@@ -444,6 +444,7 @@ namespace DALightmapper
                     propModels.AddRange(readPropModels(new GenericList(file), roomOffset, roomOrientation, roomID));
                 }
             }
+            file.Close();
             return propModels;
         }
 

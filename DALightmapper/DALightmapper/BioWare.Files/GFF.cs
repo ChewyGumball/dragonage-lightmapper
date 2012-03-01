@@ -1,59 +1,74 @@
 ﻿using System;
 using System.IO;
 using Bioware.Structs;
+using DALightmapper;
 using Ben;
 
 namespace Bioware.Files
 {
-    public class GFF : BiowareFile
+    public class GFF : FindableFile
     {
-        GFFHeader _header;
-        BiowareStruct[] _structs;
-        long beginingOffset;
-        long _dataBlockOffset;
+        private long beginningOffset;
 
-        public GFFHeader header
-        {
-            get { return _header; }
-        }
-        public BiowareStruct[] structs
-        {
-            get { return _structs; }
-        }
+        public String path { get; private set; }
+        public GFFHeader header { get; private set; }
+        public BiowareStruct[] structs { get; private set; }
 
-        public long dataOffset
-        {
-            get { return _dataBlockOffset; }
-        }
+        public long dataOffset { get; private set; }
+
+        public GFF() { }
 
         //Reads a GFF file from the file with path filename starting at offset
         public GFF(String filename, long offset)
-            : base(filename)
         {
-            //Save the filename for opening later
-            beginingOffset = offset;
-
-            OpenR();
-            //Get the header of the gff
-            _header = new GFFHeader(file);
-            _dataBlockOffset = _header.dataOffset + beginingOffset;
-
-            //Get the struct definitions
-            _structs = new BiowareStruct[_header.structCount];
-
-            for (int i = 0; i < _header.structCount; i++)
-            {
-                _structs[i] = new BiowareStruct(this, new GFFStructDefinition(file,beginingOffset));
-            }
-            Close();
+            createFromPathWithOffset(filename, offset, 0);
         }
 
         public GFF(String filename) : this(filename, 0) { }
 
-        public override void OpenR()
+
+        public void createFromPathWithOffset(String filename, long offset, int length)
         {
-            base.OpenR();
-            file.BaseStream.Seek(beginingOffset, SeekOrigin.Begin);
+            path = filename;
+            //Save the filename for opening later
+            beginningOffset = offset;
+
+            BinaryReader file = openReader();
+            //Get the header of the gff
+            header = new GFFHeader(file);
+            dataOffset = header.dataOffset + beginningOffset;
+
+            //Get the struct definitions
+            structs = new BiowareStruct[header.structCount];
+
+            for (int i = 0; i < header.structCount; i++)
+            {
+                structs[i] = new BiowareStruct(this, new GFFStructDefinition(file, beginningOffset));
+            }
+            file.Close();
+        }
+        public void createFromPath(String filename)
+        {
+            createFromPathWithOffset(filename, 0, 0);
+        }
+
+        public BinaryReader openReader()
+        {
+            try
+            {
+                BinaryReader file = new BinaryReader(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read));
+                file.BaseStream.Seek(beginningOffset, SeekOrigin.Begin);
+                return file;
+            }
+            catch (Exception e)
+            {
+                if (e.InnerException != null)
+                    Console.WriteLine("{0} \n Inner: {1}.", e.StackTrace, e.InnerException.Message);
+                else
+                    Console.WriteLine("{0}", e.StackTrace);
+
+                throw e;
+            }
         }
     }
 }

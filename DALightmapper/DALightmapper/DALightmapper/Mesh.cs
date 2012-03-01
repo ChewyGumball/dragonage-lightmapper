@@ -103,36 +103,12 @@ namespace DALightmapper
                         Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)(j)) / height);
                         if (!t.isDegenerate() && t.isOnUVPixel(topLeft, bottomRight))
                         {
-                           // Console.WriteLine("HEY");
                             //                              Position                   normal     emmision             reflection     
                             texels[i, j].add(new Patch(t.uvTo3d(topLeft, bottomRight), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f)));
                         }
                     }
                 }
             }
-            //*/
-            /*
-            texels = new Texel[width,height];
-            //For each pixel
-            for (int i = 0; i < width; i++)
-            {
-                for (int j = 0; j < height; j++)
-                {
-                    Vector2 topLeft = new Vector2(((float)i) / width, ((float)j + 1) / height);
-                    Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)(j)) / height);
-                    texels[i, j] = new Texel();
-                    //See if this uv is on any triangle in the mesh
-                    foreach (Triangle t in tris)
-                    { 
-                        if (!t.isDegenerate() && t.isOnUVPixel(topLeft,bottomRight))
-                        {
-                              //                              Position                   normal     emmision             reflection     
-                            texels[i, j].add( new Patch(t.uvTo3d(topLeft,bottomRight), t.normal, new Vector3(), new Vector3(0.7f, 0.7f, 0.7f)));
-                        }
-                    }
-                }
-            }
-            //*/
         }
     }
 }

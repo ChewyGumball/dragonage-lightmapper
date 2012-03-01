@@ -37,33 +37,18 @@ namespace Bioware.Files
         private BiowareStruct nodeStruct;
 
         private GFF binaryFile;
-
-        String _mmhName, _mshName;
-        int _numBones;
-        private BiowareMesh _mesh;
+        int numBones;
 
         public Boolean isFXModel { get; private set; }
-        public String mmhName
-        {
-            get { return _mmhName; }
-        }
-        public String mshName
-        {
-            get { return _mshName; }
-        }
-        public BiowareMesh mesh
-        {
-            get { return _mesh; }
-        }
+        public String mmhName { get; private set; }
+        public String mshName { get; private set; }
+        public ModelMesh mesh { get; private set; }
 
-        public ModelHierarchy(BiowareMesh m, String name)
-        {
-            _mmhName = name;
-            _mshName = name;
-            _mesh = m;
-        }
+        public Boolean loadedMesh { get; private set; }
+
         public ModelHierarchy(GFF gffFile)
         {
+            loadedMesh = false;
             binaryFile = gffFile;
             setStructDefinitions();
             readData();
@@ -71,20 +56,20 @@ namespace Bioware.Files
 
         public void readData()
         {
-            BinaryReader file = binaryFile.getReader();
+            BinaryReader file = binaryFile.openReader();
             int reference;
 
             //Get the name of the mmh file
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[MMH_NAME_INDEX].index, SeekOrigin.Begin);
-            _mmhName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()).ToLower();
+            mmhName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()).ToLower();
 
             //Get the name of the msh file
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[MSH_NAME_INDEX].index, SeekOrigin.Begin);
-            _mshName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()).ToLower();
+            mshName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()).ToLower();
 
             //Get the total number of bones in the mmh
             file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[TOTAL_BONES_INDEX].index, SeekOrigin.Begin);
-            _numBones = file.ReadInt32();
+            numBones = file.ReadInt32();
 
             //Apparently fx models have an extra field...
             isFXModel = binaryFile.structs[0].fields.Length == 8;
@@ -108,16 +93,19 @@ namespace Bioware.Files
 
 
             //Find the mesh
-            GFF temp = IO.findGFFFile(_mshName);
+            GFF temp = IO.findFile<GFF>(mshName);
             //If its not there throw an exception cause we need it
             if (temp == null)
             {
-                Console.WriteLine("Could not find mesh file \"{0}\".", _mshName);
-                throw new Exception("COULD NOT FIND MESH FILE, LOOK AT CONSOLE!!!!!!");
+                Console.WriteLine("Could not find mesh file \"{0}\".", mshName);
+                return;
+                //throw new Exception("COULD NOT FIND MESH FILE, LOOK AT CONSOLE!!!!!!");
             }
 
+            loadedMesh = true;
+
             //Make the mesh
-            _mesh = new ModelMesh(temp);
+            mesh = new ModelMesh(temp);
 
             //Fill in the missing mesh chunk info from the mmh file
             MeshChunk currentMeshChunk;
@@ -140,7 +128,7 @@ namespace Bioware.Files
 
                     //Find the meshChunk we need
                     currentMeshChunk = null;
-                    foreach (MeshChunk m in mesh.meshChunks)
+                    foreach (MeshChunk m in mesh.chunks)
                     {
                         if (m.name == currentMeshChunkName)
                         {
@@ -151,13 +139,13 @@ namespace Bioware.Files
                     //If no mesh chunk could be found there was a problem
                     if (currentMeshChunk == null)
                     {
-                        Console.WriteLine("Could not find mesh chunk \"{0}\" in msh file \"{1}\".", currentMeshChunkName, _mshName);
+                        Console.WriteLine("Could not find mesh chunk \"{0}\" in msh file \"{1}\".", currentMeshChunkName, mshName);
                         throw new Exception("COULD NOT FIND MESHCHUNK, LOOK AT CONSOLE!!!!!!");
                     }
 
                     //Get the material name
                     file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_MATERIAL_INDEX].index, SeekOrigin.Begin);
-                    currentMeshChunk.materialObjectName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32());
+                    currentMeshChunk.materialObjectName = IOUtilities.readECString(file, binaryFile.dataOffset + file.ReadInt32()) + ".mao";
 
                     //Get the chunk ID
                     file.BaseStream.Seek(startPosition + meshChunkInfoStruct.fields[MSH_CHUNK_ID_INDEX].index, SeekOrigin.Begin);

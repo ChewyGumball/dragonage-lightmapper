@@ -23,7 +23,7 @@ namespace DALightmapperTests
                 Console.WriteLine(e.path);
                 for (int i = 0; i < e.resourceCount; i++)
                 {
-                    GFF temp = IO.findGFFFile(e.resourceNames[i]);
+                    GFF temp = IO.findFile<GFF>(e.resourceNames[i]);
                     Assert.NotNull(temp);
                 }
             }
@@ -41,7 +41,7 @@ namespace DALightmapperTests
             int failures = 0;
             for (int i = 0; i < models.resourceCount; i++)
             {
-                GFF temp = IO.findGFFFile(models.resourceNames[i]);
+                GFF temp = IO.findFile<GFF>(models.resourceNames[i]);
                 Assert.NotNull(temp, "Not found: |" + models.resourceNames[i] +"|" + i);
                 if (Path.GetExtension(models.resourceNames[i]) == ".mmh")
                 {
@@ -71,7 +71,7 @@ namespace DALightmapperTests
             int failures = 0;
             for (int i = 0; i < meshes.resourceCount; i++)
             {
-                GFF temp = IO.findGFFFile(meshes.resourceNames[i]);
+                GFF temp = IO.findFile<GFF>(meshes.resourceNames[i]);
                 Assert.NotNull(temp, "Not found: |" + meshes.resourceNames[i] + "|" + i);
                 if (Path.GetExtension(meshes.resourceNames[i]) == ".msh")
                 {

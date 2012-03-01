@@ -1,0 +1,21 @@
+﻿<Window x:Class="DATool.DAToolWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:WinForms="clr-namespace:System.Windows.Forms;assembly=System.Windows.Forms"
+        xmlns:DATool="clr-namespace:DATool"
+        xmlns:OpenGL="clr-namespace:OpenTK;assembly=OpenTK.GLControl"
+        Title="DATool" Height="449" Width="687" WindowStyle="SingleBorderWindow" ResizeMode="CanMinimize" Closing="Window_Closing">
+    <Grid>
+        <ListBox Height="159" Margin="0,0,12,235" Name="modelListBox" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="156" IsTextSearchEnabled="False" SelectionChanged="modelListBox_SelectionChanged" />
+        <Button Content="Next" Height="23" HorizontalAlignment="Right" Margin="0,0,12,209" Name="nextButton" VerticalAlignment="Bottom" Width="75" Click="nextButton_Click" />
+        <Button Content="Previous" Height="23" HorizontalAlignment="Right" Name="previousButton" VerticalAlignment="Bottom" Width="75" Margin="0,0,93,209" />
+        <Label Content="Model Files:" Height="27" HorizontalAlignment="Right" Margin="0,0,95,387" Name="label1" VerticalAlignment="Bottom" />
+        <Button Content="Add Folder" Height="23" HorizontalAlignment="Right" Margin="0,0,93,4" Name="viewFolderButton" VerticalAlignment="Bottom" Width="75" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Click="viewFolderButton_Click" />
+        <Button Content="Add ERF" Height="23" HorizontalAlignment="Right" Margin="0,0,12,4" Name="viewERFButton" VerticalAlignment="Bottom" Width="75" Click="viewERFButton_Click" />
+        <WindowsFormsHost Height="401" HorizontalAlignment="Left" Name="windowsFormsHost1" VerticalAlignment="Top" Width="486" Margin="5,5,0,0"  >
+            <OpenGL:GLControl x:Name="glControl" />
+        </WindowsFormsHost>
+        <ListBox Height="159" HorizontalAlignment="Right" IsTextSearchEnabled="False" Margin="0,0,12,30" Name="locationListBox" VerticalAlignment="Bottom" Width="156" DataContext="{Binding}" SelectionChanged="locationListBox_SelectionChanged" />
+        <Label Content="File Locations:" Height="27" HorizontalAlignment="Right" Margin="0,0,86,183" Name="label2" VerticalAlignment="Bottom" />
+    </Grid>
+</Window>

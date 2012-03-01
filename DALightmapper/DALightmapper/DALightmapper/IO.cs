@@ -15,47 +15,22 @@ namespace DALightmapper
     delegate void FinishedReadingEventHandler(FinishedReadingEventArgs e);
     public class FinishedReadingEventArgs : EventArgs
     {
-        String _message;
-        Boolean _successful;
-        Level _level;
-
-        public String message
-        {
-            get { return _message; }
-        }
-        public Boolean successful
-        {
-            get { return _successful; }
-        }
-        public Level level
-        {
-            get { return _level; }
-        }
+        public String message {get; private set;}
+        public Boolean successful {get; private set;}
+        public Level level {get; private set;}
         
-        public FinishedReadingEventArgs(Boolean successful, String message, Level level)
+        public FinishedReadingEventArgs(Boolean s, String m, Level l)
         {
-            _successful = successful;
-            _message = message;
-            _level = level;
+            successful = s;
+            message = m;
+            level = l;
         }
     }
 
     public class IO
     {
         //If set to true, reading should be aborted and donereading event should fire false
-        static Boolean _abort;
-        public static Boolean abort
-        {
-            get { return _abort; }
-            set { _abort = value; }
-        }
-
-        //List of temporary files created during IO
-        static List<BiowareFile> tempFiles = new List<BiowareFile>();
-        public static int numTempFiles
-        {
-            get { return tempFiles.Count; }
-        }
+        public static Boolean abort {get; set;}
 
         //Reads in the data needed for a level
         //Currently reads more than lvl files for testing purposes NEED TO CLEAN UP 
@@ -63,7 +38,7 @@ namespace DALightmapper
         {
             Level levelFile = null;
 
-            _abort = false;
+            abort = false;
 
             String fileName = path;
             String extention = Path.GetExtension(fileName);
@@ -94,7 +69,6 @@ namespace DALightmapper
                     {
                         ModelMesh m = new ModelMesh(temp);
                     }
-                    temp.Close();
                 }
                 else if (extention == ".lvl")
                 {
@@ -126,60 +100,34 @@ namespace DALightmapper
 
             return levelFile;
         }
-
-        public static void addTempFile(BiowareFile fileObject)
-        {
-            if (fileObject != null)
-            {
-                tempFiles.Add(fileObject);
-            }
-        }
-
-        public static void cleanUpTempFiles()
-        {
-            for (int i = 0; i < tempFiles.Count; i++)
-            {
-                tempFiles[i].Close();
-            }
-
-            Settings.stream.AppendFormatLine(Verbosity.Medium, "Closed {0} files.", tempFiles.Count);
-            tempFiles.Clear();
-        }
-
-        //Returns the gff file with the name filename, looking in the erfs and folders saved in the settings classs.
+        
+        //Returns the file with the name filename, looking in the erfs and folders saved in the settings classs.
         //  RETURNS NULL IF THE INPUT FILENAME DOES NOT EXIST IN ONE OF THOSE PLACES
-        public static GFF findGFFFile(String filename)
+        public static T findFile<T>(String filename) where T : class, FindableFile, new()
         {
-            GFF tempGFF = null;
+            T file = null;
+            foreach (ERF erf in Settings.erfFiles)
+            {
+                if (erf.isInERF(filename))
+                {
+                    file = new T();
+                    int index = erf.indexOf(filename);
+                    file.createFromPathWithOffset(erf.path, erf.resourceOffsets[index], (int)erf.resourceLengths[index]);
+                }
+            }
 
-            //Look in temp directory
-            String tempPath = Settings.tempDirectory + "\\" + filename;
-            if (File.Exists(tempPath))
+            //Look in the folders
+            foreach (String path in Settings.filePaths)
             {
-                tempGFF = new GFF(tempPath);
-            }
-            else
-            {
-                //Look in the erfs
-                foreach (ERF erf in Settings.erfFiles)
+                String fullPath = path + "\\" + filename;
+                if (File.Exists(fullPath))
                 {
-                    if (erf.isInERF(filename))
-                    {
-                        tempGFF = new GFF(erf.path, erf.resourceOffsets[erf.indexOf(filename)]);
-                    }
+                    file = new T();
+                    file.createFromPath(fullPath);
                 }
-                //Look in the folders
-                foreach (String path in Settings.filePaths)
-                {
-                    String fullPath = path + "\\" + filename;
-                    if (File.Exists(fullPath))
-                    {
-                        tempGFF = new GFF(fullPath);
-                    }
-                }
+
             }
-            addTempFile(tempGFF);
-            return tempGFF;
+            return file;
         }
     }
 }
