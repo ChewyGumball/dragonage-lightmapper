@@ -10,7 +10,7 @@ namespace Ben
     {
         public Vector3 position { get; set; }
         public Matrix4 matrix { get { return Matrix4.CreateTranslation(position) * Matrix4.CreateRotationZ(-rightAngle) * Matrix4.CreateRotationX(-upAngle); } }
-        private float upAngle = (float)(Math.PI / 2);
+        private float upAngle = 0;
         private float rightAngle = 0;
 
         public Camera()

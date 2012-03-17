@@ -27,12 +27,18 @@ namespace DATool
     public partial class DAToolWindow : Window
     {
         Renderer renderer;
+        bool mouseOverControl = false;
+        System.Drawing.Point mouseOrigin;
+
         public DAToolWindow()
         {
             InitializeComponent();
             glControl.Width = (int)windowsFormsHost1.Width;
             glControl.Height = (int)windowsFormsHost1.Height;
             glControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(mouseWheel);
+            glControl.MouseMove += new System.Windows.Forms.MouseEventHandler(mouseMove);
+            glControl.MouseDown += new System.Windows.Forms.MouseEventHandler(mouseEnter);
+            glControl.MouseUp += new System.Windows.Forms.MouseEventHandler(mouseLeave);
             renderer = new Renderer(glControl);
             renderer.start();
         }
@@ -199,6 +205,39 @@ namespace DATool
         {
             System.Console.WriteLine("{0} changed.", e.Delta / 120);
             renderer.camera.translate(new Vector3(0, 0, -e.Delta / 120));
+        }
+
+        private void mouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            if (mouseOverControl)
+            {
+                float side = 500f;  //Vary this to change rotation speed, higher is slower
+                float diffX = (e.X - mouseOrigin.X);
+                float diffY = (e.Y - mouseOrigin.Y);
+
+                //Use cosine law on isosceles triangle, assume delta is the far side from the vertex we calculate the angle for
+                float angleX = (float)Math.Acos(((2 * side * side) - (diffX * diffX)) / (2 * side * side));
+                float angleY = (float)Math.Acos(((2 * side * side) - (diffY * diffY)) / (2 * side * side));
+
+                if (diffX < 0)
+                    angleX *= -1;
+                if (diffY < 0)
+                    angleY *= -1;
+
+                renderer.camera.rotateRight(angleX);
+                renderer.camera.rotateUp(angleY);
+                mouseOrigin = e.Location;
+            }
+        }
+
+        private void mouseEnter(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            mouseOrigin = e.Location;
+            mouseOverControl = true;
+        }
+        private void mouseLeave(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            mouseOverControl = false;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)

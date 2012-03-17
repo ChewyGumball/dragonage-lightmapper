@@ -65,7 +65,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DDSUploader.cs" />
+    <Compile Include="ModelUploader.cs" />
     <Compile Include="Renderer.cs" />
+    <Compile Include="UploadableObject.cs" />
     <Compile Include="VBO.cs" />
     <Page Include="DAToolWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

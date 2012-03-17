@@ -21,82 +21,75 @@ namespace DATool
     {
         public Camera camera { get; private set; }
         public int frameRate { get; set; }
-        
+
         GLControl control;
         Thread renderThread;
         DisplayState renderState = DisplayState.Stop;
+        UploadableObject nextUpload;
+        Matrix4 perspective;
+        Matrix4 orthographic;
 
+        bool rotateCamera;
         bool updateBuffers;
 
         List<VBO> nextVertexBufferObjects;
         Dictionary<String, int> nextTextureBuffers;
-        float nextRotationAngle;
-        
+        Matrix4 nextProjectionMatrix;
+        Matrix4 nextModelViewMatrix;
+
         int shaderProgram;
+        float rotationAngle;
 
         readonly String vertexShaderPath = System.AppDomain.CurrentDomain.BaseDirectory + "//Shaders//shader.vert";
         readonly String fragmentShaderPath = System.AppDomain.CurrentDomain.BaseDirectory + "//Shaders//shader.frag";
-        
+
         public delegate void glControlThreadSwitcher(OpenTK.Platform.IWindowInfo window);
 
         public Renderer(GLControl c)
         {
-            nextRotationAngle = 0;
+            camera = new Camera();
+            camera.translate(new Vector3(0, 0, 50));
+            //camera.rotateUp(-(float)(Math.PI / 2));
+
+            frameRate = 60;
+            control = c;
+            renderThread = null;
+
+            perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 2), (float)control.Width / (float)control.Height, 1, 100);
+            float min = Math.Min(control.Width, control.Height);
+            orthographic = Matrix4.CreateOrthographicOffCenter(0, 2, 0, 2, -1, 1);
+
+            rotateCamera = false;
+            updateBuffers = false;
+
             nextVertexBufferObjects = new List<VBO>();
             nextTextureBuffers = new Dictionary<String, int>();
+            nextProjectionMatrix = new Matrix4();
+            nextModelViewMatrix = new Matrix4();
 
-            renderThread = null;
-            
-            camera = new Camera();
-            frameRate = 60;
-
-            uploadModel(new ModelMesh());
-
-            control = c;
-            camera.translate(new Vector3(0, 0, 50));
-            camera.rotateUp(-(float)(Math.PI / 2));
             shaderProgram = 0;
+            rotationAngle = (float)(Math.PI / 180);
+
+            nextUpload = new ModelUploader();
 
             initializeControl();
         }
 
-        public void displayDDS(DDS d) {
-
-            nextRotationAngle = 0;
-            int vb, eb;
-            GL.GenBuffers(1, out vb);
-            GL.GenBuffers(1, out eb);
-            int tb = uploadDDS(d);
-            nextTextureBuffers.Add(d.formatString, tb);
-
-                                    //Position     |     Normal      | Texture
-            float[] verts = {   00.0f, 00.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                                10.0f, 00.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
-                                10.0f, 10.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                                00.0f, 10.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f
-                            };
-            uint[] indices = {  0, 2, 1,
-                                0, 3, 2
-                            };
-            VBO quad = new VBO(vb, eb, tb);
-            nextVertexBufferObjects.Add(quad);
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, quad.vertexBuffer);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, quad.elementBuffer);
-
-            GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(verts.Length * sizeof(float)), verts, BufferUsageHint.StaticDraw);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(indices.Length * sizeof(uint)), indices, BufferUsageHint.StaticDraw);
-
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-
+        public void displayDDS(DDS d)
+        {
+            nextUpload = new DDSUploader(d);
+            rotateCamera = false;
+            nextProjectionMatrix = orthographic;
+            nextModelViewMatrix = Matrix4.Identity;
             updateBuffers = true;
         }
         public void displayTarga(Targa t) { }
         public void displayModel(ModelMesh m)
         {
-            uploadModel(m);
-            nextRotationAngle = (float)(Math.PI / 180);
+            nextUpload = new ModelUploader(m);
+            rotateCamera = true;
+            nextProjectionMatrix = perspective;
+            nextModelViewMatrix = camera.matrix;
             updateBuffers = true;
         }
 
@@ -126,17 +119,6 @@ namespace DATool
         private void startRender()
         {
             makeCurrent();
-            
-            GL.MatrixMode(MatrixMode.Projection);
-            GL.LoadIdentity();
-            Matrix4 perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 2), (float)control.Width / (float)control.Height, 1, 1000);
-            GL.LoadMatrix(ref perspective);
-
-            GL.MatrixMode(MatrixMode.Modelview);
-            GL.LoadIdentity();
-            Matrix4 camMatrix = camera.matrix;
-            Matrix4 otherMatrix = Matrix4.LookAt(new Vector3(0, 0, 50), new Vector3(), new Vector3(1, 0, 0));
-            GL.LoadMatrix(ref camMatrix);
 
             GL.ClearColor(Color.Black);
             StreamReader vertShader = new StreamReader(vertexShaderPath);
@@ -172,39 +154,47 @@ namespace DATool
             makeCurrent();
 
             List<VBO> vertexBufferObjects = new List<VBO>();
-            Dictionary<String, int> textureBuffers = new Dictionary<String,int>();
-            float rotationAngle = 0;
-
+            Dictionary<String, int> textureBuffers = new Dictionary<String, int>();
 
             while (renderState == DisplayState.Run)
             {
                 DateTime start = new DateTime();
 
-                camera.rotateRight(rotationAngle);
-                Matrix4 camMatrix = camera.matrix;
-                GL.MatrixMode(MatrixMode.Modelview);
-                GL.LoadMatrix(ref camMatrix);
-
                 if (updateBuffers)
                 {
-                    rotationAngle = nextRotationAngle;
-
+                    Console.WriteLine("Updating buffers");
                     //Free the memory of the old buffers
                     clearBuffers(vertexBufferObjects, textureBuffers);
+
+                    nextVertexBufferObjects = new List<VBO>();
+                    nextTextureBuffers = new Dictionary<String, int>();
+                    nextUpload.upload(ref nextVertexBufferObjects, ref nextTextureBuffers);
 
                     //Switch the buffers
                     vertexBufferObjects = nextVertexBufferObjects;
                     textureBuffers = nextTextureBuffers;
 
-                    nextVertexBufferObjects = new List<VBO>();
-                    nextTextureBuffers = new Dictionary<String, int>();
+                    GL.MatrixMode(MatrixMode.Projection);
+                    GL.LoadMatrix(ref nextProjectionMatrix);
+
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.LoadMatrix(ref nextModelViewMatrix);
 
                     updateBuffers = false;
+                }
+
+                if (rotateCamera)
+                {
+                    camera.rotateRight(rotationAngle);
+                    Matrix4 camMatrix = camera.matrix;
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.LoadMatrix(ref camMatrix);
                 }
 
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
                 GL.UseProgram(shaderProgram);
+
                 GL.EnableClientState(ArrayCap.VertexArray);
                 GL.EnableClientState(ArrayCap.NormalArray);
                 GL.EnableClientState(ArrayCap.TextureCoordArray);
@@ -213,12 +203,11 @@ namespace DATool
                 {
                     GL.BindBuffer(BufferTarget.ArrayBuffer, vbo.vertexBuffer);
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbo.elementBuffer);
-                    GL.ActiveTexture(TextureUnit.Texture0);
-                    GL.Uniform1(GL.GetUniformLocation(shaderProgram, "diffuseTexture"), 0);
-                    GL.BindTexture(TextureTarget.Texture2D, vbo.textureBuffer);
-                    GL.BindBuffer(BufferTarget.TextureBuffer, vbo.textureBuffer);
 
-                    //GL.GetUniformLocation(shaderProgram, "diffuseTexture");
+                    GL.Uniform1(GL.GetUniformLocation(shaderProgram, "diffuseTexture"), 0);
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.BindTexture(TextureTarget.Texture2D, vbo.textureBuffer);
+
 
                     GL.VertexPointer(3, VertexPointerType.Float, vbo.vertexElementCount * sizeof(float), 0);
                     GL.NormalPointer(NormalPointerType.Float, vbo.vertexElementCount * sizeof(float), 3);
@@ -244,81 +233,7 @@ namespace DATool
                 clearBuffers(vertexBufferObjects, textureBuffers);
             }
         }
-
-        private void uploadModel(ModelMesh model)
-        {
-            //Make VBOs of each chunk
-            foreach (MeshChunk m in model.chunks)
-            {
-                int vb, eb, tb = 0;
-                GL.GenBuffers(1, out vb);
-                GL.GenBuffers(1, out eb);
-                //find texture buffer
-                if (m.materialObjectName != "")
-                {
-                    MaterialObject mao = IO.findFile<MaterialObject>(m.materialObjectName);
-                    if (mao != null)
-                    {
-                        if (mao.textures.ContainsKey(TextureType.Diffuse))
-                        {
-                            //if we havent already added it to the dictionary
-                            if (!nextTextureBuffers.ContainsKey(mao.textures[TextureType.Diffuse]))
-                            {
-                                int buffer = 0;
-                                //find the file and then make a buffer out of it then add it to the dictionary
-                                DDS dds = IO.findFile<DDS>(mao.textures[TextureType.Diffuse]);
-                                if (dds != null)
-                                {
-                                    buffer = uploadDDS(dds);
-                                }
-                                else
-                                {
-                                    Console.WriteLine("Couldn't find texture {0}", mao.textures[TextureType.Diffuse]);
-                                }
-
-                                nextTextureBuffers.Add(mao.textures[TextureType.Diffuse], buffer);
-                            }
-                            tb = nextTextureBuffers[mao.textures[TextureType.Diffuse]];
-                        }
-                        else
-                        {
-                            Console.WriteLine("Material object {0} doesn't have a diffuse texture", m.materialObjectName);
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Couldn't find material object {0}", m.materialObjectName);
-                    }
-                }
-
-                VBO curVBO = new VBO(vb, eb, tb);
-                nextVertexBufferObjects.Add(curVBO);
-
-                GL.BindBuffer(BufferTarget.ArrayBuffer, curVBO.vertexBuffer);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, curVBO.elementBuffer);
-
-                GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(m.verts.Length * sizeof(float)), m.verts, BufferUsageHint.StaticDraw);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(m.indices.Length * sizeof(uint)), m.indices, BufferUsageHint.StaticDraw);
-
-                GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-            }
-        }  
-        private int uploadDDS(DDS dds)
-        {
-            int buffer = GL.GenTexture();
-            GL.BindTexture(TextureTarget.Texture2D, buffer);
-            //GL.BufferData(BufferTarget.TextureBuffer, (IntPtr)dds.size, dds.data, BufferUsageHint.StaticDraw);
-            GL.CompressedTexImage2D(TextureTarget.Texture2D, 0, dds.format, dds.width, dds.height, 0, dds.data.Length, dds.data);
-            for (int i = 0; i < dds.mipmapCount; i++)
-            {
-                GL.CompressedTexImage2D(TextureTarget.Texture2D, i + 1, dds.format, dds.mipmapWidth(i), dds.mipmapHeight(i), 0, dds.mipmaps[i].Length, dds.mipmaps[i]);
-            }
-
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-            return buffer;
-        }
-
+        
         private void clearBuffers(List<VBO> vbos, Dictionary<String, int> textures)
         {
             //Clean up previous models memory
@@ -341,7 +256,7 @@ namespace DATool
         {
             if (!control.Context.IsCurrent)
             {
-                control.Invoke(new glControlThreadSwitcher(control.Context.MakeCurrent), new object[] {null});
+                control.Invoke(new glControlThreadSwitcher(control.Context.MakeCurrent), new object[] { null });
                 control.MakeCurrent();
             }
         }
