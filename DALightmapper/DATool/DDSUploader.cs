@@ -22,17 +22,17 @@ namespace DATool
             textureList.Add(texture.formatString, buffer);
 
             //                      Position     |     Normal      | Texture
-            float[] verts = {   0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                                1.9f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+            float[] verts = {   0.1f, 0.1f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                                1.9f, 0.1f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
                                 1.9f, 1.9f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                                0.0f, 1.9f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f
+                                0.1f, 1.9f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f
                             };
             uint[] indices = {  
                                 0, 1, 2,
                                 0, 2, 3
                              };
 
-            VBO quad = new VBO(vb, eb, buffer);
+            VBO quad = new VBO(vb, eb, buffer, 8, indices.Length);
             vboList.Add(quad);
 
             GL.BindBuffer(BufferTarget.ArrayBuffer, quad.vertexBuffer);
@@ -54,7 +54,7 @@ namespace DATool
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (float)TextureMagFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (float)TextureMinFilter.Linear);
 
-            GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (float)TextureEnvMode.Decal);
+            GL.TexEnv(TextureEnvTarget.TextureEnv, TextureEnvParameter.TextureEnvMode, (float)TextureEnvMode.Modulate);
 
             GL.CompressedTexImage2D(TextureTarget.Texture2D, 0, d.format, d.width, d.height, 0, d.data.Length, d.data);
             /*

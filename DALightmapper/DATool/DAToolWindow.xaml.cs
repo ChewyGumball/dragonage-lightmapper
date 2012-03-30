@@ -35,10 +35,11 @@ namespace DATool
             InitializeComponent();
             glControl.Width = (int)windowsFormsHost1.Width;
             glControl.Height = (int)windowsFormsHost1.Height;
-            glControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(mouseWheel);
+            //glControl.MouseWheel += new System.Windows.Forms.MouseEventHandler(mouseWheel);
             glControl.MouseMove += new System.Windows.Forms.MouseEventHandler(mouseMove);
             glControl.MouseDown += new System.Windows.Forms.MouseEventHandler(mouseEnter);
             glControl.MouseUp += new System.Windows.Forms.MouseEventHandler(mouseLeave);
+            glControl.KeyDown += new System.Windows.Forms.KeyEventHandler(keyPress);
             renderer = new Renderer(glControl);
             renderer.start();
         }
@@ -66,6 +67,14 @@ namespace DATool
                 {
                     Settings.filePaths.Add(browser.SelectedPath);
                     locationListBox.Items.Add(browser.SelectedPath);
+                }
+                foreach (String s in Directory.GetDirectories(browser.SelectedPath, "*", SearchOption.AllDirectories))
+                {
+                    if (!Settings.filePaths.Contains(s))
+                    {
+                        Settings.filePaths.Add(s);
+                        locationListBox.Items.Add(s);
+                    }
                 }
             }
         }
@@ -99,7 +108,7 @@ namespace DATool
                 }
             }
         }
-        
+
         private void locationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (locationListBox.SelectedItem != null)
@@ -107,6 +116,7 @@ namespace DATool
                 String location = (String)locationListBox.SelectedItem;
                 if (Settings.filePaths.Contains(location))
                 {
+                    Directory.GetDirectories(location);
                 }
                 else
                 {
@@ -204,7 +214,10 @@ namespace DATool
         private void mouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             System.Console.WriteLine("{0} changed.", e.Delta / 120);
-            renderer.camera.translate(new Vector3(0, 0, -e.Delta / 120));
+            lock (renderer.camera)
+            {
+                renderer.camera.translate(new Vector3(0, 0, -e.Delta / 120));
+            }
         }
 
         private void mouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -224,8 +237,11 @@ namespace DATool
                 if (diffY < 0)
                     angleY *= -1;
 
-                renderer.camera.rotateRight(angleX);
-                renderer.camera.rotateUp(angleY);
+                lock (renderer.camera)
+                {
+                    renderer.camera.rotateRight(angleX);
+                    renderer.camera.rotateUp(angleY);
+                }
                 mouseOrigin = e.Location;
             }
         }
@@ -239,7 +255,36 @@ namespace DATool
         {
             mouseOverControl = false;
         }
-
+        private void keyPress(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
+            switch (e.KeyCode)
+            {
+                case System.Windows.Forms.Keys.D:
+                    lock (renderer.camera)
+                    {
+                        renderer.camera.localTranslate(new Vector3(0.5f, 0, 0));
+                    }
+                    break;
+                case System.Windows.Forms.Keys.S:
+                    lock (renderer.camera)
+                    {
+                        renderer.camera.localTranslate(new Vector3(0, 0, 0.5f));
+                    }
+                    break;
+                case System.Windows.Forms.Keys.A:
+                    lock (renderer.camera)
+                    {
+                        renderer.camera.localTranslate(new Vector3(-0.5f, 0, 0));
+                    }
+                    break;
+                case System.Windows.Forms.Keys.W:
+                    lock (renderer.camera)
+                    {
+                        renderer.camera.localTranslate(new Vector3(0, 0, -0.5f));
+                    }
+                    break;
+            }
+        }
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             renderer.stop();

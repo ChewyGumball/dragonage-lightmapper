@@ -26,11 +26,13 @@ namespace DATool
         Thread renderThread;
         DisplayState renderState = DisplayState.Stop;
         UploadableObject nextUpload;
+
         Matrix4 perspective;
         Matrix4 orthographic;
 
-        bool rotateCamera;
+        bool rotateModel;
         bool updateBuffers;
+        bool updateCamera;
 
         List<VBO> nextVertexBufferObjects;
         Dictionary<String, int> nextTextureBuffers;
@@ -56,16 +58,17 @@ namespace DATool
             renderThread = null;
 
             perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 2), (float)control.Width / (float)control.Height, 1, 100);
-            float min = Math.Min(control.Width, control.Height);
             orthographic = Matrix4.CreateOrthographicOffCenter(0, 2, 0, 2, -1, 1);
 
-            rotateCamera = false;
+            rotateModel = false;
             updateBuffers = false;
+            updateCamera = false;
 
             nextVertexBufferObjects = new List<VBO>();
             nextTextureBuffers = new Dictionary<String, int>();
-            nextProjectionMatrix = new Matrix4();
-            nextModelViewMatrix = new Matrix4();
+
+            nextProjectionMatrix = Matrix4.Identity;
+            nextModelViewMatrix = Matrix4.Identity;
 
             shaderProgram = 0;
             rotationAngle = (float)(Math.PI / 180);
@@ -78,18 +81,20 @@ namespace DATool
         public void displayDDS(DDS d)
         {
             nextUpload = new DDSUploader(d);
-            rotateCamera = false;
+            rotateModel = false;
             nextProjectionMatrix = orthographic;
             nextModelViewMatrix = Matrix4.Identity;
+            updateCamera = false;
             updateBuffers = true;
         }
         public void displayTarga(Targa t) { }
         public void displayModel(ModelMesh m)
         {
             nextUpload = new ModelUploader(m);
-            rotateCamera = true;
+            rotateModel = true;
             nextProjectionMatrix = perspective;
             nextModelViewMatrix = camera.matrix;
+            updateCamera = true;
             updateBuffers = true;
         }
 
@@ -120,7 +125,7 @@ namespace DATool
         {
             makeCurrent();
 
-            GL.ClearColor(Color.Black);
+            GL.ClearColor(Color.Blue);
             StreamReader vertShader = new StreamReader(vertexShaderPath);
             StreamReader fragShader = new StreamReader(fragmentShaderPath);
 
@@ -156,6 +161,8 @@ namespace DATool
             List<VBO> vertexBufferObjects = new List<VBO>();
             Dictionary<String, int> textureBuffers = new Dictionary<String, int>();
 
+            Matrix4 modelTransform = Matrix4.Identity;
+
             while (renderState == DisplayState.Run)
             {
                 DateTime start = new DateTime();
@@ -166,6 +173,7 @@ namespace DATool
                     //Free the memory of the old buffers
                     clearBuffers(vertexBufferObjects, textureBuffers);
 
+                    //Upload the next model and its textures
                     nextVertexBufferObjects = new List<VBO>();
                     nextTextureBuffers = new Dictionary<String, int>();
                     nextUpload.upload(ref nextVertexBufferObjects, ref nextTextureBuffers);
@@ -174,19 +182,31 @@ namespace DATool
                     vertexBufferObjects = nextVertexBufferObjects;
                     textureBuffers = nextTextureBuffers;
 
+                    //Set up the projection matrix
                     GL.MatrixMode(MatrixMode.Projection);
                     GL.LoadMatrix(ref nextProjectionMatrix);
 
-                    GL.MatrixMode(MatrixMode.Modelview);
-                    GL.LoadMatrix(ref nextModelViewMatrix);
+                    //Get the new model transform
+                    modelTransform = nextModelViewMatrix;
 
                     updateBuffers = false;
                 }
 
-                if (rotateCamera)
+                if (updateCamera)
                 {
-                    camera.rotateRight(rotationAngle);
-                    Matrix4 camMatrix = camera.matrix;
+                    //If we are rotating the model, update the model transform
+                    if (rotateModel)
+                    {
+                        modelTransform *= Matrix4.CreateRotationZ(-rotationAngle);
+                    }
+
+                    //Add in the camera transform
+                    Matrix4 camMatrix = modelTransform;
+                    lock (camera)
+                    {
+                        camMatrix = camMatrix * camera.matrix;
+                    }
+
                     GL.MatrixMode(MatrixMode.Modelview);
                     GL.LoadMatrix(ref camMatrix);
                 }
@@ -199,19 +219,20 @@ namespace DATool
                 GL.EnableClientState(ArrayCap.NormalArray);
                 GL.EnableClientState(ArrayCap.TextureCoordArray);
 
+                //Draw each model
                 foreach (VBO vbo in vertexBufferObjects)
                 {
                     GL.BindBuffer(BufferTarget.ArrayBuffer, vbo.vertexBuffer);
                     GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbo.elementBuffer);
-
-                    GL.Uniform1(GL.GetUniformLocation(shaderProgram, "diffuseTexture"), 0);
-                    GL.ActiveTexture(TextureUnit.Texture0);
                     GL.BindTexture(TextureTarget.Texture2D, vbo.textureBuffer);
 
+                    GL.ActiveTexture(TextureUnit.Texture0);
+                    GL.Uniform1(GL.GetUniformLocation(shaderProgram, "diffuseTexture"), 0);
 
-                    GL.VertexPointer(3, VertexPointerType.Float, vbo.vertexElementCount * sizeof(float), 0);
-                    GL.NormalPointer(NormalPointerType.Float, vbo.vertexElementCount * sizeof(float), 3);
-                    GL.TexCoordPointer(2, TexCoordPointerType.Float, vbo.vertexElementCount * sizeof(float), 6);
+
+                    GL.VertexPointer(3, VertexPointerType.Float, vbo.vertexSize * sizeof(float), 0);
+                    GL.NormalPointer(NormalPointerType.Float, vbo.vertexSize * sizeof(float), 3 * sizeof(float));
+                    GL.TexCoordPointer(2, TexCoordPointerType.Float, vbo.vertexSize * sizeof(float), 6 * sizeof(float));
 
                     GL.DrawElements(BeginMode.Triangles, vbo.indexElementCount, DrawElementsType.UnsignedInt, 0);
 
@@ -223,6 +244,7 @@ namespace DATool
 
                 control.SwapBuffers();
 
+                //Sleep till next frame start
                 double millisecondsPerFrame = 1000 / frameRate;
                 double timeTaken = (DateTime.Now - start).TotalMilliseconds % millisecondsPerFrame;
                 Thread.Sleep((int)(millisecondsPerFrame - timeTaken));
@@ -269,6 +291,8 @@ namespace DATool
             GL.MatrixMode(MatrixMode.Projection);
             GL.LoadIdentity();
             GL.Ortho(0, w, 0, h, -1, 1); // Bottom-left corner pixel has coordinate (0, 0)
+            GL.MatrixMode(MatrixMode.Modelview);
+            GL.LoadIdentity();
             GL.Viewport(0, 0, w, h); // Use all of the glControl painting area
         }
     }

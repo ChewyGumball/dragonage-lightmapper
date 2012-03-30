@@ -8,7 +8,7 @@ namespace Ben
 {
     public class Camera
     {
-        public Vector3 position { get; set; }
+        public Vector3 position { get; private set; }
         public Matrix4 matrix { get { return Matrix4.CreateTranslation(position) * Matrix4.CreateRotationZ(-rightAngle) * Matrix4.CreateRotationX(-upAngle); } }
         private float upAngle = 0;
         private float rightAngle = 0;

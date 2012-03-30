@@ -64,14 +64,14 @@ namespace DATool
                     }
                 }
                 //*/
-                VBO curVBO = new VBO(vb, eb, tb);
+                VBO curVBO = new VBO(vb, eb, tb, 8, m.indices.Length);
                 vboList.Add(curVBO);
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, curVBO.vertexBuffer);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, curVBO.elementBuffer);
 
                 GL.BufferData(BufferTarget.ArrayBuffer, (IntPtr)(m.verts.Length * sizeof(float)), m.verts, BufferUsageHint.StaticDraw);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(m.indices.Length * sizeof(uint)), m.indices, BufferUsageHint.StaticDraw);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(curVBO.indexElementCount * sizeof(uint)), m.indices, BufferUsageHint.StaticDraw);
 
                 GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
