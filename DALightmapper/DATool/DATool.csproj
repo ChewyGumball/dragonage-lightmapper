@@ -67,7 +67,9 @@
     </ApplicationDefinition>
     <Compile Include="DDSUploader.cs" />
     <Compile Include="ModelUploader.cs" />
+    <Compile Include="OverlayUploader.cs" />
     <Compile Include="Renderer.cs" />
+    <Compile Include="TextUploader.cs" />
     <Compile Include="UploadableObject.cs" />
     <Compile Include="VBO.cs" />
     <Page Include="DAToolWindow.xaml">

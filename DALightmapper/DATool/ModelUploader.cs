@@ -42,7 +42,8 @@ namespace DATool
                                 DDS dds = IO.findFile<DDS>(mao.textures[TextureType.Diffuse]);
                                 if (dds != null)
                                 {
-                                    buffer = DDSUploader.uploadDDS(dds);
+                                    DDSUploader temp = new DDSUploader(dds);
+                                    buffer = temp.uploadTexture();
                                 }
                                 else
                                 {

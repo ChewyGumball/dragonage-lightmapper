@@ -25,22 +25,26 @@ namespace DATool
         GLControl control;
         Thread renderThread;
         DisplayState renderState = DisplayState.Stop;
-        UploadableObject nextUpload;
+        List<UploadableObject> nextModels;
+        List<OverlayUploader> nextOverlays;
 
         Matrix4 perspective;
         Matrix4 orthographic;
 
         bool rotateModel;
-        bool updateBuffers;
         bool updateCamera;
+        bool updateBuffers;
+        bool clearDisplayList;
+        bool overlay;
+        bool updateOverlayList;
+        bool clearOverlayList;
 
-        List<VBO> nextVertexBufferObjects;
-        Dictionary<String, int> nextTextureBuffers;
         Matrix4 nextProjectionMatrix;
-        Matrix4 nextModelViewMatrix;
 
         int shaderProgram;
         float rotationAngle;
+
+        int textTextureIndex;
 
         readonly String vertexShaderPath = System.AppDomain.CurrentDomain.BaseDirectory + "//Shaders//shader.vert";
         readonly String fragmentShaderPath = System.AppDomain.CurrentDomain.BaseDirectory + "//Shaders//shader.frag";
@@ -63,40 +67,72 @@ namespace DATool
             rotateModel = false;
             updateBuffers = false;
             updateCamera = false;
+            clearDisplayList = false;
 
-            nextVertexBufferObjects = new List<VBO>();
-            nextTextureBuffers = new Dictionary<String, int>();
-
+            overlay = false;
+            updateOverlayList = false;
+            clearOverlayList = false;
+            
             nextProjectionMatrix = Matrix4.Identity;
-            nextModelViewMatrix = Matrix4.Identity;
 
+            textTextureIndex = 0;
             shaderProgram = 0;
             rotationAngle = (float)(Math.PI / 180);
 
-            nextUpload = new ModelUploader();
+            nextModels = new List<UploadableObject>();
+            nextOverlays = new List<OverlayUploader>();
 
             initializeControl();
         }
 
+        public void overlayText(String s)
+        {
+            lock (nextOverlays)
+            {
+                nextOverlays.Add(new TextUploader(s, control.Width, control.Height));
+            }
+            updateOverlayList = true;
+        }
+
+        public void showOverlays() { overlay = true; }
+        public void hideOverlays() { overlay = false; }
+        public void clearOverlays() 
+        {
+            lock (nextOverlays)
+            {
+                nextOverlays.Clear();
+            }
+            clearOverlayList = true; 
+        }
+
         public void displayDDS(DDS d)
         {
-            nextUpload = new DDSUploader(d);
+            lock (nextModels)
+            {
+                nextModels.Clear();
+                nextModels.Add(new DDSUploader(d));
+            }
             rotateModel = false;
             nextProjectionMatrix = orthographic;
-            nextModelViewMatrix = Matrix4.Identity;
             updateCamera = false;
+            clearDisplayList = true;
             updateBuffers = true;
         }
         public void displayTarga(Targa t) { }
         public void displayModel(ModelMesh m)
         {
-            nextUpload = new ModelUploader(m);
+            lock (nextModels)
+            {
+                nextModels.Clear();
+                nextModels.Add(new ModelUploader(m));
+            }
             rotateModel = true;
             nextProjectionMatrix = perspective;
-            nextModelViewMatrix = camera.matrix;
             updateCamera = true;
+            clearDisplayList = true;
             updateBuffers = true;
         }
+        public void clearDisplay() { clearDisplayList = true;}
 
         public void start()
         {
@@ -161,35 +197,57 @@ namespace DATool
             List<VBO> vertexBufferObjects = new List<VBO>();
             Dictionary<String, int> textureBuffers = new Dictionary<String, int>();
 
+            List<VBO> overlayObjects = new List<VBO>();
+            Dictionary<String, int> overlayTextureBuffers = new Dictionary<String, int>();
+
+            GL.Enable(EnableCap.Blend);
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
             Matrix4 modelTransform = Matrix4.Identity;
 
             while (renderState == DisplayState.Run)
             {
                 DateTime start = new DateTime();
-
-                if (updateBuffers)
+                if (clearDisplayList)
                 {
-                    Console.WriteLine("Updating buffers");
                     //Free the memory of the old buffers
                     clearBuffers(vertexBufferObjects, textureBuffers);
 
-                    //Upload the next model and its textures
-                    nextVertexBufferObjects = new List<VBO>();
-                    nextTextureBuffers = new Dictionary<String, int>();
-                    nextUpload.upload(ref nextVertexBufferObjects, ref nextTextureBuffers);
+                    vertexBufferObjects = new List<VBO>();
+                    textureBuffers = new Dictionary<String, int>();
+                    clearDisplayList = false;
+                }
 
-                    //Switch the buffers
-                    vertexBufferObjects = nextVertexBufferObjects;
-                    textureBuffers = nextTextureBuffers;
+                if (clearOverlayList)
+                {
+                    clearBuffers(overlayObjects, overlayTextureBuffers);
+                    overlayObjects = new List<VBO>();
+                    overlayTextureBuffers = new Dictionary<String, int>();
+                    clearOverlayList = false;
+                }
+
+                if (updateBuffers)
+                {
+                    //Update the buffers
+                    uploadBuffers(ref vertexBufferObjects, ref textureBuffers, nextModels);
+                    nextModels.Clear();
 
                     //Set up the projection matrix
                     GL.MatrixMode(MatrixMode.Projection);
                     GL.LoadMatrix(ref nextProjectionMatrix);
 
-                    //Get the new model transform
-                    modelTransform = nextModelViewMatrix;
+                    //reset the model transform
+                    modelTransform = Matrix4.Identity;
 
                     updateBuffers = false;
+                }
+
+                if (updateOverlayList)
+                {
+                    uploadBuffers(ref overlayObjects, ref overlayTextureBuffers, nextOverlays);
+                    nextOverlays.Clear();
+
+                    updateOverlayList = false;
                 }
 
                 if (updateCamera)
@@ -222,25 +280,44 @@ namespace DATool
                 //Draw each model
                 foreach (VBO vbo in vertexBufferObjects)
                 {
-                    GL.BindBuffer(BufferTarget.ArrayBuffer, vbo.vertexBuffer);
-                    GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbo.elementBuffer);
-                    GL.BindTexture(TextureTarget.Texture2D, vbo.textureBuffer);
-
-                    GL.ActiveTexture(TextureUnit.Texture0);
-                    GL.Uniform1(GL.GetUniformLocation(shaderProgram, "diffuseTexture"), 0);
-
-
-                    GL.VertexPointer(3, VertexPointerType.Float, vbo.vertexSize * sizeof(float), 0);
-                    GL.NormalPointer(NormalPointerType.Float, vbo.vertexSize * sizeof(float), 3 * sizeof(float));
-                    GL.TexCoordPointer(2, TexCoordPointerType.Float, vbo.vertexSize * sizeof(float), 6 * sizeof(float));
-
-                    GL.DrawElements(BeginMode.Triangles, vbo.indexElementCount, DrawElementsType.UnsignedInt, 0);
-
+                    drawVBO(vbo);
                 }
 
                 GL.DisableClientState(ArrayCap.TextureCoordArray);
                 GL.DisableClientState(ArrayCap.NormalArray);
                 GL.DisableClientState(ArrayCap.VertexArray);
+
+                if (overlay)
+                {
+                    GL.MatrixMode(MatrixMode.Projection);
+                    GL.PushMatrix();
+                    GL.LoadIdentity();
+                    GL.LoadMatrix(ref orthographic);
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PushMatrix();
+                    GL.LoadIdentity();
+
+                    GL.UseProgram(shaderProgram);
+
+                    GL.EnableClientState(ArrayCap.VertexArray);
+                    GL.EnableClientState(ArrayCap.NormalArray);
+                    GL.EnableClientState(ArrayCap.TextureCoordArray);
+
+                    foreach (VBO vbo in overlayObjects)
+                    {
+                        drawVBO(vbo);
+                    }
+
+                    GL.DisableClientState(ArrayCap.TextureCoordArray);
+                    GL.DisableClientState(ArrayCap.NormalArray);
+                    GL.DisableClientState(ArrayCap.VertexArray);
+
+                    GL.MatrixMode(MatrixMode.Projection);
+                    GL.PopMatrix();
+                    GL.MatrixMode(MatrixMode.Modelview);
+                    GL.PopMatrix();
+
+                }
 
                 control.SwapBuffers();
 
@@ -253,9 +330,37 @@ namespace DATool
             if (renderState == DisplayState.Stop)
             {
                 clearBuffers(vertexBufferObjects, textureBuffers);
+                clearBuffers(overlayObjects, overlayTextureBuffers);
             }
         }
-        
+
+        private void drawVBO(VBO vbo)
+        {
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vbo.vertexBuffer);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, vbo.elementBuffer);
+            GL.BindTexture(TextureTarget.Texture2D, vbo.textureBuffer);
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.Uniform1(GL.GetUniformLocation(shaderProgram, "diffuseTexture"), 0);
+
+            GL.VertexPointer(3, VertexPointerType.Float, vbo.vertexSize * sizeof(float), 0);
+            GL.NormalPointer(NormalPointerType.Float, vbo.vertexSize * sizeof(float), 3 * sizeof(float));
+            GL.TexCoordPointer(2, TexCoordPointerType.Float, vbo.vertexSize * sizeof(float), 6 * sizeof(float));
+
+            GL.DrawElements(BeginMode.Triangles, vbo.indexElementCount, DrawElementsType.UnsignedInt, 0);
+        }
+        private void uploadBuffers<T>(ref List<VBO> vertexBufferObjects, ref Dictionary<String, int> textureBuffers, List<T> uploads) where T : UploadableObject
+        {
+            lock (uploads)
+            {
+                foreach (UploadableObject obj in uploads)
+                {
+                    //Upload the next model and its textures
+                    obj.upload(ref vertexBufferObjects, ref textureBuffers);
+                }
+            }
+        }
+
         private void clearBuffers(List<VBO> vbos, Dictionary<String, int> textures)
         {
             //Clean up previous models memory

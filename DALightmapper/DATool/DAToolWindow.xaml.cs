@@ -158,6 +158,9 @@ namespace DATool
                     GFF tempGFF = IO.findFile<GFF>(itemName);
                     if (tempGFF != null)
                     {
+                        renderer.clearOverlays();
+                        renderer.overlayText(tempGFF.path);
+                        renderer.showOverlays();
                         renderer.displayModel(new ModelMesh(tempGFF));
                     }
                     else
@@ -173,6 +176,9 @@ namespace DATool
                         ModelHierarchy mh = new ModelHierarchy(tempGFF);
                         if (mh.loadedMesh)
                         {
+                            renderer.clearOverlays();
+                            renderer.overlayText(mh.mmhName);
+                            renderer.showOverlays();
                             renderer.displayModel(mh.mesh);
                         }
                         else
