@@ -8,15 +8,19 @@ namespace DATool
 {
     class TextUploader : OverlayUploader
     {
+        private PointF origin;
         private String text;
         private int width;
         private int height;
 
-        public TextUploader(String s, int w = 512, int h = 512)
+        public TextUploader(String s, int w = 512, int h = 512) : this(s, new PointF(0, 0), w, h) { }
+
+        public TextUploader(String s, PointF o, int w, int h)
         {
             text = s;
             width = w;
             height = h;
+            origin = o;
         }
 
         public override int uploadTexture()
@@ -28,7 +32,7 @@ namespace DATool
             gfx.Clear(Color.Transparent);
             gfx.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
 
-            gfx.DrawString(text, new Font(FontFamily.GenericSansSerif, 11), Brushes.White, new RectangleF(new PointF(0,0), new SizeF(width, height)));
+            gfx.DrawString(text, new Font(FontFamily.GenericSansSerif, 11), Brushes.White, new RectangleF(new PointF(0, 0), new SizeF(width, height)));
 
             System.Drawing.Imaging.BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 

@@ -43,9 +43,7 @@ namespace DATool
 
         int shaderProgram;
         float rotationAngle;
-
-        int textTextureIndex;
-
+        
         readonly String vertexShaderPath = System.AppDomain.CurrentDomain.BaseDirectory + "//Shaders//shader.vert";
         readonly String fragmentShaderPath = System.AppDomain.CurrentDomain.BaseDirectory + "//Shaders//shader.frag";
 
@@ -54,8 +52,6 @@ namespace DATool
         public Renderer(GLControl c)
         {
             camera = new Camera();
-            camera.translate(new Vector3(0, 0, 50));
-            //camera.rotateUp(-(float)(Math.PI / 2));
 
             frameRate = 60;
             control = c;
@@ -75,7 +71,6 @@ namespace DATool
             
             nextProjectionMatrix = Matrix4.Identity;
 
-            textTextureIndex = 0;
             shaderProgram = 0;
             rotationAngle = (float)(Math.PI / 180);
 

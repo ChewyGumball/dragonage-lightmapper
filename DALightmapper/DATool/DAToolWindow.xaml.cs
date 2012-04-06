@@ -41,6 +41,9 @@ namespace DATool
             glControl.MouseUp += new System.Windows.Forms.MouseEventHandler(mouseLeave);
             glControl.KeyDown += new System.Windows.Forms.KeyEventHandler(keyPress);
             renderer = new Renderer(glControl);
+            renderer.camera.translate(new Vector3(-5, 0, 0));
+            renderer.camera.rotateUp(((float)(Math.PI / 2)));
+            renderer.camera.rotateRight(-((float)(Math.PI / 2)));
             renderer.start();
         }
 
@@ -345,6 +348,18 @@ namespace DATool
                     lock (renderer.camera)
                     {
                         renderer.camera.localTranslate(new Vector3(0, 0, -0.5f));
+                    }
+                    break;
+                case System.Windows.Forms.Keys.R:
+                    lock (renderer.camera)
+                    {
+                        renderer.camera.localTranslate(new Vector3(0, 0.5f, 0));
+                    }
+                    break;
+                case System.Windows.Forms.Keys.F:
+                    lock (renderer.camera)
+                    {
+                        renderer.camera.localTranslate(new Vector3(0, -0.5f, 0));
                     }
                     break;
             }
