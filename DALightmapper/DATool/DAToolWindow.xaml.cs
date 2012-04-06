@@ -56,26 +56,41 @@ namespace DATool
             }
         }
 
+        // method adds a folder into the location box, 
+        // then adds all the erfs in all subfolders into the list of erfs
         private void viewFolderButton_Click(object sender, RoutedEventArgs e)
         {
             System.Windows.Forms.FolderBrowserDialog browser = new System.Windows.Forms.FolderBrowserDialog();
             browser.ShowNewFolderButton = false;
-            System.Windows.Forms.DialogResult result = browser.ShowDialog();
+            System.Windows.Forms.DialogResult result = browser.ShowDialog();            
             if (result == System.Windows.Forms.DialogResult.OK)
             {
+                //User clicked OK, add the path into the location box, try to add all the erfs in there too
                 if (!Settings.filePaths.Contains(browser.SelectedPath))
                 {
-                    Settings.filePaths.Add(browser.SelectedPath);
-                    locationListBox.Items.Add(browser.SelectedPath);
+                    Settings.filePaths.Add(browser.SelectedPath);                    
                 }
+                locationListBox.Items.Add(browser.SelectedPath);
+
                 foreach (String s in Directory.GetDirectories(browser.SelectedPath, "*", SearchOption.AllDirectories))
                 {
                     if (!Settings.filePaths.Contains(s))
                     {
+                        //Add all the subdirectories
                         Settings.filePaths.Add(s);
-                        locationListBox.Items.Add(s);
                     }
                 }
+
+                foreach (String t in Directory.GetFiles(browser.SelectedPath, "*.erf", SearchOption.AllDirectories))
+                {
+                    ERF newErf = new ERF(t);
+                    newErf.readKeyData();
+                    if (!Settings.erfFiles.Contains(newErf))
+                    {
+                        Settings.erfFiles.Add(newErf);
+                    }              
+                }
+
             }
         }
         private void viewERFButton_Click(object sender, RoutedEventArgs e)
@@ -103,10 +118,16 @@ namespace DATool
                         ERF newErf = new ERF(s);
                         newErf.readKeyData();
                         Settings.erfFiles.Add(newErf);
-                        locationListBox.Items.Add(s);
+                        
                     }
+                    locationListBox.Items.Add(s);
                 }
             }
+        }
+
+        private bool isDisplayableExtension(String t)
+        {
+            return t == ".mmh" || t == ".msh" || t == ".dds";            
         }
 
         private void locationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -114,12 +135,48 @@ namespace DATool
             if (locationListBox.SelectedItem != null)
             {
                 String location = (String)locationListBox.SelectedItem;
-                if (Settings.filePaths.Contains(location))
-                {
-                    Directory.GetDirectories(location);
+                modelListBox.Items.Clear();
+                if (Directory.Exists(location))
+                {                    
+                    if (Settings.filePaths.Contains(location))
+                    {
+                        //Folder has been added, try to see if the erfs have been added, if not, throw error message. Then add all the contents of erf to modellist
+                        foreach (String s in Directory.GetFiles(location, "*", SearchOption.AllDirectories))
+                        {
+                            if (Path.GetExtension(s) == ".erf")
+                            {
+                                ERF myErf = Settings.erfFiles.Find(Erf => Erf.path == s);
+                                if (myErf != null)
+                                {
+                                     myErf.readKeyData();
+                                    foreach (String t in myErf.resourceNames)
+                                    {
+                                        if (isDisplayableExtension(Path.GetExtension(t)))
+                                        {
+                                        modelListBox.Items.Add(t);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    Console.WriteLine("the given erf doens't exist in the erf list, the file path given is: {0}", s);
+                                }
+                            }
+                            else if (isDisplayableExtension(Path.GetExtension(s)))
+                            {
+                                modelListBox.Items.Add(s);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // If it appears in the location box, should be added already
+                        Console.WriteLine("What're you doing here? This folder should be added already");
+                    }
                 }
                 else
                 {
+                    // Not a direcotry, must be an ERF file
                     ERF selectedERF = null;
                     foreach (ERF erf in Settings.erfFiles)
                     {
@@ -138,7 +195,7 @@ namespace DATool
                         modelListBox.Items.Clear();
                         foreach (String s in selectedERF.resourceNames)
                         {
-                            if (Path.GetExtension(s) == ".mmh" || Path.GetExtension(s) == ".msh" || Path.GetExtension(s) == ".dds" || Path.GetExtension(s) == ".mao")
+                            if (isDisplayableExtension(Path.GetExtension(s)))
                             {
                                 modelListBox.Items.Add(s);
                             }
@@ -162,6 +219,7 @@ namespace DATool
                         renderer.overlayText(tempGFF.path);
                         renderer.showOverlays();
                         renderer.displayModel(new ModelMesh(tempGFF));
+                        
                     }
                     else
                     {
