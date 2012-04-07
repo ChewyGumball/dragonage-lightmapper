@@ -7,7 +7,7 @@ namespace Ben
     public enum Verbosity { Warnings = 0, Low = 1, Medium = 2, High = 3, TESTING = 4 }
     public class StatusStream
     {
-        private Boolean outputToConsole = false;    //If this stream should output to the console or not
+        private Boolean outputToConsole = true;    //If this stream should output to the console or not
         private List<TextBox> textBoxes;            //The list of text boxes to output too
         private List<ProgressBar> progressBars;
   

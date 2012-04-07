@@ -29,8 +29,57 @@ namespace DALightmapper
 
     public class IO
     {
-        public static List<String> filePaths = new List<String>();
-        public static List<ERF> erfFiles = new List<ERF>();
+        private static List<String> filePathList = new List<String>();
+        private static List<ERF> erfFileList = new List<ERF>();
+
+        //Lists of places to look for files
+        public static IEnumerable<String> filePaths { get { return filePathList; } }
+        public static IEnumerable<ERF> erfFiles { get { return erfFileList; } }
+
+        public static void addFilePath(String path)
+        {
+            if (!filePathList.Contains(path) && Directory.Exists(path))
+            {
+                filePathList.Add(path);
+            }
+        }
+        private static void addERF(ERF erf)
+        {
+            erfFileList.Add(erf);
+        }
+        public static void addERF(String path)
+        {
+            if (File.Exists(path) && Path.GetExtension(path) == ".erf")
+            {
+                if(getERF(path) == null)
+                {
+                    addERF(new ERF(path));
+                }
+            }
+        }
+        public static void removeFilePath(String path)
+        {
+            filePathList.Remove(path);
+        }
+        public static void removeERF(ERF erf)
+        {
+            erfFileList.Remove(erf);
+        }
+
+        public static ERF getERF(String path)
+        {
+            ERF foundERF = null;
+            foreach (ERF erf in erfFiles)
+            {
+                if (erf.path == path)
+                {
+                    foundERF = erf;
+                    break;
+                }
+            }
+
+            return foundERF;
+        }
 
         //If set to true, reading should be aborted and donereading event should fire false
         public static Boolean abort {get; set;}
@@ -82,7 +131,6 @@ namespace DALightmapper
                 {
                     Settings.stream.AppendLine(Verbosity.Low, "This is an ERF, attempting to read key data");
                     ERF thing = new ERF(fileName);
-                    thing.readKeyData();
                     Settings.stream.AppendLine(Verbosity.Low, "Read in key data, " + thing.resourceCount + " files found");
                     Settings.stream.indent++;
                     for (int i = 0; i < thing.resourceCount; i++)

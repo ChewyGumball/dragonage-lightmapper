@@ -10,7 +10,6 @@ namespace Bioware.Files
 {
     public class ERF
     {
-
         String _type;               //The type of erf from the header
         String _version;            //The version of erf from the header
 
@@ -33,13 +32,7 @@ namespace Bioware.Files
             resourceNames = new String[resourceCount];
             resourceLengths = new uint[resourceCount];
             resourceOffsets = new uint[resourceCount];
-            file.Close();
-        }
 
-        //Actuall reads in the table of contents
-        public void readKeyData()
-        {
-            BinaryReader file = openReader(); 
             //Seek to the beginning of the data portion
             file.BaseStream.Seek(32, SeekOrigin.Begin);
             //Read in resource data
@@ -50,6 +43,7 @@ namespace Bioware.Files
                 resourceOffsets[i] = file.ReadUInt32();
                 resourceLengths[i] = file.ReadUInt32();
             }
+
             file.Close();
         }
 

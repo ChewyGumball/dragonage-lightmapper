@@ -71,7 +71,7 @@ namespace DATool
                 //User clicked OK, add the path into the location box, try to add all the erfs in there too
                 if (!IO.filePaths.Contains(browser.SelectedPath))
                 {
-                    IO.filePaths.Add(browser.SelectedPath);
+                    IO.addFilePath(browser.SelectedPath);
                 }
                 locationListBox.Items.Add(browser.SelectedPath);
 
@@ -80,18 +80,13 @@ namespace DATool
                     if (!IO.filePaths.Contains(s))
                     {
                         //Add all the subdirectories
-                        IO.filePaths.Add(s);
+                        IO.addFilePath(s);
                     }
                 }
 
                 foreach (String t in Directory.GetFiles(browser.SelectedPath, "*.erf", SearchOption.AllDirectories))
                 {
-                    ERF newErf = new ERF(t);
-                    newErf.readKeyData();
-                    if (!IO.erfFiles.Contains(newErf))
-                    {
-                        IO.erfFiles.Add(newErf);
-                    }
+                    IO.addERF(t);
                 }
 
             }
@@ -107,23 +102,11 @@ namespace DATool
             {
                 foreach (String s in browser.FileNames)
                 {
-                    bool alreadyAdded = false;
-                    foreach (ERF erf in IO.erfFiles)
+                    if (IO.getERF(s) == null)
                     {
-                        if (erf.path == s)
-                        {
-                            alreadyAdded = true;
-                            break;
-                        }
+                        locationListBox.Items.Add(s);
+                        IO.addERF(s);
                     }
-                    if (!alreadyAdded)
-                    {
-                        ERF newErf = new ERF(s);
-                        newErf.readKeyData();
-                        IO.erfFiles.Add(newErf);
-
-                    }
-                    locationListBox.Items.Add(s);
                 }
             }
         }
@@ -148,10 +131,9 @@ namespace DATool
                         {
                             if (Path.GetExtension(s) == ".erf")
                             {
-                                ERF myErf = IO.erfFiles.Find(Erf => Erf.path == s);
+                                ERF myErf = IO.getERF(s);
                                 if (myErf != null)
                                 {
-                                    myErf.readKeyData();
                                     foreach (String t in myErf.resourceNames)
                                     {
                                         if (isDisplayableExtension(Path.GetExtension(t)))

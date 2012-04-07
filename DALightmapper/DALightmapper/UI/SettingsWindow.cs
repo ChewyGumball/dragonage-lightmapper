@@ -17,7 +17,6 @@ namespace DALightmapper
         public SettingsWindow()
         {
             InitializeComponent();
-            Settings.initializeSettings();
             //Make sure working directory is working!
 
             trb_Verbosity.Value = (int)Settings.verboseStatus;
@@ -80,7 +79,7 @@ namespace DALightmapper
         {
             folderBrowserDialog1.ShowDialog();
             String path = folderBrowserDialog1.SelectedPath;
-            IO.filePaths.Add(path);
+            IO.addFilePath(path);
             lb_filePaths.Items.Add(path);
         }
 
@@ -90,8 +89,11 @@ namespace DALightmapper
             String[] paths = openFileDialog1.FileNames;
             foreach (String s in paths)
             {
-                IO.erfFiles.Add(new ERF(s));
-                lb_erfFiles.Items.Add(s);
+                if (IO.getERF(s) == null)
+                {
+                    IO.addERF(s);
+                    lb_erfFiles.Items.Add(s);
+                }
             }
         }
 

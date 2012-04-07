@@ -45,7 +45,7 @@ namespace DALightmapper
             {
                 if (Directory.Exists(s))
                 {
-                    IO.filePaths.Add(s);
+                    IO.addFilePath(s);
                 }
                 else
                 {
@@ -57,9 +57,7 @@ namespace DALightmapper
             {
                 if (File.Exists(s))
                 {
-                    ERF temp = new ERF(s);
-                    temp.readKeyData();
-                    IO.erfFiles.Add(temp);
+                    IO.addERF(s);
                 }
                 else
                 {

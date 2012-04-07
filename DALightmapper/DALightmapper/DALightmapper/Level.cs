@@ -93,7 +93,6 @@ namespace DALightmapper
         {
             // Initialize the erf (lvl) file in memory
             diskFile = new ERF(filePath);
-            diskFile.readKeyData();
 
             //find the index of the header file in the erf
             int headerIndex = diskFile.indexOf("header.gff");
