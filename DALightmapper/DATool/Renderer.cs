@@ -57,7 +57,7 @@ namespace DATool
             control = c;
             renderThread = null;
 
-            perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 2), (float)control.Width / (float)control.Height, 1, 100);
+            perspective = Matrix4.CreatePerspectiveFieldOfView((float)(Math.PI / 2), (float)control.Width / (float)control.Height, 1, 1000);
             orthographic = Matrix4.CreateOrthographicOffCenter(0, 2, 0, 2, -1, 1);
 
             rotateModel = false;
@@ -197,6 +197,8 @@ namespace DATool
 
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+
+            GL.Enable(EnableCap.DepthTest);
 
             Matrix4 modelTransform = Matrix4.Identity;
 

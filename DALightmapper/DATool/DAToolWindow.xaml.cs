@@ -65,13 +65,13 @@ namespace DATool
         {
             System.Windows.Forms.FolderBrowserDialog browser = new System.Windows.Forms.FolderBrowserDialog();
             browser.ShowNewFolderButton = false;
-            System.Windows.Forms.DialogResult result = browser.ShowDialog();            
+            System.Windows.Forms.DialogResult result = browser.ShowDialog();
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 //User clicked OK, add the path into the location box, try to add all the erfs in there too
                 if (!Settings.filePaths.Contains(browser.SelectedPath))
                 {
-                    Settings.filePaths.Add(browser.SelectedPath);                    
+                    Settings.filePaths.Add(browser.SelectedPath);
                 }
                 locationListBox.Items.Add(browser.SelectedPath);
 
@@ -91,7 +91,7 @@ namespace DATool
                     if (!Settings.erfFiles.Contains(newErf))
                     {
                         Settings.erfFiles.Add(newErf);
-                    }              
+                    }
                 }
 
             }
@@ -121,7 +121,7 @@ namespace DATool
                         ERF newErf = new ERF(s);
                         newErf.readKeyData();
                         Settings.erfFiles.Add(newErf);
-                        
+
                     }
                     locationListBox.Items.Add(s);
                 }
@@ -130,7 +130,7 @@ namespace DATool
 
         private bool isDisplayableExtension(String t)
         {
-            return t == ".mmh" || t == ".msh" || t == ".dds";            
+            return t == ".mmh" || t == ".msh" || t == ".dds";
         }
 
         private void locationListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -140,7 +140,7 @@ namespace DATool
                 String location = (String)locationListBox.SelectedItem;
                 modelListBox.Items.Clear();
                 if (Directory.Exists(location))
-                {                    
+                {
                     if (Settings.filePaths.Contains(location))
                     {
                         //Folder has been added, try to see if the erfs have been added, if not, throw error message. Then add all the contents of erf to modellist
@@ -151,12 +151,12 @@ namespace DATool
                                 ERF myErf = Settings.erfFiles.Find(Erf => Erf.path == s);
                                 if (myErf != null)
                                 {
-                                     myErf.readKeyData();
+                                    myErf.readKeyData();
                                     foreach (String t in myErf.resourceNames)
                                     {
                                         if (isDisplayableExtension(Path.GetExtension(t)))
                                         {
-                                        modelListBox.Items.Add(t);
+                                            modelListBox.Items.Add(t);
                                         }
                                     }
                                 }
@@ -222,7 +222,7 @@ namespace DATool
                         renderer.overlayText(tempGFF.path);
                         renderer.showOverlays();
                         renderer.displayModel(new ModelMesh(tempGFF));
-                        
+
                     }
                     else
                     {

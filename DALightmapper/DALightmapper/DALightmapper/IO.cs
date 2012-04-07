@@ -125,8 +125,15 @@ namespace DALightmapper
                     file = new T();
                     file.createFromPath(fullPath);
                 }
-
             }
+            
+            //If the filename is actually a full path itself
+            if (File.Exists(filename))
+            {
+                file = new T();
+                file.createFromPath(filename);
+            }
+            
             return file;
         }
     }
