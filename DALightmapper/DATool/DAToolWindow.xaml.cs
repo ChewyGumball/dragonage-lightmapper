@@ -69,18 +69,18 @@ namespace DATool
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 //User clicked OK, add the path into the location box, try to add all the erfs in there too
-                if (!Settings.filePaths.Contains(browser.SelectedPath))
+                if (!IO.filePaths.Contains(browser.SelectedPath))
                 {
-                    Settings.filePaths.Add(browser.SelectedPath);
+                    IO.filePaths.Add(browser.SelectedPath);
                 }
                 locationListBox.Items.Add(browser.SelectedPath);
 
                 foreach (String s in Directory.GetDirectories(browser.SelectedPath, "*", SearchOption.AllDirectories))
                 {
-                    if (!Settings.filePaths.Contains(s))
+                    if (!IO.filePaths.Contains(s))
                     {
                         //Add all the subdirectories
-                        Settings.filePaths.Add(s);
+                        IO.filePaths.Add(s);
                     }
                 }
 
@@ -88,9 +88,9 @@ namespace DATool
                 {
                     ERF newErf = new ERF(t);
                     newErf.readKeyData();
-                    if (!Settings.erfFiles.Contains(newErf))
+                    if (!IO.erfFiles.Contains(newErf))
                     {
-                        Settings.erfFiles.Add(newErf);
+                        IO.erfFiles.Add(newErf);
                     }
                 }
 
@@ -108,7 +108,7 @@ namespace DATool
                 foreach (String s in browser.FileNames)
                 {
                     bool alreadyAdded = false;
-                    foreach (ERF erf in Settings.erfFiles)
+                    foreach (ERF erf in IO.erfFiles)
                     {
                         if (erf.path == s)
                         {
@@ -120,7 +120,7 @@ namespace DATool
                     {
                         ERF newErf = new ERF(s);
                         newErf.readKeyData();
-                        Settings.erfFiles.Add(newErf);
+                        IO.erfFiles.Add(newErf);
 
                     }
                     locationListBox.Items.Add(s);
@@ -141,14 +141,14 @@ namespace DATool
                 modelListBox.Items.Clear();
                 if (Directory.Exists(location))
                 {
-                    if (Settings.filePaths.Contains(location))
+                    if (IO.filePaths.Contains(location))
                     {
                         //Folder has been added, try to see if the erfs have been added, if not, throw error message. Then add all the contents of erf to modellist
                         foreach (String s in Directory.GetFiles(location, "*", SearchOption.AllDirectories))
                         {
                             if (Path.GetExtension(s) == ".erf")
                             {
-                                ERF myErf = Settings.erfFiles.Find(Erf => Erf.path == s);
+                                ERF myErf = IO.erfFiles.Find(Erf => Erf.path == s);
                                 if (myErf != null)
                                 {
                                     myErf.readKeyData();
@@ -181,7 +181,7 @@ namespace DATool
                 {
                     // Not a direcotry, must be an ERF file
                     ERF selectedERF = null;
-                    foreach (ERF erf in Settings.erfFiles)
+                    foreach (ERF erf in IO.erfFiles)
                     {
                         if (erf.path == location)
                         {

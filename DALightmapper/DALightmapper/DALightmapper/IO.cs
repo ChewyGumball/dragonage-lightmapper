@@ -29,6 +29,9 @@ namespace DALightmapper
 
     public class IO
     {
+        public static List<String> filePaths = new List<String>();
+        public static List<ERF> erfFiles = new List<ERF>();
+
         //If set to true, reading should be aborted and donereading event should fire false
         public static Boolean abort {get; set;}
 
@@ -106,7 +109,7 @@ namespace DALightmapper
         public static T findFile<T>(String filename) where T : class, FindableFile, new()
         {
             T file = null;
-            foreach (ERF erf in Settings.erfFiles)
+            foreach (ERF erf in erfFiles)
             {
                 if (erf.isInERF(filename))
                 {
@@ -117,7 +120,7 @@ namespace DALightmapper
             }
 
             //Look in the folders
-            foreach (String path in Settings.filePaths)
+            foreach (String path in filePaths)
             {
                 String fullPath = path + "\\" + filename;
                 if (File.Exists(fullPath))

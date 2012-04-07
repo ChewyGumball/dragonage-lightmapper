@@ -34,8 +34,6 @@ namespace DALightmapper
         public static String tempDirectory = "";
         public static String workingDirectory = "";
 
-        public static List<String> filePaths = new List<String>();
-        public static List<ERF> erfFiles = new List<ERF>();
                
         //Initializes the variables saved in an ini file leaving the others at default value
         public static void initializeSettings()
@@ -47,7 +45,7 @@ namespace DALightmapper
             {
                 if (Directory.Exists(s))
                 {
-                    filePaths.Add(s);
+                    IO.filePaths.Add(s);
                 }
                 else
                 {
@@ -61,7 +59,7 @@ namespace DALightmapper
                 {
                     ERF temp = new ERF(s);
                     temp.readKeyData();
-                    erfFiles.Add(temp);
+                    IO.erfFiles.Add(temp);
                 }
                 else
                 {
@@ -82,11 +80,11 @@ namespace DALightmapper
             System.Collections.Specialized.StringCollection saveFilePaths = new System.Collections.Specialized.StringCollection();
             System.Collections.Specialized.StringCollection saveErfFiles = new System.Collections.Specialized.StringCollection();
 
-            foreach (String s in filePaths)
+            foreach (String s in IO.filePaths)
             {
                 saveFilePaths.Add(s);
             }
-            foreach (ERF erf in erfFiles)
+            foreach (ERF erf in IO.erfFiles)
             {
                 saveErfFiles.Add(erf.path);
             }

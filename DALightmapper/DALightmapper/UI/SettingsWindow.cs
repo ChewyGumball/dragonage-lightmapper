@@ -26,11 +26,11 @@ namespace DALightmapper
             cb_useTrueAttenuation.Checked = Settings.useTrueAttenuation;
             cb_clearTempDir.Checked = Settings.cleanUpTempFiles;
 
-            foreach (String s in Settings.filePaths)
+            foreach (String s in IO.filePaths)
             {
                 lb_filePaths.Items.Add(s);
             }
-            foreach (ERF erf in Settings.erfFiles)
+            foreach (ERF erf in IO.erfFiles)
             {
                 lb_erfFiles.Items.Add(erf.path);
             }
@@ -80,7 +80,7 @@ namespace DALightmapper
         {
             folderBrowserDialog1.ShowDialog();
             String path = folderBrowserDialog1.SelectedPath;
-            Settings.filePaths.Add(path);
+            IO.filePaths.Add(path);
             lb_filePaths.Items.Add(path);
         }
 
@@ -90,7 +90,7 @@ namespace DALightmapper
             String[] paths = openFileDialog1.FileNames;
             foreach (String s in paths)
             {
-                Settings.erfFiles.Add(new ERF(s));
+                IO.erfFiles.Add(new ERF(s));
                 lb_erfFiles.Items.Add(s);
             }
         }
