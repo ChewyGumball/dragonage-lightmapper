@@ -45,6 +45,15 @@ namespace Bioware.Files
             //second channel (lightmap) uvs
             Vector2[] luvs;
 
+            //Make sure this is not a FX mesh (instance stream is 0)
+
+            file.BaseStream.Seek(binaryFile.dataOffset + binaryFile.structs[0].fields[5].index, SeekOrigin.Begin);
+            if (file.ReadByte() != 0)
+            {
+                chunks = new MeshChunk[0];
+                return;
+            }
+
             //seek to the beginning of the data part of the file
             file.BaseStream.Seek(binaryFile.dataOffset, SeekOrigin.Begin);
 
