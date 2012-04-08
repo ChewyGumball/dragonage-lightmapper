@@ -25,7 +25,7 @@ namespace DALightmapper
 
         //--Light Mapping Variables--//
         public static int numPhotonsPerLight = 10000;   //Number of photons to shoot per light
-        public static double gatherRadius = 0.2;         //Radius of sphere to sample photons for a patch
+        public static float gatherRadius = 0.2f;         //Radius of sphere to sample photons for a patch
         public static Boolean useNumBounces = false;
         
         public static int pixelsPerUnit = 10;   //Number of pixels per unit length to use when making lightmap textures

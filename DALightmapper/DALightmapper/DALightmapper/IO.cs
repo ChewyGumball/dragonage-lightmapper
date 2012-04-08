@@ -12,21 +12,6 @@ using Ben;
 
 namespace DALightmapper
 {
-    delegate void FinishedReadingEventHandler(FinishedReadingEventArgs e);
-    public class FinishedReadingEventArgs : EventArgs
-    {
-        public String message {get; private set;}
-        public Boolean successful {get; private set;}
-        public Level level {get; private set;}
-        
-        public FinishedReadingEventArgs(Boolean s, String m, Level l)
-        {
-            successful = s;
-            message = m;
-            level = l;
-        }
-    }
-
     public class IO
     {
         private static List<String> filePathList = new List<String>();

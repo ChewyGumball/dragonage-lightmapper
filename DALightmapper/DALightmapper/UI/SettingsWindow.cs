@@ -41,6 +41,7 @@ namespace DALightmapper
             nmup_Cores.Maximum = Environment.ProcessorCount;
             nmup_Cores.Minimum = 1;
             nmup_Cores.Value = Settings.maxThreads;
+            nmup_gatherRadius.Value = (decimal)Settings.gatherRadius;
 
         }
 
@@ -137,6 +138,11 @@ namespace DALightmapper
         private void btn_Save_Click(object sender, EventArgs e)
         {
             Settings.saveSettings();
+        }
+
+        private void nmup_gatherRadius_ValueChanged(object sender, EventArgs e)
+        {
+            Settings.gatherRadius = (float)nmup_gatherRadius.Value;
         }
     }
 }

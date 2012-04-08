@@ -14,7 +14,7 @@ namespace Ben
         public byte r, g, b, a;
 
         public Pixel(byte blue, byte green, byte red)
-            : this(blue, green, red, 255)
+            : this(blue, green, red, 0)
         { }
 
         public Pixel(Vector3 v)
@@ -125,8 +125,15 @@ namespace Ben
             pixels = new Pixel[w * h];
             width = w;
             height = h;
+            for (int i = 0; i < w; i++)
+            {
+                for (int j = 0; j < h; j++)
+                {
+                    this[i, j] = new Pixel(255, 255, 255);
+                }
+            }
         }
-        public Targa(Pixel[] pix, short w, short h, byte bpp, String file)
+        public Targa(String file, Pixel[] pix, short w, short h, byte bpp)
         {
             pixels = pix;
             width = w;
@@ -135,7 +142,7 @@ namespace Ben
             filename = file;
         }
         public Targa(Pixel[] pix, short w, short h, byte bpp)
-            : this(pix, w, h, bpp, "")
+            : this("UNNAMED PIXEL", pix, w, h, bpp)
         { }
 
 

@@ -50,17 +50,28 @@ namespace DALightmapper
             }
         }
 
-        public Targa makeIntoTexture(String directory)
+        public Targa makeLightMapTexture(String directory)
         {
-            Targa texture = new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".tga", (short)width, (short)height);
+            Pixel[] pixels = new Pixel[width * height];
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
                 {
-                    texture[i, j] = new Pixel((texels[i, j].excidentLight) * 255);
+                    pixels[j * width + i] = new Pixel((texels[i, j].excidentLight) * 255);
                 }
             }
+            Targa texture = new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".StandardLightMap.tga", pixels, (short)width, (short)height, 24);
             return texture;
+        }
+
+        public Targa makeAmbientOcclutionTexture(String directory)
+        {
+            return new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".AmbientOcclusionMap.tga", (short)width, (short)height);
+        }
+
+        public Targa makeShadowMapTexture(String directory)
+        {
+            return new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".ShadowMap.tga", (short)width, (short)height);
         }
     }
 }

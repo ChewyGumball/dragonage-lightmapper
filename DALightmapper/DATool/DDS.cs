@@ -103,6 +103,7 @@ namespace DATool
             uint pixelFormatSize = file.ReadUInt32();
             uint pixelFormatFlags = file.ReadUInt32();
 
+            //The texture is not compressed if the FOURCC is not set
             if ((pixelFormatFlags & FOURCC_FLAG) == 0)
             {
                 throw new NotImplementedException("Uncompressed textures have not been implemented!");

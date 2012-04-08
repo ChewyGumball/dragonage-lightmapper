@@ -301,10 +301,10 @@ namespace DALightmapper
             return containsPoint(t.x) && containsPoint(t.y) && containsPoint(t.z);
         }
         
-        public Boolean sphereIntersect(Vector3 point, double distance)
+        public Boolean sphereIntersect(Vector3 point, float distance)
         {
-            BoundingBox b = new BoundingBox(point, (float)distance, (float)distance, (float)distance);
-            return boxIntersects(b);
+            return !(min.X > (point.X + distance) || min.Y > (point.Y + distance) || min.Z > (point.Z + distance) || 
+                    (point.X - distance) > max.X || (point.Y - distance) > max.Y || (point.Z - distance) > max.Z);
         }
 
         public Boolean boxIntersects(BoundingBox b)

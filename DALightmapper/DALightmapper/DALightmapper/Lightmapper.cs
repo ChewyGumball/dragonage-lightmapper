@@ -70,18 +70,15 @@ namespace DALightmapper
             List<Triangle> castingTriangles = new List<Triangle>();
 
             //The list of models that need lightmaps
-            List<ModelInstance> receivingModelsList = new List<ModelInstance>();
+            List<ModelInstance> receivingModels = new List<ModelInstance>();
 
             foreach (ModelInstance m in level.lightmapModels)
             {
                 if (m.baseModel.isLightmapped)
-                    receivingModelsList.Add(m);
+                    receivingModels.Add(m);
                 if (m.baseModel.castsShadows)
                     castingTriangles.AddRange(m.tris);
             }
-
-            //We keep an index in the lightmap into this array so we can identify which map goes to which model
-            ModelInstance[] receivingModels = receivingModelsList.ToArray();
 
             //Make the lightmaps
             maps = makeLightmaps(receivingModels);
@@ -121,11 +118,16 @@ namespace DALightmapper
                                     {2,4,2},
                                     {1,2,1}
                                    };
-                Targa lightMap = l.makeIntoTexture(Settings.tempDirectory + "\\lightmaps");
+                Targa lightMap = l.makeLightMapTexture(Settings.tempDirectory + "\\lightmaps");
                 lightMap.applyFilter(gaussFilter);
                 lightMap.writeToFile();
+
+                l.makeAmbientOcclutionTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
+                l.makeShadowMapTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
+
                 Settings.stream.UpdateProgress();
             }
+
             Settings.stream.AppendLine("Done");
 
             //Fire the event saying lightmapping was finished completely
@@ -133,7 +135,7 @@ namespace DALightmapper
         }
 
         //Makes lightmaps for the input model instances
-        private static List<LightMap> makeLightmaps(ModelInstance[] models)
+        private static List<LightMap> makeLightmaps(List<ModelInstance> models)
         {
             List<Patch> patchList = new List<Patch>();
             List<LightMap> lightmapList = new List<LightMap>();
@@ -235,7 +237,8 @@ namespace DALightmapper
                     }
 
                     Patch p = l.patches[i];
-                    List<Photon> gather = photonMap.getWithinDistanceSquared(p.position, Settings.gatherRadius * Settings.gatherRadius);
+                    List<Photon> gather = new List<Photon>();
+                    photonMap.getWithinDistanceSquared(p.position, (float)(Settings.gatherRadius * Settings.gatherRadius), ref gather);
                     foreach (Photon photon in gather)
                     {
                         p.incidentLight += photon.colour;
