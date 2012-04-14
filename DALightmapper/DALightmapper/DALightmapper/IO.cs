@@ -66,6 +66,16 @@ namespace DALightmapper
             return foundERF;
         }
 
+        //Creates an empty directory with the input path, deleting previous directories if they exist
+        public static void createDirectory(String path)
+        {
+            if(Directory.Exists(path))
+            {
+                Directory.Delete(path,true);
+            }
+            Directory.CreateDirectory(path);
+        }
+
         //If set to true, reading should be aborted and donereading event should fire false
         public static Boolean abort {get; set;}
 

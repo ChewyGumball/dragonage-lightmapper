@@ -53,25 +53,49 @@ namespace DALightmapper
         // Runs the light map process
         public static void runLightmaps(String path)
         {
+            //Reset abort
+            abort = false;
+
             Settings.stream.AppendText("Loading level . . . ");
             Level level = IO.readLevel(path);
             if (level == null)
             {
-                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping, no level file.", false), null, null);
+                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping, could not find level file " +path+".", false), null, null);
                 return;
             }
             Settings.stream.AppendLine("Done");
 
-            List<LightMap> maps;
-            List<Photon> photons;
 
-            //The list of triangles which will be casting shadows
-            //  This comes from the models which cast shadows, we don't care which models they come from
+
+            //-- Set up directories for lightmap files --//
+
+            //Create the directory to store the lightmaps in
+            String lightmapDirectory = Settings.tempDirectory + "\\" + Path.GetFileName(level.name);
+            IO.createDirectory(lightmapDirectory);
+
+            //Create the subdirectory where we store uncompressed lightmaps
+            String uncompressedDirectory = lightmapDirectory + "\\uncompressed";
+            IO.createDirectory(uncompressedDirectory);
+
+            //Create the subdirectory where we store compressed lightmaps
+            String compressedDirectory = lightmapDirectory + "\\compressed";
+            IO.createDirectory(compressedDirectory);
+
+            //Create the subdirectory where we store the atlas textures
+            String atlasDirectory = lightmapDirectory + "\\atlas";
+            IO.createDirectory(atlasDirectory);
+                        
+
+
+            //-- Get the geometry we need for lightmapping --//
+
+            //The list of triangles which will be casting shadows, we don't care which models they come from
             List<Triangle> castingTriangles = new List<Triangle>();
 
-            //The list of models that need lightmaps
+            //The list of models that need lightmaps, not all models receive lightmaps
             List<ModelInstance> receivingModels = new List<ModelInstance>();
 
+            //Find all the lightmapped models and casting triangles
             foreach (ModelInstance m in level.lightmapModels)
             {
                 if (m.baseModel.isLightmapped)
@@ -80,17 +104,21 @@ namespace DALightmapper
                     castingTriangles.AddRange(m.tris);
             }
 
-            //Make the lightmaps
-            maps = makeLightmaps(receivingModels);
 
-            Settings.stream.AppendText("Partitioning level . . . ");
+
+            //-- Do the lightmapping --//
+
+            //Make the lightmaps
+            List<LightMap> maps = makeLightmaps(receivingModels);
+
             //Make the triangle partitioner
+            Settings.stream.AppendText("Partitioning level . . . ");
             Partitioner scene = new Octree(castingTriangles);
             Settings.stream.AppendLine("Done");
 
             //Shoot the photons
             Settings.stream.AppendFormatText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
-            photons = firePhotons(level.lights, scene);            
+            List<Photon> photons = firePhotons(level.lights, scene);            
             Settings.stream.AppendLine("Done");
 
             //Make the photon map
@@ -103,32 +131,24 @@ namespace DALightmapper
             gatherPhotons(maps,photonMap);
             Settings.stream.AppendLine("Done");
 
-            //Make the lightmaps
-            Settings.stream.SetProgressBarMaximum(maps.Count);
+
+
+            //-- Create the lightmap files --//
+
             Settings.stream.AppendText("Creating light map textures . . . ");
-            foreach (LightMap l in maps)
-            {
-                int[,] boxFilter = {
-                                    {1,1,1},
-                                    {1,1,1},
-                                    {1,1,1}
-                                   };
-                int[,] gaussFilter = {
-                                    {1,2,1},
-                                    {2,4,2},
-                                    {1,2,1}
-                                   };
-                Targa lightMap = l.makeLightMapTexture(Settings.tempDirectory + "\\lightmaps");
-                lightMap.applyFilter(gaussFilter);
-                lightMap.writeToFile();
-
-                l.makeAmbientOcclutionTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
-                l.makeShadowMapTexture(Settings.tempDirectory + "\\lightmaps").writeToFile();
-
-                Settings.stream.UpdateProgress();
-            }
-
+            outputLightmaps(uncompressedDirectory, maps);
             Settings.stream.AppendLine("Done");
+
+            Settings.stream.AppendText("Compressing lightmaps . . . ");
+            compressLightMaps(uncompressedDirectory, compressedDirectory);
+            Settings.stream.AppendLine("Done");
+
+            Settings.stream.AppendText("Building lightmap atlas . . . ");
+            buildAtlas(compressedDirectory, atlasDirectory);
+            Settings.stream.AppendLine("Done");
+
+
+
 
             //Fire the event saying lightmapping was finished completely
             FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Successfully finished light mapping.", true), null, null);
@@ -137,7 +157,6 @@ namespace DALightmapper
         //Makes lightmaps for the input model instances
         private static List<LightMap> makeLightmaps(List<ModelInstance> models)
         {
-            List<Patch> patchList = new List<Patch>();
             List<LightMap> lightmapList = new List<LightMap>();
             //Make lightmaps
             foreach (ModelInstance m in models)
@@ -258,6 +277,55 @@ namespace DALightmapper
                     throw new LightmappingAbortedException();
                 }
             }
+        }
+
+        private static void outputLightmaps(String uncompressedPath, List<LightMap> lightmaps)
+        {
+            Settings.stream.SetProgressBarMaximum(lightmaps.Count);
+            foreach (LightMap l in lightmaps)
+            {
+                /* for reference
+                int[,] boxFilter = {
+                                    {1,1,1},
+                                    {1,1,1},
+                                    {1,1,1}
+                                   };
+                 */
+                int[,] gaussFilter = {
+                                    {1,2,1},
+                                    {2,4,2},
+                                    {1,2,1}
+                                   };
+
+                Targa lightMap = l.makeLightMapTexture(uncompressedPath);
+                lightMap.applyFilter(gaussFilter);
+                lightMap.writeToFile();
+
+                l.makeAmbientOcclutionTexture(uncompressedPath).writeToFile();
+                l.makeShadowMapTexture(uncompressedPath).writeToFile();
+
+                Settings.stream.UpdateProgress();
+            }
+        }
+        private static void compressLightMaps(String uncompressedPath, String compressedPath)
+        {
+            String arguments = String.Format("-in_lm \"{0}\" -in_sm \"{0}\" -in_ao \"{0}\" -out \"{1}\"", uncompressedPath, compressedPath);
+
+            ProcessStartInfo info = new ProcessStartInfo(Settings.lightmappingToolsDirectory + "\\BakedMapProcessor.exe", arguments);
+            info.UseShellExecute = false;
+            info.CreateNoWindow = true;
+
+            Process.Start(info);
+        }
+        private static void buildAtlas(String compressedPath, String atlasPath)
+        {
+            String arguments = String.Format("-in \"{0}\" -out \"{1}\"", compressedPath, atlasPath);
+
+            ProcessStartInfo info = new ProcessStartInfo(Settings.lightmappingToolsDirectory + "\\CreateAtlas.exe", arguments);
+            info.UseShellExecute = false;
+            info.CreateNoWindow = true;
+
+            Process.Start(info);
         }
     }
 }

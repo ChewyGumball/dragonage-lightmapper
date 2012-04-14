@@ -26,14 +26,23 @@ namespace DALightmapper
         public List<Light> lights { get; private set; }
 
         private Dictionary<String, Model> baseModels;
+        private String layoutName;
 
         #region Index Values
 
         //Struct index values (mostly list indecies)
         private static readonly int TOP_LEVEL_STRUCT_INDEX = 0;
         private static readonly int TERRAIN_CHUNK_LIST_INDEX = 3;
-        private static readonly int ROOM_LIST_INDEX = 1;
         private static readonly int ENVIRONMENT_LIST_INDEX = 1;
+
+        //Area struct index values
+        private static readonly int AREA_PROPERTY_INDEX = 0;
+        private static readonly int AREA_LIST_INDEX = 1;
+
+        //Area property list index values
+        private static readonly int AREA_LAYOUT_NAME_INDEX = 3;
+
+        //Room struct index values
         private static readonly int ROOM_POSITION_INDEX = 0;
         private static readonly int ROOM_ROTATION_INDEX = 1;
         private static readonly int ROOM_OBJECT_LIST_INDEX = 2;
@@ -64,7 +73,7 @@ namespace DALightmapper
         private static readonly int MODEL_ID_INDEX = 4;
 
         //Model index values (within property list)
-        private static readonly int MODEL_FILENAME_INDEX = 0;
+        private static readonly int MODEL_FILENAME_INDEX = 4;
         private static readonly int MODEL_LIGHTMAPVALUE_INDEX = 13;
 
         //Model static constant values
@@ -106,6 +115,7 @@ namespace DALightmapper
             headerFile = new GFF(filePath, diskFile.resourceOffsets[headerIndex]);
             baseModels = new Dictionary<String, Model>();
             lightmapModels = new List<ModelInstance>();
+            layoutName = "WHAT";
             //Set up the struct definitions (for sanity!)
             setStructDefinitions();
         }
@@ -149,18 +159,30 @@ namespace DALightmapper
                 lightmapModels.AddRange(readPropModels(objectList, new Vector3(), new Quaternion(), 0));
                 lights.AddRange(readLights(objectList, new Vector3(), new Quaternion(), 0));
             }
-
             //if its an indoor room we have to go farther into the data
             else if (environmentStruct.type == GFFSTRUCTTYPE.ENV_WORLD_ROOM)
             {
                 //get to the area struct data
                 file.BaseStream.Seek(headerFile.dataOffset + objectList[0], SeekOrigin.Begin);
 
+
+                //Get the layout name
+                file.BaseStream.Seek(areaStruct.fields[AREA_PROPERTY_INDEX].index + propertyStruct.fields[PROPERTY_CHILDREN_INDEX].index, SeekOrigin.Current);
+                reference = file.ReadInt32();
+                file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
+                GenericList propertyList = new GenericList(file);
+
+                file.BaseStream.Seek(headerFile.dataOffset + propertyList[AREA_LAYOUT_NAME_INDEX] + propertyStruct.fields[PROPERTY_VALUE_INDEX].index, SeekOrigin.Begin);
+                layoutName = IOUtilities.readECString(file, headerFile.dataOffset + file.ReadInt32());                
+
                 //now get the reference to the room list and make it
-                file.BaseStream.Seek(areaStruct.fields[ROOM_LIST_INDEX].index, SeekOrigin.Current);
+                file.BaseStream.Seek(headerFile.dataOffset + objectList[0], SeekOrigin.Begin);
+
+                file.BaseStream.Seek(areaStruct.fields[AREA_LIST_INDEX].index, SeekOrigin.Current);
                 reference = file.ReadInt32();
                 file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
                 GenericList roomList = new GenericList(file);
+
 
                 //for each room in the list
                 for (int i = 0; i < roomList.length; i++)
@@ -425,7 +447,7 @@ namespace DALightmapper
                     {
                         if (baseModels[modelFileName].isLightmapped || baseModels[modelFileName].castsShadows)
                         {
-                            propModels.Add(new ModelInstance(modelFileName, baseModels[modelFileName], position, rotation, modelID, roomID));
+                            propModels.Add(new ModelInstance(modelFileName, baseModels[modelFileName], position, rotation, modelID, roomID, layoutName));
                         }
                     }
                 }

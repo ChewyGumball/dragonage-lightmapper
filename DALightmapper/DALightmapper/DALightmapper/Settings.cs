@@ -32,13 +32,13 @@ namespace DALightmapper
 
         //--Paths to Required Files--// 
         public static String tempDirectory = "";
-        public static String workingDirectory = "";
+        public static String lightmappingToolsDirectory = "";
 
                
         //Initializes the variables saved in an ini file leaving the others at default value
         public static void initializeSettings()
         {
-            workingDirectory = Properties.Settings.Default.workingDirectory;
+            lightmappingToolsDirectory = Properties.Settings.Default.lightmappingToolsDirectory;
             tempDirectory = Properties.Settings.Default.tempDirectory;
 
             foreach (String s in Properties.Settings.Default.filePaths)
@@ -89,7 +89,7 @@ namespace DALightmapper
 
             Properties.Settings.Default.erfFiles = saveErfFiles;
             Properties.Settings.Default.filePaths = saveFilePaths;
-            Properties.Settings.Default.workingDirectory = workingDirectory;
+            Properties.Settings.Default.lightmappingToolsDirectory = lightmappingToolsDirectory;
             Properties.Settings.Default.tempDirectory = tempDirectory;
 
             Properties.Settings.Default.numPhotons = numPhotonsPerLight;

@@ -34,7 +34,7 @@ namespace DALightmapper
                 lb_erfFiles.Items.Add(erf.path);
             }
 
-            tb_workingDirectory.Text = Settings.workingDirectory;
+            tb_workingDirectory.Text = Settings.lightmappingToolsDirectory;
             tb_tempDirectory.Text = Settings.tempDirectory;
 
             nmup_numPhotons.Value = Settings.numPhotonsPerLight;
@@ -66,7 +66,7 @@ namespace DALightmapper
         {
             folderBrowserDialog1.ShowDialog();
             tb_workingDirectory.Text = folderBrowserDialog1.SelectedPath;
-            Settings.workingDirectory = tb_workingDirectory.Text;
+            Settings.lightmappingToolsDirectory = tb_workingDirectory.Text;
         }
 
         private void btn_tempFiles_Click(object sender, EventArgs e)

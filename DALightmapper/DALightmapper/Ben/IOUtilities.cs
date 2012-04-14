@@ -6,11 +6,6 @@ namespace Ben
 {
     public class IOUtilities
     {
-        //Used to abbreviate file sizes
-        private static readonly float kilobyte = 1024;
-        private static readonly float megabyte = 1024 * kilobyte;
-        private static readonly float gigabyte = 1024 * megabyte;
-        private static readonly float terabyte = 1024 * gigabyte;
 
         //----------------------------------------------------------------------//
         //  Reads in a string headed with the length in characters //
@@ -28,7 +23,6 @@ namespace Ben
             int length = file.ReadInt32() * 2;
             return readECStringWithLength(file,length);
         }
-
         public static String readECStringWithLength(BinaryReader file, int length)
         {
             return Encoding.Unicode.GetString(file.ReadBytes(length)).Trim('\0').Trim();
@@ -120,7 +114,6 @@ namespace Ben
             }
             return bits;
         }
-
         public static string ByteArrayToString(byte[] ba)
         {
             StringBuilder hex = new StringBuilder(ba.Length * 2);
@@ -128,9 +121,18 @@ namespace Ben
                 hex.AppendFormat("{0:x2}", b);
             return hex.ToString();
         }
-        //Abreviates filesizes
+
+        //--------------------------------------------------------------------//
+        //  Abreviate file sizes to biggest of KB, MB, GB, TB with 2 decimal  //
+        //                      places of precision                           //
+        //--------------------------------------------------------------------//
         public static string ToByteString(long bytes)
         {
+            float kilobyte = 1024;
+            float megabyte = 1024 * kilobyte;
+            float gigabyte = 1024 * megabyte;
+            float terabyte = 1024 * gigabyte;
+
             if (bytes > terabyte) return (bytes / terabyte).ToString("0.00 TB");
             else if (bytes > gigabyte) return (bytes / gigabyte).ToString("0.00 GB");
             else if (bytes > megabyte) return (bytes / megabyte).ToString("0.00 MB");

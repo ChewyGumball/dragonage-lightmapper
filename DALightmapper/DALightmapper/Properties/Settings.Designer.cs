@@ -105,12 +105,12 @@ namespace DALightmapper.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Ben\\Documents\\BioWare\\Dragon Age\\temp")]
-        public string workingDirectory {
+        public string lightmappingToolsDirectory {
             get {
-                return ((string)(this["workingDirectory"]));
+                return ((string)(this["lightmappingToolsDirectory"]));
             }
             set {
-                this["workingDirectory"] = value;
+                this["lightmappingToolsDirectory"] = value;
             }
         }
         

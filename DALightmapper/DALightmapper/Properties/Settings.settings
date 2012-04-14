@@ -27,7 +27,7 @@
     <Setting Name="clearTempFiles" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
-    <Setting Name="workingDirectory" Type="System.String" Scope="User">
+    <Setting Name="lightmappingToolsDirectory" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Users\Ben\Documents\BioWare\Dragon Age\temp</Value>
     </Setting>
     <Setting Name="tempDirectory" Type="System.String" Scope="User">

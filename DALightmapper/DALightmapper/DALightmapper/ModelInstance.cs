@@ -12,6 +12,7 @@ namespace DALightmapper
         public Quaternion rotation { get; private set; }
         public uint id { get; private set; }
         public int roomID { get; private set; }
+        public String layoutName { get; private set; }
         public BoundingBox[] bounds { get; private set; }
         public List<Triangle> tris
         {
@@ -29,7 +30,7 @@ namespace DALightmapper
             }
         }
 
-        public ModelInstance (String n, Model baseM, Vector3 pos, Quaternion rot, uint modelId, int rID)
+        public ModelInstance (String n, Model baseM, Vector3 pos, Quaternion rot, uint modelId, int rID, string lName)
         {
             name = n;
             baseModel = baseM;
@@ -37,6 +38,7 @@ namespace DALightmapper
             rotation = rot;
             id = modelId;
             roomID = rID;
+            layoutName = lName;
             //Need to make bounding boxes
             bounds = new BoundingBox[baseModel.meshes.Length];
             for (int i = 0; i < bounds.Length; i++)

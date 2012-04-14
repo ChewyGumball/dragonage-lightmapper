@@ -30,28 +30,30 @@ namespace DALightmapper
             Settings.initializeSettings();
             oglPreviewWindow = new OpenGLPreview();
             settingsWindow = new SettingsWindow();
-            
+            Settings.stream.AppendLine();
+            Settings.stream.AppendLine();
+            Settings.stream.AppendLine("Command line arguments:");
+            foreach(String s in Environment.GetCommandLineArgs())
+            {
+                Settings.stream.AppendLine(s);
+            }
             try
             {
-                if (!Directory.Exists(Settings.workingDirectory))
+                if (!Directory.Exists(Settings.tempDirectory))
                 {
-                    Directory.CreateDirectory(Settings.workingDirectory);
-                }
-                if (!Directory.Exists(Settings.tempDirectory + "\\lightmaps"))
-                {
-                    Directory.CreateDirectory(Settings.tempDirectory + "\\lightmaps");
+                    Directory.CreateDirectory(Settings.tempDirectory);
                 }
             }
             catch (UnauthorizedAccessException)
             {
-                Settings.stream.AppendFormatLine("The working directory (\"{0}\") could not be accessed due to permissions.", Settings.workingDirectory);
+                Settings.stream.AppendFormatLine("The temp directory (\"{0}\") could not be accessed due to permissions.", Settings.tempDirectory);
                 Settings.stream.indent++;
                 Settings.stream.AppendLine("Please change the permissions of the parent directory.");
                 Settings.stream.indent--;
             }
             catch (Exception e)
             {
-                Settings.stream.AppendFormatLine("There was an error accessing the working directory (\"{0}\"), {1}", Settings.workingDirectory, e.Message);
+                Settings.stream.AppendFormatLine("There was an error accessing the temp directory (\"{0}\"), {1}", Settings.tempDirectory, e.Message);
             }
 
             //Plug into thread finish handler for Light Mapping
@@ -217,7 +219,14 @@ namespace DALightmapper
             {
                 try
                 {
-                    Directory.Delete(Settings.tempDirectory, true);
+                    foreach (String s in Directory.GetDirectories(Settings.tempDirectory))
+                    {
+                        Directory.Delete(s, true);
+                    }
+                    foreach (String s in Directory.GetFiles(Settings.tempDirectory))
+                    {
+                        File.Delete(s);
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -22,6 +22,7 @@ namespace DALightmapper
         private int index;
         private Texel[,] texels;
 
+        String name;
 
         public LightMap(ModelInstance mi, int meshIndex)
         {
@@ -48,6 +49,8 @@ namespace DALightmapper
                     }
                 }
             }
+
+            name = "lm" + model.layoutName + "_" + Ben.MathHelper.convertToBase36(model.id) + "_0_" + model.baseModel.meshes[index].id;
         }
 
         public Targa makeLightMapTexture(String directory)
@@ -60,18 +63,18 @@ namespace DALightmapper
                     pixels[j * width + i] = new Pixel((texels[i, j].excidentLight) * 255);
                 }
             }
-            Targa texture = new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".StandardLightMap.tga", pixels, (short)width, (short)height, 24);
+            Targa texture = new Targa(directory + "\\" + name + ".StandardLightMap.tga", pixels, (short)width, (short)height, 24);
             return texture;
         }
 
         public Targa makeAmbientOcclutionTexture(String directory)
         {
-            return new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".AmbientOcclusionMap.tga", (short)width, (short)height);
+            return new Targa(directory + "\\" + name + ".AmbientOcclusionMap.tga", (short)width, (short)height);
         }
 
         public Targa makeShadowMapTexture(String directory)
         {
-            return new Targa(directory + "\\lmXXX_" + model.roomID + model.id + model.baseModel.meshes[index].id + ".ShadowMap.tga", (short)width, (short)height);
+            return new Targa(directory + "\\" + name + ".ShadowMap.tga", (short)width, (short)height);
         }
     }
 }
