@@ -31,6 +31,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -40,11 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bioware.Enums\USAGE.cs" />
     <Compile Include="Bioware.Files\BiowareMesh.cs" />
     <Compile Include="Bioware.Files\BiowareModel.cs" />
     <Compile Include="Bioware.Files\ERF.cs" />
     <Compile Include="Bioware.Files\GFF.cs" />
     <Compile Include="Bioware.Files\GFFHeader.cs" />
+    <Compile Include="Bioware.Files\Level.cs" />
     <Compile Include="Bioware.Files\MaterialObject.cs" />
     <Compile Include="Bioware.Files\ModelHierarchy.cs" />
     <Compile Include="Bioware.Files\ModelMesh.cs" />

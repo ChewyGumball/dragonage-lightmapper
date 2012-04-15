@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Text;
-using System.Windows.Forms;
 using System.IO;
 using OpenTK;
 
 using Bioware.Files;
 using Bioware.Structs;
-using Ben;
 
-namespace DALightmapper
+namespace Bioware.IO
 {
     public class IO
     {
@@ -75,18 +72,13 @@ namespace DALightmapper
             }
             Directory.CreateDirectory(path);
         }
-
-        //If set to true, reading should be aborted and donereading event should fire false
-        public static Boolean abort {get; set;}
-
+        
         //Reads in the data needed for a level
         //Currently reads more than lvl files for testing purposes NEED TO CLEAN UP 
         public static Level readLevel(String path)
         {
             Level levelFile = null;
-
-            abort = false;
-
+            
             String fileName = path;
             String extention = Path.GetExtension(fileName);
             String directory = Path.GetDirectoryName(fileName);

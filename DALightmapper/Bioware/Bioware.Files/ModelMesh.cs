@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Threading;
 using System.Text;
-using System.Windows.Forms;
 using System.IO;
 using OpenTK;
 
 using Bioware.Structs;
-
-using Ben;
-
-using DALightmapper;
+using Bioware.IO;
 
 namespace Bioware.Files
 {
@@ -75,7 +70,7 @@ namespace Bioware.Files
             int triangleNum = 0;
 
             //Create all the chunks
-            for (int i = 0; i < listLength && !IO.abort; i++)
+            for (int i = 0; i < listLength; i++)
             {
                 file.BaseStream.Seek(startPosition + (i * 4), SeekOrigin.Begin);
                 file.BaseStream.Seek(binaryFile.dataOffset + file.ReadInt32(), SeekOrigin.Begin);
@@ -98,13 +93,13 @@ namespace Bioware.Files
             ushort index1, index2, index3;
 
             //For each chunk read in vertex data
-            for (int i = 0; i < chunks.Length && !IO.abort; i++)
+            for (int i = 0; i < chunks.Length; i++)
             {
                 verts = new Vector3[chunks[i].vertexCount];
                 uvs = new Vector2[chunks[i].vertexCount];
                 luvs = new Vector2[chunks[i].vertexCount];
                 //Read in the vertex data
-                for (int j = 0; j < chunks[i].vertexCount && !IO.abort; j++)
+                for (int j = 0; j < chunks[i].vertexCount; j++)
                 {
                     int vertArrayIndex = j * (chunks[i].vertexElementCount);
                     int positionIndex = vertArrayIndex;
@@ -145,7 +140,7 @@ namespace Bioware.Files
 
                 //Seek to index data (skipping the length int at beginning)
                 file.BaseStream.Seek(indexOffset, SeekOrigin.Begin);
-                for (int j = 0; j < chunks[i].indexCount / 3 && !IO.abort; j++)
+                for (int j = 0; j < chunks[i].indexCount / 3; j++)
                 {
                     int indexIndex = j * 3;
                     //Read in the indices

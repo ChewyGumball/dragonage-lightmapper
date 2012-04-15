@@ -3,12 +3,9 @@ using System;
 
 using OpenTK;
 
-using Ben;
-
 using Bioware.Structs;
-using Bioware.Files;
 
-namespace DALightmapper
+namespace Bioware.Files
 {
     public class BiowareModel
     {

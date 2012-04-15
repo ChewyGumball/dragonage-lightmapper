@@ -6,10 +6,8 @@ using System.Text;
 using OpenTK;
 
 using Bioware.Files;
-
-using Ben;
-
-using DALightmapper;
+using Bioware.IO;
+using Bioware.Enums;
 
 namespace Bioware.Structs
 {

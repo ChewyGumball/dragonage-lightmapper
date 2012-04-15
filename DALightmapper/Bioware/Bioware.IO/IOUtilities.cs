@@ -2,7 +2,7 @@
 using System.Text;
 using System.IO;
 
-namespace Ben
+namespace Bioware.IO
 {
     public class IOUtilities
     {
