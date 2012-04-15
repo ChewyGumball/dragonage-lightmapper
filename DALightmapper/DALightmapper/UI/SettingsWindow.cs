@@ -38,8 +38,6 @@ namespace DALightmapper
             tb_tempDirectory.Text = Settings.tempDirectory;
 
             nmup_numPhotons.Value = Settings.numPhotonsPerLight;
-            nmup_Cores.Maximum = Environment.ProcessorCount;
-            nmup_Cores.Minimum = 1;
             nmup_Cores.Value = Settings.maxThreads;
             nmup_gatherRadius.Value = (decimal)Settings.gatherRadius;
 
@@ -130,9 +128,18 @@ namespace DALightmapper
 
         private void nmup_Cores_ValueChanged(object sender, EventArgs e)
         {
-            Settings.maxThreads = (int)nmup_Cores.Value;
-            ThreadPool.SetMaxThreads(Settings.maxThreads, Settings.maxThreads);
-            Settings.stream.AppendFormatLine("MaxThreads = {0}", Settings.maxThreads);
+            //Can't set maximum in the widget properties because that would call
+            //  this function, overriding the Settings maxThread variable
+            if (nmup_Cores.Value > Environment.ProcessorCount)
+            {
+                nmup_Cores.Value = Environment.ProcessorCount;
+            }
+            else
+            {
+                Settings.maxThreads = (int)nmup_Cores.Value;
+                ThreadPool.SetMaxThreads(Settings.maxThreads, Settings.maxThreads);
+                Settings.stream.AppendFormatLine("MaxThreads = {0}", Settings.maxThreads);
+            }
         }
 
         private void btn_Save_Click(object sender, EventArgs e)

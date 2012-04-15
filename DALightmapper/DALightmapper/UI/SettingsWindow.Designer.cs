@@ -269,9 +269,19 @@
             // nmup_Cores
             // 
             this.nmup_Cores.Location = new System.Drawing.Point(684, 204);
+            this.nmup_Cores.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             this.nmup_Cores.Name = "nmup_Cores";
             this.nmup_Cores.Size = new System.Drawing.Size(38, 20);
             this.nmup_Cores.TabIndex = 14;
+            this.nmup_Cores.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             this.nmup_Cores.ValueChanged += new System.EventHandler(this.nmup_Cores_ValueChanged);
             // 
             // label7
