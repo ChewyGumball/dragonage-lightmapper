@@ -98,23 +98,10 @@
     <Compile Include="Ben\MathHelper.cs" />
     <Compile Include="Ben\Targa.cs" />
     <Compile Include="Ben\TextBitmap.cs" />
-    <Compile Include="BioWare.Files\MaterialObject.cs" />
     <Compile Include="DALightmapper\AmbientLight.cs" />
-    <Compile Include="BioWare.Structs\BiowareStruct.cs" />
     <Compile Include="DALightmapper\BoundingBox.cs" />
-    <Compile Include="BioWare.Files\ERF.cs" />
-    <Compile Include="BioWare.Structs\GenericList.cs" />
-    <Compile Include="BioWare.Files\GFF.cs" />
-    <Compile Include="BioWare.Structs\GFFFieldDefinition.cs" />
-    <Compile Include="BioWare.Structs\GFFFieldFlags.cs" />
-    <Compile Include="BioWare.Structs\GFFFIELDTYPE.cs" />
-    <Compile Include="BioWare.Files\GFFHeader.cs" />
-    <Compile Include="BioWare.Structs\GFFID.cs" />
-    <Compile Include="BioWare.Structs\GFFStructDefinition.cs" />
-    <Compile Include="BioWare.Structs\GFFSTRUCTTYPE.cs" />
     <Compile Include="DALightmapper\FindableFile.cs" />
     <Compile Include="DALightmapper\IO.cs" />
-    <Compile Include="Ben\IOUtilities.cs" />
     <Compile Include="DALightmapper\Level.cs" />
     <Compile Include="DALightmapper\Light.cs" />
     <Compile Include="DALightmapper\LightMap.cs" />
@@ -128,14 +115,10 @@
     <Compile Include="UI\MainWindow.Designer.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="BioWare.Files\BiowareMesh.cs" />
     <Compile Include="DALightmapper\Mesh.cs" />
-    <Compile Include="BioWare.Structs\MeshChunk.cs" />
     <Compile Include="DALightmapper\Model.cs" />
     <Compile Include="DALightmapper\BiowareModel.cs" />
-    <Compile Include="BioWare.Files\ModelHierarchy.cs" />
     <Compile Include="DALightmapper\ModelInstance.cs" />
-    <Compile Include="BioWare.Files\ModelMesh.cs" />
     <Compile Include="UI\OpenGLPreview.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -149,13 +132,6 @@
     <Compile Include="DALightmapper\Settings.cs" />
     <Compile Include="DALightmapper\SpotLight.cs" />
     <Compile Include="Ben\StatusStream.cs" />
-    <Compile Include="BioWare.Structs\TerrainMapEdge.cs" />
-    <Compile Include="BioWare.Structs\TerrainMapFace.cs" />
-    <Compile Include="BioWare.Structs\TerrainMapVertex.cs" />
-    <Compile Include="BioWare.Files\TerrainMesh.cs" />
-    <Compile Include="BioWare.Structs\TerrainMeshEdge.cs" />
-    <Compile Include="BioWare.Structs\TerrainMeshFace.cs" />
-    <Compile Include="BioWare.Structs\TerrainMeshVertex.cs" />
     <Compile Include="DALightmapper\Triangle.cs" />
     <Compile Include="UI\Settings.cs" />
     <Compile Include="UI\SettingsWindow.cs">
