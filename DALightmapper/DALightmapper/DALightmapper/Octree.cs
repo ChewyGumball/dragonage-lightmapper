@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using OpenTK;
+
+using Geometry;
 
 namespace DALightmapper
 {
@@ -94,7 +97,13 @@ namespace DALightmapper
 
         public Octree(List<Photon> p)
         {
-            build(p, 100, 8, new BoundingBox(p));
+            List<Vector3> points = new List<Vector3>();
+            foreach (Photon photon in p)
+            {
+                points.Add(photon.position);
+            }
+
+            build(p, 100, 8, new BoundingBox(points));
         }
         public Octree(List<Photon> p, int maxPoints, int maxDepth, BoundingBox box)
         {

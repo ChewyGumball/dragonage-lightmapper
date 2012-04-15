@@ -95,44 +95,27 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Ben\Camera.cs" />
-    <Compile Include="Ben\MathHelper.cs" />
-    <Compile Include="Ben\Targa.cs" />
     <Compile Include="Ben\TextBitmap.cs" />
-    <Compile Include="DALightmapper\AmbientLight.cs" />
-    <Compile Include="DALightmapper\BoundingBox.cs" />
-    <Compile Include="DALightmapper\FindableFile.cs" />
-    <Compile Include="DALightmapper\IO.cs" />
-    <Compile Include="DALightmapper\Level.cs" />
-    <Compile Include="DALightmapper\Light.cs" />
     <Compile Include="DALightmapper\LightMap.cs" />
     <Compile Include="DALightmapper\Lightmapper.cs" />
     <Compile Include="DALightmapper\Octree.cs" />
     <Compile Include="DALightmapper\Partitioner.cs" />
-    <Compile Include="DALightmapper\Texel.cs" />
     <Compile Include="UI\MainWindow.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\MainWindow.Designer.cs">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </Compile>
-    <Compile Include="DALightmapper\Mesh.cs" />
-    <Compile Include="DALightmapper\Model.cs" />
-    <Compile Include="DALightmapper\BiowareModel.cs" />
-    <Compile Include="DALightmapper\ModelInstance.cs" />
     <Compile Include="UI\OpenGLPreview.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="UI\OpenGLPreview.Designer.cs">
       <DependentUpon>OpenGLPreview.cs</DependentUpon>
     </Compile>
-    <Compile Include="DALightmapper\Patch.cs" />
-    <Compile Include="DALightmapper\PointLight.cs" />
     <Compile Include="DALightmapper\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DALightmapper\Settings.cs" />
-    <Compile Include="DALightmapper\SpotLight.cs" />
     <Compile Include="Ben\StatusStream.cs" />
-    <Compile Include="DALightmapper\Triangle.cs" />
     <Compile Include="UI\Settings.cs" />
     <Compile Include="UI\SettingsWindow.cs">
       <SubType>Form</SubType>
@@ -201,6 +184,10 @@
     <ProjectReference Include="..\Bioware\Bioware.csproj">
       <Project>{83E62F7F-0C27-471A-AD5A-659BBD6611FC}</Project>
       <Name>Bioware</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Geometry\Geometry.csproj">
+      <Project>{25E2EDAF-12A5-4C25-9CCB-2716CE0EAC99}</Project>
+      <Name>Geometry</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

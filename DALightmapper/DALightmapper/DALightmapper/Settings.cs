@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
+
 using Ben;
+
+using Bioware.IO;
 using Bioware.Files;
 
 namespace DALightmapper
@@ -45,7 +48,7 @@ namespace DALightmapper
             {
                 if (Directory.Exists(s))
                 {
-                    IO.addFilePath(s);
+                    ResourceManager.addFilePath(s);
                 }
                 else
                 {
@@ -57,7 +60,7 @@ namespace DALightmapper
             {
                 if (File.Exists(s))
                 {
-                    IO.addERF(s);
+                    ResourceManager.addERF(s);
                 }
                 else
                 {
@@ -78,11 +81,11 @@ namespace DALightmapper
             System.Collections.Specialized.StringCollection saveFilePaths = new System.Collections.Specialized.StringCollection();
             System.Collections.Specialized.StringCollection saveErfFiles = new System.Collections.Specialized.StringCollection();
 
-            foreach (String s in IO.filePaths)
+            foreach (String s in ResourceManager.filePaths)
             {
                 saveFilePaths.Add(s);
             }
-            foreach (ERF erf in IO.erfFiles)
+            foreach (ERF erf in ResourceManager.erfFiles)
             {
                 saveErfFiles.Add(erf.path);
             }

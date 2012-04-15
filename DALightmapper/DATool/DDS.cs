@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Text;
-using DALightmapper;
 
 using OpenTK.Graphics.OpenGL;
+
+using Bioware.IO;
 
 namespace DATool
 {

@@ -7,7 +7,7 @@ using System.Drawing;
 
 using OpenTK;
 
-namespace Ben
+namespace Geometry
 {
     public struct Pixel
     {

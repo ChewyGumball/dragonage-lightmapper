@@ -1,8 +1,7 @@
 ﻿using System;
-using Ben;
 using OpenTK;
 
-namespace DALightmapper
+namespace Geometry
 {
     public class Model
     {

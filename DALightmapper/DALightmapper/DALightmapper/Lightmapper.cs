@@ -2,17 +2,22 @@
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using OpenTK;
-using OpenTK.Graphics.OpenGL;
-using Bioware.Files;
-using Bioware.Structs;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Diagnostics;
-
-using Ben;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
+
+using Bioware.Files;
+using Bioware.Structs;
+using Bioware.IO;
+
+using Ben;
+
+using Geometry;
 
 namespace DALightmapper
 {
@@ -57,7 +62,8 @@ namespace DALightmapper
             abort = false;
 
             Settings.stream.AppendText("Loading level . . . ");
-            Level level = IO.readLevel(path);
+            //Level level = ResourceManager.readLevel(path);
+            Level level = new Level(path);
             if (level == null)
             {
                 FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping, could not find level file " +path+".", false), null, null);
@@ -71,19 +77,19 @@ namespace DALightmapper
 
             //Create the directory to store the lightmaps in
             String lightmapDirectory = Settings.tempDirectory + "\\" + Path.GetFileName(level.name);
-            IO.createDirectory(lightmapDirectory);
+            ResourceManager.createDirectory(lightmapDirectory);
 
             //Create the subdirectory where we store uncompressed lightmaps
             String uncompressedDirectory = lightmapDirectory + "\\uncompressed";
-            IO.createDirectory(uncompressedDirectory);
+            ResourceManager.createDirectory(uncompressedDirectory);
 
             //Create the subdirectory where we store compressed lightmaps
             String compressedDirectory = lightmapDirectory + "\\compressed";
-            IO.createDirectory(compressedDirectory);
+            ResourceManager.createDirectory(compressedDirectory);
 
             //Create the subdirectory where we store the atlas textures
             String atlasDirectory = lightmapDirectory + "\\atlas";
-            IO.createDirectory(atlasDirectory);
+            ResourceManager.createDirectory(atlasDirectory);
                         
 
 
@@ -177,6 +183,7 @@ namespace DALightmapper
 
         private static List<Photon> firePhotons(List<Light> lights, Partitioner scene)
         {
+            Random random = new Random();
             int numPhotons = 0;
             foreach (Light l in lights)
             {
@@ -208,13 +215,25 @@ namespace DALightmapper
                         if (t != null)
                         {
                             Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
-                            while (Ben.MathHelper.nextRandom() > reflectProbability)
+                            double randomNumber;
+
+                            lock (random)
+                            {
+                                randomNumber = random.NextDouble();
+                            }
+
+                            while (randomNumber > reflectProbability)
                             {
                                 direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(t.normal, (float)Math.PI));
                                 t = scene.firstIntersection(intersection, intersection + (direction * 1000));
                                 if (t == null)
                                     break;
                                 intersection = t.lineIntersectionPoint(intersection, intersection + (direction * 1000));
+
+                                lock (random)
+                                {
+                                    randomNumber = random.NextDouble();
+                                }
                             }
 
                             lock (photons)

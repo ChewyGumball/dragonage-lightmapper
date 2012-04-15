@@ -4,9 +4,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-using Bioware.Structs;
-
-namespace DALightmapper
+namespace Geometry
 {
     public class Triangle
     {
@@ -14,10 +12,7 @@ namespace DALightmapper
         Vector2[] _tVerts;
         Vector2[] _lVerts;
         Vector3 _normal;
-        uint textureID;
-
-        MeshChunk _chunk;
-
+        
         Vector2[] lightMapInverseMatrix;
         float determinant;
 
@@ -110,20 +105,10 @@ namespace DALightmapper
                 calculateInverseMatrix();
             }
         }
-        public MeshChunk chunk
-        {
-            get { return _chunk; }
-            set { _chunk = value; }
-        }
 
         public Vector3 this[int i]
         {
             get { return _mVerts[i]; }
-        }
-        uint id
-        {
-            get { return textureID; }
-            set { textureID = value; }
         }
 
         public Triangle(Triangle t, Vector3 offset)

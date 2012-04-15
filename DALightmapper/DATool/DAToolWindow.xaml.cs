@@ -12,12 +12,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Drawing;
 using System.Threading;
+
 using OpenTK.Graphics.OpenGL;
 using OpenTK;
-using DALightmapper;
+
 using Bioware.Files;
+using Bioware.IO;
 using Bioware.Structs;
-using Ben;
 
 namespace DATool
 {
@@ -69,24 +70,24 @@ namespace DATool
             if (result == System.Windows.Forms.DialogResult.OK)
             {
                 //User clicked OK, add the path into the location box, try to add all the erfs in there too
-                if (!IO.filePaths.Contains(browser.SelectedPath))
+                if (!ResourceManager.filePaths.Contains(browser.SelectedPath))
                 {
-                    IO.addFilePath(browser.SelectedPath);
+                    ResourceManager.addFilePath(browser.SelectedPath);
                 }
                 locationListBox.Items.Add(browser.SelectedPath);
 
                 foreach (String s in Directory.GetDirectories(browser.SelectedPath, "*", SearchOption.AllDirectories))
                 {
-                    if (!IO.filePaths.Contains(s))
+                    if (!ResourceManager.filePaths.Contains(s))
                     {
                         //Add all the subdirectories
-                        IO.addFilePath(s);
+                        ResourceManager.addFilePath(s);
                     }
                 }
 
                 foreach (String t in Directory.GetFiles(browser.SelectedPath, "*.erf", SearchOption.AllDirectories))
                 {
-                    IO.addERF(t);
+                    ResourceManager.addERF(t);
                 }
 
             }
@@ -102,10 +103,10 @@ namespace DATool
             {
                 foreach (String s in browser.FileNames)
                 {
-                    if (IO.getERF(s) == null)
+                    if (ResourceManager.getERF(s) == null)
                     {
                         locationListBox.Items.Add(s);
-                        IO.addERF(s);
+                        ResourceManager.addERF(s);
                     }
                 }
             }
@@ -124,14 +125,14 @@ namespace DATool
                 modelListBox.Items.Clear();
                 if (Directory.Exists(location))
                 {
-                    if (IO.filePaths.Contains(location))
+                    if (ResourceManager.filePaths.Contains(location))
                     {
                         //Folder has been added, try to see if the erfs have been added, if not, throw error message. Then add all the contents of erf to modellist
                         foreach (String s in Directory.GetFiles(location, "*", SearchOption.AllDirectories))
                         {
                             if (Path.GetExtension(s) == ".erf")
                             {
-                                ERF myErf = IO.getERF(s);
+                                ERF myErf = ResourceManager.getERF(s);
                                 if (myErf != null)
                                 {
                                     foreach (String t in myErf.resourceNames)
@@ -163,7 +164,7 @@ namespace DATool
                 {
                     // Not a direcotry, must be an ERF file
                     ERF selectedERF = null;
-                    foreach (ERF erf in IO.erfFiles)
+                    foreach (ERF erf in ResourceManager.erfFiles)
                     {
                         if (erf.path == location)
                         {
@@ -197,7 +198,7 @@ namespace DATool
 
                 if (Path.GetExtension(itemName) == ".msh")
                 {
-                    GFF tempGFF = IO.findFile<GFF>(itemName);
+                    GFF tempGFF = ResourceManager.findFile<GFF>(itemName);
                     if (tempGFF != null)
                     {
                         renderer.clearOverlays();
@@ -213,7 +214,7 @@ namespace DATool
                 }
                 else if (Path.GetExtension(itemName) == ".mmh")
                 {
-                    GFF tempGFF = IO.findFile<GFF>(itemName);
+                    GFF tempGFF = ResourceManager.findFile<GFF>(itemName);
                     if (tempGFF != null)
                     {
                         ModelHierarchy mh = new ModelHierarchy(tempGFF);
@@ -238,7 +239,7 @@ namespace DATool
                 {
                     try
                     {
-                        DDS texture = IO.findFile<DDS>(itemName);
+                        DDS texture = ResourceManager.findFile<DDS>(itemName);
                         if (texture != null)
                         {
                             renderer.displayDDS(texture);
@@ -255,7 +256,7 @@ namespace DATool
                 }
                 else if (Path.GetExtension(itemName) == ".mao")
                 {
-                    MaterialObject mao = IO.findFile<MaterialObject>(itemName);
+                    MaterialObject mao = ResourceManager.findFile<MaterialObject>(itemName);
                 }
             }
         }

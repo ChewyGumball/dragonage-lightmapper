@@ -50,6 +50,9 @@
     <Compile Include="Bioware.Files\Level.cs" />
     <Compile Include="Bioware.Files\MaterialObject.cs" />
     <Compile Include="Bioware.Files\ModelHierarchy.cs" />
+    <Compile Include="Bioware.Structs\AmbientLight.cs" />
+    <Compile Include="Bioware.Structs\Light.cs" />
+    <Compile Include="Bioware.Structs\ModelInstance.cs" />
     <Compile Include="Bioware.Files\ModelMesh.cs" />
     <Compile Include="Bioware.Files\TerrainMesh.cs" />
     <Compile Include="Bioware.IO\FindableFile.cs" />
@@ -64,6 +67,8 @@
     <Compile Include="Bioware.Structs\GFFStructDefinition.cs" />
     <Compile Include="Bioware.Enums\GFFSTRUCTTYPE.cs" />
     <Compile Include="Bioware.Structs\MeshChunk.cs" />
+    <Compile Include="Bioware.Structs\PointLight.cs" />
+    <Compile Include="Bioware.Structs\SpotLight.cs" />
     <Compile Include="Bioware.Structs\TerrainMapEdge.cs" />
     <Compile Include="Bioware.Structs\TerrainMapFace.cs" />
     <Compile Include="Bioware.Structs\TerrainMapVertex.cs" />
@@ -72,7 +77,12 @@
     <Compile Include="Bioware.Structs\TerrainMeshVertex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Geometry\Geometry.csproj">
+      <Project>{25E2EDAF-12A5-4C25-9CCB-2716CE0EAC99}</Project>
+      <Name>Geometry</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -9,7 +9,10 @@ using System.Text;
 using System.Windows.Forms;
 
 using Ben;
+
+using Bioware.IO;
 using Bioware.Files;
+
 namespace DALightmapper
 {
     public partial class SettingsWindow : Form
@@ -25,11 +28,11 @@ namespace DALightmapper
             cb_useTrueAttenuation.Checked = Settings.useTrueAttenuation;
             cb_clearTempDir.Checked = Settings.cleanUpTempFiles;
 
-            foreach (String s in IO.filePaths)
+            foreach (String s in ResourceManager.filePaths)
             {
                 lb_filePaths.Items.Add(s);
             }
-            foreach (ERF erf in IO.erfFiles)
+            foreach (ERF erf in ResourceManager.erfFiles)
             {
                 lb_erfFiles.Items.Add(erf.path);
             }
@@ -78,7 +81,7 @@ namespace DALightmapper
         {
             folderBrowserDialog1.ShowDialog();
             String path = folderBrowserDialog1.SelectedPath;
-            IO.addFilePath(path);
+            ResourceManager.addFilePath(path);
             lb_filePaths.Items.Add(path);
         }
 
@@ -88,9 +91,9 @@ namespace DALightmapper
             String[] paths = openFileDialog1.FileNames;
             foreach (String s in paths)
             {
-                if (IO.getERF(s) == null)
+                if (ResourceManager.getERF(s) == null)
                 {
-                    IO.addERF(s);
+                    ResourceManager.addERF(s);
                     lb_erfFiles.Items.Add(s);
                 }
             }

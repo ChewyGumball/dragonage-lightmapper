@@ -4,7 +4,7 @@ using System.Text;
 
 using OpenTK;
 
-namespace DALightmapper
+namespace Geometry
 {
     public class Patch
     {

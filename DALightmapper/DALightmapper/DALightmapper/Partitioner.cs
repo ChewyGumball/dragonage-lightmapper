@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 
+using Geometry;
 using OpenTK;
 
 namespace DALightmapper

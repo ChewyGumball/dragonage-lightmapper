@@ -9,6 +9,8 @@ using Bioware.Files;
 
 using Ben;
 
+using Geometry;
+
 namespace DALightmapper
 {
     public class LightMap
@@ -50,7 +52,7 @@ namespace DALightmapper
                 }
             }
 
-            name = "lm" + model.layoutName + "_" + Ben.MathHelper.convertToBase36(model.id) + "_0_" + model.baseModel.meshes[index].id;
+            name = "lm" + model.layoutName + "_" + convertToBase36(model.id) + "_0_" + model.baseModel.meshes[index].id;
         }
 
         public Targa makeLightMapTexture(String directory)
@@ -75,6 +77,24 @@ namespace DALightmapper
         public Targa makeShadowMapTexture(String directory)
         {
             return new Targa(directory + "\\" + name + ".ShadowMap.tga", (short)width, (short)height);
+        }
+        
+        private static String convertToBase36(uint number)
+        {
+            char[] digits = {   '0','1','2','3','4','5','6','7','8','9',
+                                'a','b','c','d','e','f','g','h','i','j',
+                                'k','l','m','n','o','p','q','r','s','t',
+                                'u','v','w','x','y','z'
+                            };
+            String convertedNumber = "";
+
+            while (number > 1)
+            {
+                convertedNumber = digits[number % 36] + convertedNumber;
+                number = number / 36;
+            }
+
+            return convertedNumber;
         }
     }
 }

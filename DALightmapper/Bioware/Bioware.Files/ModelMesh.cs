@@ -6,6 +6,8 @@ using OpenTK;
 using Bioware.Structs;
 using Bioware.IO;
 
+using Geometry;
+
 namespace Bioware.Files
 {
     public class ModelMesh : BiowareMesh
@@ -163,7 +165,7 @@ namespace Bioware.Files
                     chunks[i].area += 0.5 * Vector3.Cross(chunks[i].tris[j].y - chunks[i].tris[j].x, chunks[i].tris[j].z - chunks[i].tris[j].x).Length;
 
                     //Associate this chunk to the newly created triangle
-                    chunks[i].tris[j].chunk = chunks[i];
+                    //chunks[i].tris[j].chunk = chunks[i];
 
                     //Increase offset by 3 indices (2 bytes each)
                     indexOffset += 6;

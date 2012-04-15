@@ -7,6 +7,8 @@ using OpenTK;
 using Bioware.Structs;
 using Bioware.IO;
 
+using Geometry;
+
 namespace Bioware.Files
 {
 
@@ -436,7 +438,7 @@ namespace Bioware.Files
                         else
                         {
                             //Print an error  
-                            Settings.stream.AppendFormatLine("Could not find model file \"{0}\".",modelFileName);
+                            //Settings.stream.AppendFormatLine("Could not find model file \"{0}\".",modelFileName);
                         }
                     }
 

@@ -75,6 +75,8 @@ namespace Bioware.IO
         
         //Reads in the data needed for a level
         //Currently reads more than lvl files for testing purposes NEED TO CLEAN UP 
+
+        /*
         public static Level readLevel(String path)
         {
             Level levelFile = null;
@@ -138,6 +140,7 @@ namespace Bioware.IO
 
             return levelFile;
         }
+        */
         
         //Returns the file with the name filename, looking in the erfs and folders saved in the settings classs.
         //  RETURNS NULL IF THE INPUT FILENAME DOES NOT EXIST IN ONE OF THOSE PLACES

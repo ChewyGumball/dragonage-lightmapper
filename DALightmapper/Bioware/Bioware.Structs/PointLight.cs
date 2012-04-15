@@ -1,7 +1,9 @@
 ﻿using OpenTK;
 using System;
 
-namespace DALightmapper
+using Geometry;
+
+namespace Bioware.Structs
 {
     public class PointLight : Light
     {
@@ -20,7 +22,7 @@ namespace DALightmapper
 
         public override Vector3 generateRandomDirection()
         {
-            Vector3 temp = new Vector3((float)Ben.MathHelper.nextGaussian(), (float)Ben.MathHelper.nextGaussian(), (float)Ben.MathHelper.nextGaussian());
+            Vector3 temp = new Vector3((float)nextGaussian(), (float)nextGaussian(), (float)nextGaussian());
             temp.Normalize();
             return temp;
 

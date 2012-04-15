@@ -11,9 +11,13 @@ using System.Windows.Forms;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+
+using Bioware.Structs;
 using Bioware.Files;
 
 using Ben;
+
+using Geometry;
 
 namespace DALightmapper
 {

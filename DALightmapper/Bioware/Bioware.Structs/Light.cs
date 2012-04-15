@@ -1,7 +1,9 @@
 ﻿using OpenTK;
 using System;
 
-namespace DALightmapper
+using Geometry;
+
+namespace Bioware.Structs
 {
     public enum LightType { Static, Baked }
 
@@ -32,5 +34,42 @@ namespace DALightmapper
 
         //Returns a random vector along which a photon from this light could travel
         public abstract Vector3 generateRandomDirection();
+
+
+        //-- For creating randomly directed rays for lights --//
+        private static Random random = new Random();
+        private static Boolean haveNextNextGaussian = false;
+        private static double nextNextGaussian;
+
+        protected static double nextRandom()
+        {
+            lock (random)
+            {
+                return random.NextDouble();
+            }
+        }
+
+        protected static double nextGaussian()
+        {
+            if (haveNextNextGaussian)
+            {
+                haveNextNextGaussian = false;
+                return nextNextGaussian;
+            }
+            else
+            {
+                double v1, v2, s;
+                do
+                {
+                    v1 = 2 * random.NextDouble() - 1;   // between -1.0 and 1.0
+                    v2 = 2 * random.NextDouble() - 1;   // between -1.0 and 1.0
+                    s = v1 * v1 + v2 * v2;
+                } while (s >= 1 || s == 0);
+                double multiplier = System.Math.Sqrt(-2 * System.Math.Log(s) / s);
+                nextNextGaussian = v2 * multiplier;
+                haveNextNextGaussian = true;
+                return v1 * multiplier;
+            }
+        }
     }
 }

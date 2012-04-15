@@ -4,9 +4,8 @@ using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL;
 
 using Bioware.Structs;
+using Bioware.IO;
 using Bioware.Files;
-
-using DALightmapper;
 
 namespace DATool
 {
@@ -29,7 +28,7 @@ namespace DATool
                 //*
                 if (m.materialObjectName != "")
                 {
-                    MaterialObject mao = IO.findFile<MaterialObject>(m.materialObjectName);
+                    MaterialObject mao = ResourceManager.findFile<MaterialObject>(m.materialObjectName);
                     if (mao != null)
                     {
                         if (mao.textures.ContainsKey(TextureType.Diffuse))
@@ -39,7 +38,7 @@ namespace DATool
                             {
                                 int buffer = 0;
                                 //find the file and then make a buffer out of it then add it to the dictionary
-                                DDS dds = IO.findFile<DDS>(mao.textures[TextureType.Diffuse]);
+                                DDS dds = ResourceManager.findFile<DDS>(mao.textures[TextureType.Diffuse]);
                                 if (dds != null)
                                 {
                                     DDSUploader temp = new DDSUploader(dds);

@@ -1,7 +1,9 @@
 ﻿using OpenTK;
 using System;
 
-namespace DALightmapper
+using Geometry;
+
+namespace Bioware.Structs
 {
     public class SpotLight : Light
     {
@@ -65,8 +67,8 @@ namespace DALightmapper
             //Find a perpendicular vector
             Vector3 perp = Vector3.Cross(direction, perpAxis);
 
-            float randomAngleA = (float)(outerAngle * Ben.MathHelper.nextRandom());
-            float randomAngleB = (float)(Math.PI * 2 * Ben.MathHelper.nextRandom());
+            float randomAngleA = (float)(outerAngle * nextRandom());
+            float randomAngleB = (float)(Math.PI * 2 * nextRandom());
 
             Vector3 dir = Vector3.Transform(direction, Matrix4.CreateFromAxisAngle(perp, randomAngleA));
 

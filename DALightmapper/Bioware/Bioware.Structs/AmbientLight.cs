@@ -1,7 +1,9 @@
 ﻿using System;
 using OpenTK;
 
-namespace DALightmapper
+using Geometry;
+
+namespace Bioware.Structs
 {
     public class AmbientLight : Light
     {

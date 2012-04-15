@@ -9,6 +9,8 @@ using Bioware.Files;
 using Bioware.IO;
 using Bioware.Enums;
 
+using Geometry;
+
 namespace Bioware.Structs
 {
     public class MeshChunk

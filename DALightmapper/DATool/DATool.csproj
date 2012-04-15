@@ -69,6 +69,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Camera.cs" />
     <Compile Include="DDSUploader.cs" />
     <Compile Include="ModelUploader.cs" />
     <Compile Include="OverlayUploader.cs" />
@@ -121,10 +122,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DALightmapper\DALightmapper.csproj">
-      <Project>{22FEEA74-18F9-4AFD-9D0C-5D0E7E100C6E}</Project>
-      <Name>DALightmapper</Name>
-      <EmbedInteropTypes>False</EmbedInteropTypes>
+    <ProjectReference Include="..\Bioware\Bioware.csproj">
+      <Project>{83E62F7F-0C27-471A-AD5A-659BBD6611FC}</Project>
+      <Name>Bioware</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Geometry\Geometry.csproj">
+      <Project>{25E2EDAF-12A5-4C25-9CCB-2716CE0EAC99}</Project>
+      <Name>Geometry</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -2,6 +2,8 @@
 
 using Bioware.Structs;
 
+using Geometry;
+
 namespace Bioware.Files
 {
     

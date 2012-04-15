@@ -9,10 +9,10 @@ using System.Drawing;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 
-using DALightmapper;
 using Bioware.Files;
 using Bioware.Structs;
-using Ben;
+
+using Geometry;
 
 namespace DATool
 {

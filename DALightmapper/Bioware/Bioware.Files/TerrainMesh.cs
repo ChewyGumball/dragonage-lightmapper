@@ -6,6 +6,8 @@ using OpenTK;
 
 using Bioware.Structs;
 
+using Geometry;
+
 namespace Bioware.Files
 {
     public class TerrainMesh : BiowareMesh

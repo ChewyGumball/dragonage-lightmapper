@@ -2,7 +2,7 @@
 
 using OpenTK;
 
-namespace DALightmapper
+namespace Geometry
 {
     public class Texel
     {
