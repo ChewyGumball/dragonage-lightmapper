@@ -5,7 +5,6 @@ using System.IO;
 using OpenTK;
 
 using Bioware.Structs;
-using DALightmapper;
 
 namespace Bioware.Files
 {

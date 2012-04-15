@@ -3,8 +3,7 @@ using System.Threading;
 using System.Text;
 using System.IO;
 
-using Ben;
-using DALightmapper;
+using Bioware.IO;
 
 namespace Bioware.Files
 {
@@ -36,7 +35,7 @@ namespace Bioware.Files
             //Seek to the beginning of the data portion
             file.BaseStream.Seek(32, SeekOrigin.Begin);
             //Read in resource data
-            for (int i = 0; i < resourceCount && !IO.abort; i++)
+            for (int i = 0; i < resourceCount; i++)
             {
                 //Read in file name
                 resourceNames[i] = IOUtilities.readECStringWithLength(file, 64).ToLower();

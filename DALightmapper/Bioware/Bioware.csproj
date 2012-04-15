@@ -53,7 +53,7 @@
     <Compile Include="Bioware.Files\ModelMesh.cs" />
     <Compile Include="Bioware.Files\TerrainMesh.cs" />
     <Compile Include="Bioware.IO\FindableFile.cs" />
-    <Compile Include="Bioware.IO\IO.cs" />
+    <Compile Include="Bioware.IO\ResourceManager.cs" />
     <Compile Include="Bioware.IO\IOUtilities.cs" />
     <Compile Include="Bioware.Structs\BiowareStruct.cs" />
     <Compile Include="Bioware.Structs\GenericList.cs" />

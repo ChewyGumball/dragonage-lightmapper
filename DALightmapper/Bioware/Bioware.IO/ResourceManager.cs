@@ -9,7 +9,7 @@ using Bioware.Structs;
 
 namespace Bioware.IO
 {
-    public class IO
+    public class ResourceManager
     {
         private static List<String> filePathList = new List<String>();
         private static List<ERF> erfFileList = new List<ERF>();

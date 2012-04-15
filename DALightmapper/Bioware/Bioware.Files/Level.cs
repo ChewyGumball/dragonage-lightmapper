@@ -422,7 +422,7 @@ namespace Bioware.Files
                     if (!baseModels.ContainsKey(modelFileName))
                     {
                         //Find the mmh file
-                        GFF tempGFF = IO.findFile<GFF>(modelFileName);
+                        GFF tempGFF = ResourceManager.findFile<GFF>(modelFileName);
                         //If the file was not found
                         if (tempGFF != null)
                         {

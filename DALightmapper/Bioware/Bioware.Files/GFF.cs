@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Bioware.Structs;
-using DALightmapper;
-using Ben;
+
+using Bioware.IO;
 
 namespace Bioware.Files
 {

@@ -2,11 +2,8 @@
 using System.IO;
 using OpenTK;
 
-using Ben;
-
+using Bioware.IO;
 using Bioware.Structs;
-
-using DALightmapper;
 
 namespace Bioware.Files
 {
@@ -93,7 +90,7 @@ namespace Bioware.Files
 
 
             //Find the mesh
-            GFF temp = IO.findFile<GFF>(mshName);
+            GFF temp = ResourceManager.findFile<GFF>(mshName);
             //If its not there throw an exception cause we need it
             if (temp == null)
             {
