@@ -56,10 +56,10 @@
     <Compile Include="Bioware.Structs\GenericList.cs" />
     <Compile Include="Bioware.Structs\GFFFieldDefinition.cs" />
     <Compile Include="Bioware.Structs\GFFFieldFlags.cs" />
-    <Compile Include="Bioware.Structs\GFFFIELDTYPE.cs" />
-    <Compile Include="Bioware.Structs\GFFID.cs" />
+    <Compile Include="Bioware.Enums\GFFFIELDTYPE.cs" />
+    <Compile Include="Bioware.Enums\GFFID.cs" />
     <Compile Include="Bioware.Structs\GFFStructDefinition.cs" />
-    <Compile Include="Bioware.Structs\GFFSTRUCTTYPE.cs" />
+    <Compile Include="Bioware.Enums\GFFSTRUCTTYPE.cs" />
     <Compile Include="Bioware.Structs\MeshChunk.cs" />
     <Compile Include="Bioware.Structs\TerrainMapEdge.cs" />
     <Compile Include="Bioware.Structs\TerrainMapFace.cs" />
@@ -69,9 +69,7 @@
     <Compile Include="Bioware.Structs\TerrainMeshVertex.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Bioware.Enums\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
