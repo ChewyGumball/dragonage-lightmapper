@@ -79,10 +79,10 @@ namespace Bioware.IO
             StringBuilder layout = new StringBuilder(); 
             for (int i = 0; i < file.structs.Length; i++)
             {
-                layout.AppendFormat("{0}. {1}\n", i, file.structs[i].definition.ToString());
+                layout.AppendFormat("{0}. {1}{2}", i, file.structs[i].definition.ToString(), Environment.NewLine);
                 for (int j = 0; j < file.structs[i].fields.Length; j++)
                 {
-                    layout.AppendFormat("{0}. \t{1}\n", j, file.structs[i].fields[j].ToString());
+                    layout.AppendFormat("\t{0}. {1}{2}", j, file.structs[i].fields[j].ToString(), Environment.NewLine);
                 }
             }
 
@@ -94,10 +94,10 @@ namespace Bioware.IO
         {
             StringBuilder contents = new StringBuilder();
 
-            contents.AppendFormat("{0} contains {1} files.\n", file.path, file.resourceCount);
+            contents.AppendFormat("{0} contains {1} files.{2}", file.path, file.resourceCount,Environment.NewLine);
             for (int i = 0; i < file.resourceCount; i++)
             {
-                contents.AppendFormat("\t{0}: {1} at offset {2}", file.resourceNames[i], IOUtilities.ToByteString(file.resourceLengths[i]), file.resourceOffsets[i]);
+                contents.AppendFormat("\t{0}: {1} at offset {2}{3}", file.resourceNames[i], IOUtilities.ToByteString(file.resourceLengths[i]), file.resourceOffsets[i],Environment.NewLine);
             }
 
             return contents.ToString();
