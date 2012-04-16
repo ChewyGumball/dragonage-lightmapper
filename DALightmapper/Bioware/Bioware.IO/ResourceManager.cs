@@ -72,76 +72,37 @@ namespace Bioware.IO
             }
             Directory.CreateDirectory(path);
         }
-        
-        //Reads in the data needed for a level
-        //Currently reads more than lvl files for testing purposes NEED TO CLEAN UP 
 
-        /*
-        public static Level readLevel(String path)
+        //Returns a string describing the struct definitions of the GFF file
+        public static String getGFFLayout(GFF file)
         {
-            Level levelFile = null;
-            
-            String fileName = path;
-            String extention = Path.GetExtension(fileName);
-            String directory = Path.GetDirectoryName(fileName);
-
-
-            if (File.Exists(fileName))
+            StringBuilder layout = new StringBuilder(); 
+            for (int i = 0; i < file.structs.Length; i++)
             {
-                if (extention == ".gff" || extention == ".msh" || extention == ".mmh" || extention == ".tmsh")
+                layout.AppendFormat("{0}. {1}\n", i, file.structs[i].definition.ToString());
+                for (int j = 0; j < file.structs[i].fields.Length; j++)
                 {
-                    Settings.stream.AppendLine(Verbosity.Low, "Displaying GFF structs and fields:");
-                    GFF temp = new GFF(fileName);
-                    for (int i = 0; i < temp.structs.Length; i++)
-                    {
-                        Settings.stream.AppendFormatLine(Verbosity.Low,"{0}. {1}",i,temp.structs[i].definition.ToString());
-                        Settings.stream.indent++;
-                        for (int j = 0; j < temp.structs[i].fields.Length; j++)
-                        {
-                            Settings.stream.AppendFormatLine(Verbosity.Low, "{0}. {1}", j, temp.structs[i].fields[j].ToString());
-                        }
-                        Settings.stream.indent--;
-                    }
-                    if (extention == ".mmh")
-                    {
-                        ModelHierarchy m = new ModelHierarchy(temp);
-                    }
-                    else if (extention == ".msh")
-                    {
-                        ModelMesh m = new ModelMesh(temp);
-                    }
-                }
-                else if (extention == ".lvl")
-                {
-                    levelFile = new Level(fileName);
-                    levelFile.readObjects();
-                }
-                else if (extention == ".erf")
-                {
-                    Settings.stream.AppendLine(Verbosity.Low, "This is an ERF, attempting to read key data");
-                    ERF thing = new ERF(fileName);
-                    Settings.stream.AppendLine(Verbosity.Low, "Read in key data, " + thing.resourceCount + " files found");
-                    Settings.stream.indent++;
-                    for (int i = 0; i < thing.resourceCount; i++)
-                    {
-                        Settings.stream.AppendFormatLine(Verbosity.Low, "{0}: {1} at offset {2}", thing.resourceNames[i], IOUtilities.ToByteString(thing.resourceLengths[i]), thing.resourceOffsets[i]);
-                    }
-                    Settings.stream.indent--;
-                }
-                else
-                {
-                    Settings.stream.AppendFormatLine("{0} is not a valid extension ({1}).",extention,fileName);
+                    layout.AppendFormat("{0}. \t{1}\n", j, file.structs[i].fields[j].ToString());
                 }
             }
-            else
-            {
-                Settings.stream.AppendFormatLine("{0} is not a valid file.", fileName);
-            }
 
-            return levelFile;
+            return layout.ToString();
         }
-        */
-        
+
+        //Returns a string listing all the contents of the ERF file with sizes and offsets
+        public static String getERFContents(ERF file)
+        {
+            StringBuilder contents = new StringBuilder();
+
+            contents.AppendFormat("{0} contains {1} files.\n", file.path, file.resourceCount);
+            for (int i = 0; i < file.resourceCount; i++)
+            {
+                contents.AppendFormat("\t{0}: {1} at offset {2}", file.resourceNames[i], IOUtilities.ToByteString(file.resourceLengths[i]), file.resourceOffsets[i]);
+            }
+
+            return contents.ToString();
+        }
+                
         //Returns the file with the name filename, looking in the erfs and folders saved in the settings classs.
         //  RETURNS NULL IF THE INPUT FILENAME DOES NOT EXIST IN ONE OF THOSE PLACES
         public static T findFile<T>(String filename) where T : class, FindableFile, new()

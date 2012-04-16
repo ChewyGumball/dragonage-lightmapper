@@ -118,6 +118,7 @@ namespace Bioware.Files
             layoutName = "WHAT";
             //Set up the struct definitions (for sanity!)
             setStructDefinitions();
+            readObjects();
         }
 
         public void readObjects()
@@ -214,6 +215,8 @@ namespace Bioware.Files
                 }
             }
             generatePatches(baseModels);
+
+            file.Close();            
         }
 
         private List<Light> readLights(GenericList objectList, Vector3 roomOffset, Quaternion roomOrientation, int roomID)

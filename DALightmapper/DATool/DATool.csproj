@@ -125,10 +125,12 @@
     <ProjectReference Include="..\Bioware\Bioware.csproj">
       <Project>{83E62F7F-0C27-471A-AD5A-659BBD6611FC}</Project>
       <Name>Bioware</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
     <ProjectReference Include="..\Geometry\Geometry.csproj">
       <Project>{25E2EDAF-12A5-4C25-9CCB-2716CE0EAC99}</Project>
       <Name>Geometry</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

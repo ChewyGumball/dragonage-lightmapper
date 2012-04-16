@@ -2,23 +2,26 @@
 using System.IO;
 using System.Windows.Forms;
 using System.Threading;
+using System.Collections.Generic;
+
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
+
 using Ben;
 
 using Bioware.Files;
+using Bioware.IO;
 
 namespace DALightmapper
 {
     public partial class MainWindow : Form
     {
-        int currentJob;
-
         OpenGLPreview oglPreviewWindow;
         SettingsWindow settingsWindow;
 
         Thread runThread;
+        Queue<String> jobs;
 
         public MainWindow()
         {
@@ -63,14 +66,19 @@ namespace DALightmapper
 
         private void btn_Start_Click(object sender, EventArgs e)
         {
-            if (lb_Files.Items.Count > 0)
+            jobs = new Queue<String>();
+            foreach (String s in lb_Files.Items)
+            {
+                jobs.Enqueue(s);
+            }
+
+            if (jobs.Count > 0)
             {
                 btn_Start.Enabled = false;
                 btn_Stop.Enabled = true;
                 btn_Add.Enabled = false;
                 btn_Remove.Enabled = false;
 
-                currentJob = 0;
                 proccessNextJob();
             }
             else
@@ -84,7 +92,7 @@ namespace DALightmapper
         private void proccessNextJob()
         {
             Settings.stream.AppendLine();
-            if (currentJob >= lb_Files.Items.Count)
+            if (jobs.Count == 0)
             {
                 Settings.stream.AppendLine("Finished all jobs.");
                 btn_Start.Enabled = true;
@@ -94,20 +102,40 @@ namespace DALightmapper
             }
             else
             {
-                Settings.stream.AppendFormatLine("Starting job {0}:",currentJob + 1);
-                //Run lightmapping!
-                int jobIndex = currentJob;
-                ThreadStart job = delegate {
-                    try
+                String currentJob = jobs.Dequeue();
+
+                Settings.stream.AppendFormatLine("Starting next job ({0}):",currentJob);
+
+                String extention = Path.GetExtension(currentJob);
+                if (extention == ".gff" || extention == ".msh" || extention == ".mmh" || extention == ".tmsh")
+                {
+                    GFF file = ResourceManager.findFile<GFF>(currentJob);
+                    if (file != null)
                     {
-                        Lightmapper.runLightmaps(lb_Files.Items[jobIndex].ToString());
+                        Settings.stream.AppendLine("This is a GFF file, printing struct definitions:");
+                        Settings.stream.AppendText(ResourceManager.getGFFLayout(file));
                     }
-                    catch (LightmappingAbortedException)
-                    { }
-                };
-                runThread = new Thread(job);
-                runThread.Start();
-                currentJob++;
+                    else
+                    {
+                        Settings.stream.AppendFormatLine("Couldn't find {0}, skipping this job.", currentJob);
+                    }
+                    proccessNextJob();
+                }
+                else
+                {
+                    //Run lightmapping!
+                    ThreadStart job = delegate
+                    {
+                        try
+                        {
+                            Lightmapper.runLightmaps(currentJob);
+                        }
+                        catch (LightmappingAbortedException)
+                        { }
+                    };
+                    runThread = new Thread(job);
+                    runThread.Start();
+                }
             }
         }
 
@@ -118,7 +146,6 @@ namespace DALightmapper
 
         private void btn_Stop_Click(object sender, EventArgs e)
         {
-            currentJob = lb_Files.Items.Count + 1;
             Lightmapper.abort = true;
             btn_Start.Enabled = true;
             btn_Stop.Enabled = false;
