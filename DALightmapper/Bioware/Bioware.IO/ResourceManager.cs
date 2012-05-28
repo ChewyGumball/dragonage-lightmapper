@@ -47,6 +47,14 @@ namespace Bioware.IO
         {
             erfFileList.Remove(erf);
         }
+        public static void clearFilePaths()
+        {
+            filePathList.Clear();
+        }
+        public static void clearERFs()
+        {
+            erfFileList.Clear();
+        }
 
         public static ERF getERF(String path)
         {

@@ -42,6 +42,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="2D\Pixel.cs" />
     <Compile Include="2D\Targa.cs" />
     <Compile Include="2D\Texel.cs" />
     <Compile Include="3D\BoundingBox.cs" />

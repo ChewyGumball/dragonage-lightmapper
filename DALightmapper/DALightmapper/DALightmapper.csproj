@@ -100,6 +100,7 @@
     <Compile Include="DALightmapper\Lightmapper.cs" />
     <Compile Include="DALightmapper\Octree.cs" />
     <Compile Include="DALightmapper\Partitioner.cs" />
+    <Compile Include="DALightmapper\Scene.cs" />
     <Compile Include="UI\MainWindow.cs">
       <SubType>Form</SubType>
     </Compile>

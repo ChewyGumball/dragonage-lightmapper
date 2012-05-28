@@ -24,10 +24,10 @@ namespace Bioware.Structs
             distance = dis;
         }
 
-        public override float influence(Patch patch)
+        public override float influence(Vector3 patch)
         {
             //Find vector from light to point
-            Vector3 lightToPoint = Vector3.Subtract(patch.position, position);
+            Vector3 lightToPoint = Vector3.Subtract(patch, position);
             //Find the angle between direction vector and above vector, only positive angle needed
             float angle = Math.Abs(Vector3.Dot(direction, lightToPoint) / lightToPoint.LengthFast);
             //When outside the outside cone, no influence

@@ -10,10 +10,10 @@ namespace Bioware.Structs
         public PointLight(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
             : base(pos, col, intense, t, shoots)
         { }
-        public override float influence(Patch patch)
+        public override float influence(Vector3 patch)
         {
             //Find the distance from the light
-            float distance = Vector3.Subtract(position, patch.position).LengthFast;
+            float distance = Vector3.Subtract(position, patch).LengthFast;
             //Make a vector to use with constant/linear/quadratic attenuation
             Vector3 d = new Vector3(1, distance, (distance * distance));
             //Multiply the intensity by the attenuation

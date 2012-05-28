@@ -1,7 +1,7 @@
 ﻿using OpenTK;
 using System;
 
-using Geometry;
+//using Geometry;
 
 namespace Bioware.Structs
 {
@@ -23,14 +23,14 @@ namespace Bioware.Structs
             intensity = intense;
             //By default all lights use 1/d^2 as their falloff. If Settings.useTrueAttenuation = false this vector
             //      will be overwritten when the lights are created
-            attenuation = new Vector3(1, 1, 1);
+            attenuation = new Vector3(1, 0, 0);
             type = t;
             shootsPhotons = shoots;
         }
 
         //Returns a float value representing the amount of light this light would have on 
         //      input point ignoring obstructions
-        public abstract float influence(Patch patch);
+        public abstract float influence(Vector3 patch);
 
         //Returns a random vector along which a photon from this light could travel
         public abstract Vector3 generateRandomDirection();

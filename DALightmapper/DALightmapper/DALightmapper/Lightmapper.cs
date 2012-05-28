@@ -74,22 +74,39 @@ namespace DALightmapper
 
 
             //-- Set up directories for lightmap files --//
+            String uncompressedDirectory;
+            String uncompressedAmbientDirectory;
+            String compressedDirectory;
+            String atlasDirectory;
 
-            //Create the directory to store the lightmaps in
-            String lightmapDirectory = Settings.tempDirectory + "\\" + Path.GetFileName(level.name);
-            ResourceManager.createDirectory(lightmapDirectory);
+            if (Settings.allPathsSpecified)
+            {
+                uncompressedDirectory = Settings.uncompressedDirectory;
+                uncompressedAmbientDirectory = Settings.ambientDirectory;
+                compressedDirectory = Settings.compressedDirectory;
+                atlasDirectory = Settings.atlasedDirectory;
+            }
+            else
+            {
+                //Create the directory to store the lightmaps in
+                String lightmapDirectory = Settings.tempDirectory + "\\" + Path.GetFileName(level.name);
+                ResourceManager.createDirectory(lightmapDirectory);
 
-            //Create the subdirectory where we store uncompressed lightmaps
-            String uncompressedDirectory = lightmapDirectory + "\\uncompressed";
-            ResourceManager.createDirectory(uncompressedDirectory);
+                //Create the subdirectory where we store uncompressed lightmaps
+                uncompressedDirectory = lightmapDirectory + "\\uncompressed";
+                ResourceManager.createDirectory(uncompressedDirectory);
 
-            //Create the subdirectory where we store compressed lightmaps
-            String compressedDirectory = lightmapDirectory + "\\compressed";
-            ResourceManager.createDirectory(compressedDirectory);
+                //Ambient Occlusion directory is the same as the uncompressed directory
+                uncompressedAmbientDirectory = uncompressedDirectory;
 
-            //Create the subdirectory where we store the atlas textures
-            String atlasDirectory = lightmapDirectory + "\\atlas";
-            ResourceManager.createDirectory(atlasDirectory);
+                //Create the subdirectory where we store compressed lightmaps
+                compressedDirectory = lightmapDirectory + "\\compressed";
+                ResourceManager.createDirectory(compressedDirectory);
+
+                //Create the subdirectory where we store the atlas textures
+                atlasDirectory = lightmapDirectory + "\\atlas";
+                ResourceManager.createDirectory(atlasDirectory);
+            }
                         
 
 
@@ -140,13 +157,12 @@ namespace DALightmapper
 
 
             //-- Create the lightmap files --//
-
             Settings.stream.AppendText("Creating light map textures . . . ");
-            outputLightmaps(uncompressedDirectory, maps);
+            outputLightmaps(uncompressedDirectory,uncompressedAmbientDirectory, maps);
             Settings.stream.AppendLine("Done");
 
             Settings.stream.AppendText("Compressing lightmaps . . . ");
-            compressLightMaps(uncompressedDirectory, compressedDirectory);
+            compressLightMaps(uncompressedDirectory,uncompressedAmbientDirectory, compressedDirectory);
             Settings.stream.AppendLine("Done");
 
             Settings.stream.AppendText("Building lightmap atlas . . . ");
@@ -238,7 +254,7 @@ namespace DALightmapper
 
                             lock (photons)
                             {
-                                photons.Add(new Photon(intersection, l.colour));
+                                photons.Add(new Photon(intersection, l.colour * l.influence(intersection)));
                             }
                         }
                         Settings.stream.UpdateProgress();
@@ -298,7 +314,7 @@ namespace DALightmapper
             }
         }
 
-        private static void outputLightmaps(String uncompressedPath, List<LightMap> lightmaps)
+        private static void outputLightmaps(String uncompressedPath, String ambientPath, List<LightMap> lightmaps)
         {
             Settings.stream.SetProgressBarMaximum(lightmaps.Count);
             foreach (LightMap l in lightmaps)
@@ -320,16 +336,16 @@ namespace DALightmapper
                 lightMap.applyFilter(gaussFilter);
                 lightMap.writeToFile();
 
-                l.makeAmbientOcclutionTexture(uncompressedPath).writeToFile();
+                l.makeAmbientOcclutionTexture(ambientPath).writeToFile();
                 l.makeShadowMapTexture(uncompressedPath).writeToFile();
 
                 Settings.stream.UpdateProgress();
             }
         }
-        private static void compressLightMaps(String uncompressedPath, String compressedPath)
+        private static void compressLightMaps(String uncompressedPath, String ambientPath, String compressedPath)
         {
-            String arguments = String.Format("-in_lm \"{0}\" -in_sm \"{0}\" -in_ao \"{0}\" -out \"{1}\"", uncompressedPath, compressedPath);
-
+            String arguments = String.Format("-in_lm \"{0}\" -in_sm \"{0}\" -in_ao \"{1}\" -out \"{2}\"", uncompressedPath, ambientPath, compressedPath);
+            Settings.stream.AppendLine("ARGUMENTS: " + arguments);
             ProcessStartInfo info = new ProcessStartInfo(Settings.lightmappingToolsDirectory + "\\BakedMapProcessor.exe", arguments);
             info.UseShellExecute = false;
             info.CreateNoWindow = true;
@@ -337,9 +353,12 @@ namespace DALightmapper
             Process.Start(info);
         }
         private static void buildAtlas(String compressedPath, String atlasPath)
-        {
-            String arguments = String.Format("-in \"{0}\" -out \"{1}\"", compressedPath, atlasPath);
-
+        {            
+            String arguments = String.Format("-in \"{0}\" -out \"{1}\" -in_width {2} -in_height {3}", compressedPath, atlasPath, Settings.atlasWidth, Settings.atlasHeight);
+            if (Settings.atlasFile != "")
+            {
+                arguments += " -file " + Settings.atlasFile;
+            }
             ProcessStartInfo info = new ProcessStartInfo(Settings.lightmappingToolsDirectory + "\\CreateAtlas.exe", arguments);
             info.UseShellExecute = false;
             info.CreateNoWindow = true;

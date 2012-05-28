@@ -52,7 +52,7 @@ namespace DALightmapper
                 }
             }
 
-            name = "lm" + model.layoutName + "_" + convertToBase36(model.id) + "_0_" + model.baseModel.meshes[index].id;
+            name = "lm" + model.layoutName + "_" + convertToBase36(model.id) + "_0" + model.baseModel.meshes[index].id;
         }
 
         public Targa makeLightMapTexture(String directory)

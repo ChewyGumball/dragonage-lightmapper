@@ -30,7 +30,7 @@ namespace DALightmapper
             InitializeComponent();
             Settings.stream.attachTextBox(tb_Status);
             Settings.stream.attachProgressBar(pg_Status);
-            Settings.initializeSettings();
+            Settings.initializeSettings(Environment.GetCommandLineArgs());
             oglPreviewWindow = new OpenGLPreview();
             settingsWindow = new SettingsWindow();
             Settings.stream.AppendLine();

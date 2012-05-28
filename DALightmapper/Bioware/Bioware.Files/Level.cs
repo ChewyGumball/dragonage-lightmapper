@@ -54,6 +54,7 @@ namespace Bioware.Files
       //  private static readonly int LIGHT_NAME_INDEX = 4;
         private static readonly int LIGHT_COLOUR_INDEX = 5;
         private static readonly int LIGHT_TYPE_INDEX = 6;
+        private static readonly int LIGHT_COLOUR_MULTIPLIER_INDEX = 8;
         private static readonly int LIGHT_EFFECT_INDEX = 9;
         private static readonly int LIGHT_INANGLE_INDEX = 11;
         private static readonly int LIGHT_OUTANGLE_INDEX = 12;
@@ -262,6 +263,12 @@ namespace Bioware.Files
                     //get the type
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_TYPE_INDEX].index, SeekOrigin.Begin);
                     type = file.ReadInt32();
+
+                    //get the multiplier
+                    file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_COLOUR_MULTIPLIER_INDEX].index, SeekOrigin.Begin);
+                    intensity = file.ReadSingle();
+
+                    Console.WriteLine("Intensity is {0}.", intensity);
 
                     //get the effect
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_EFFECT_INDEX].index, SeekOrigin.Begin);
