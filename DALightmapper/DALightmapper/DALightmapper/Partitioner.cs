@@ -9,6 +9,8 @@ namespace DALightmapper
     {
         Triangle firstIntersection(Vector3 start, Vector3 direction);
         bool lineIsUnobstructed(Vector3 start, Vector3 end);
-        void getWithinDistanceSquared(Vector3 point, float distance, ref List<Photon> photons);
+        void getWithinDistance(Vector3 point, float distance, ref List<Photon> photons);
+        void getNearest(Vector3 point, int n, ref List<Photon> photons);
+        void Clear();
     }
 }

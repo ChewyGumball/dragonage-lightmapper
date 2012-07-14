@@ -22,10 +22,14 @@ namespace DALightmapper
         public Mesh mesh { get; private set; }
 
         private int index;
-        private Texel[,] texels;
+        public Texel[,] texels { get; set; }
 
         String name;
-
+        public LightMap(ModelInstance mi, int meshIndex, String lightmapName)
+            : this(mi, meshIndex)
+        {
+            name = lightmapName;
+        }
         public LightMap(ModelInstance mi, int meshIndex)
         {
             index = meshIndex;
@@ -45,7 +49,7 @@ namespace DALightmapper
                     texels[i,j] = new Texel();
                     foreach (Patch p in mesh.texels[i,j].patches)
                     {
-                        Patch temp = new Patch(p,model.position, model.rotation);
+                        Patch temp = new Patch(p,model.transform);
                         texels[i,j].add(temp);
                         patches.Add(temp);
                     }
@@ -57,28 +61,49 @@ namespace DALightmapper
 
         public Targa makeLightMapTexture(String directory)
         {
+            return makeLightMapTexture(directory, name + ".StandardLightMap.tga");
+        }
+        public Targa makeLightMapTexture(String directory, String outputName)
+        {
             Pixel[] pixels = new Pixel[width * height];
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
                 {
-                    pixels[j * width + i] = new Pixel((texels[i, j].excidentLight) * 255);
+                    pixels[(height - j - 1) * width + i] = new Pixel(texels[i, j].excidentLight);
                 }
             }
-            Targa texture = new Targa(directory + "\\" + name + ".StandardLightMap.tga", pixels, (short)width, (short)height, 24);
+            Targa texture = new Targa(directory + "\\" + outputName, pixels, (short)width, (short)height, 24);
             return texture;
+
         }
 
-        public Targa makeAmbientOcclutionTexture(String directory)
+        public Targa makeAmbientOcclusionTexture(String directory)
         {
-            return new Targa(directory + "\\" + name + ".AmbientOcclusionMap.tga", (short)width, (short)height);
+            return makeAmbientOcclusionTexture(directory, name + ".AmbientOcclusionMap.tga");
         }
-
-        public Targa makeShadowMapTexture(String directory)
+        public Targa makeAmbientOcclusionTexture(String directory, String outputName)
         {
-            return new Targa(directory + "\\" + name + ".ShadowMap.tga", (short)width, (short)height);
+            Pixel[] pixels = new Pixel[width * height];
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    pixels[(height - j - 1) * width + i] = new Pixel(texels[i, j].ambientValue);
+                }
+            }
+            return new Targa(directory + "\\" + outputName, pixels, (short)width, (short)height, 24);
         }
         
+        public Targa makeShadowMapTexture(String directory)
+        {
+            return makeShadowMapTexture(directory, name + ".ShadowMap.tga");
+        }
+        public Targa makeShadowMapTexture(String directory, String outputName)
+        {
+            return new Targa(directory + "\\" + outputName, (short)width, (short)height);
+        }
+
         private static String convertToBase36(uint number)
         {
             char[] digits = {   '0','1','2','3','4','5','6','7','8','9',

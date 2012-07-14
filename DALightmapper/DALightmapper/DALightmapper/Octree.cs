@@ -11,9 +11,9 @@ namespace DALightmapper
     {
         public Octree[] children;
         public BoundingBox bounds;
-        public List<Triangle> tris;
-        public List<Triangle> unused;
-        private List<Photon> points;
+        public List<Triangle> tris = new List<Triangle>();
+        public List<Triangle> unused = new List<Triangle>();
+        private List<Photon> points = new List<Photon>();
 
         public int getUnused()
         {
@@ -45,18 +45,16 @@ namespace DALightmapper
         {
             build(triangles, maxTriangles, maxDepth, box);
         }
-        public void build(List<Triangle> triangles, int maxTriangles, int maxDepth, BoundingBox box)
+        private void build(List<Triangle> triangles, int maxTriangles, int maxDepth, BoundingBox box)
         {
             bounds = box;
             if (triangles.Count <= maxTriangles || maxDepth == 0)
             {
                 tris = triangles;
-                unused = new List<Triangle>();
                 children = new Octree[0];
             }
             else
             {
-                tris = new List<Triangle>();
                 children = new Octree[8];
                 BoundingBox newBox;
                 List<Triangle> childrenTriangles;
@@ -73,20 +71,20 @@ namespace DALightmapper
                         if (newBox.triangleIntersects(t))
                         {
                             childrenTriangles.Add(t);
-                            if (!used.Contains(t))
-                            {
-                                used.Add(t);
-                            }
+                            //if (!used.Contains(t))
+                            //{
+                              //  used.Add(t);
+                            //}
                         }
                     }
                     children[i] = new Octree(childrenTriangles, maxTriangles, maxDepth - 1, newBox);
                 }
                 unused = new List<Triangle>();
-                foreach (Triangle t in triangles)
-                {
-                    if (!used.Contains(t))
-                        unused.Add(t);
-                }
+                //foreach (Triangle t in triangles)
+                //{
+                //    if (!used.Contains(t))
+                //        unused.Add(t);
+                //}
                 if (unused.Count > 0)
                 {
                     //throw new Exception("SHIT");
@@ -109,7 +107,7 @@ namespace DALightmapper
         {
             build(p, maxPoints, maxDepth, box);
         }
-        public void build(List<Photon> p, int maxPoints, int maxDepth, BoundingBox box)
+        private void build(List<Photon> p, int maxPoints, int maxDepth, BoundingBox box)
         {
             bounds = box;
             if (p.Count <= maxPoints || maxDepth == 0)
@@ -119,7 +117,6 @@ namespace DALightmapper
             }
             else
             {
-                points = new List<Photon>();
                 children = new Octree[8];
                 BoundingBox newBox;
                 List<Photon> childrenPoints;
@@ -232,16 +229,17 @@ namespace DALightmapper
             return nearest;
         }
 
-        public void getWithinDistanceSquared(Vector3 point, float distance, ref List<Photon> photons)
+        public void getWithinDistance(Vector3 point, float distance, ref List<Photon> photons)
         {
             if (bounds.sphereIntersect(point, distance))
             {
                 if (points.Count > 0)
                 {
+                    float distanceSquared = distance * distance;
                     foreach (Photon p in points)
                     {
                         Vector3 diff = p.position - point;
-                        if(diff.LengthSquared >= distance)
+                        if(diff.LengthSquared <= distanceSquared)
                         {
                             photons.Add(p);
                         }
@@ -251,10 +249,24 @@ namespace DALightmapper
                 {
                     foreach (Octree o in children)
                     {
-                        o.getWithinDistanceSquared(point, distance, ref photons);
+                        o.getWithinDistance(point, distance, ref photons);
                     }
                 }
             }
+        }
+        void getNearest(Vector3 point, int n, ref List<Photon> photons)
+        {
+            throw new NotImplementedException();
+        }
+        public void Clear()
+        {
+            foreach (Octree o in children)
+            {
+                o.Clear();
+            }
+            tris.Clear();
+            unused.Clear();
+            points.Clear();
         }
     }
 }

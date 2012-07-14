@@ -55,6 +55,7 @@
             this.btn_Save = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
             this.nmup_gatherRadius = new System.Windows.Forms.NumericUpDown();
+            this.label8 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).BeginInit();
@@ -268,7 +269,7 @@
             // 
             // nmup_Cores
             // 
-            this.nmup_Cores.Location = new System.Drawing.Point(684, 204);
+            this.nmup_Cores.Location = new System.Drawing.Point(677, 204);
             this.nmup_Cores.Minimum = new decimal(new int[] {
             1,
             0,
@@ -287,7 +288,7 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(593, 206);
+            this.label7.Location = new System.Drawing.Point(590, 206);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(84, 13);
             this.label7.TabIndex = 15;
@@ -320,7 +321,7 @@
             0,
             0,
             131072});
-            this.nmup_gatherRadius.Location = new System.Drawing.Point(684, 230);
+            this.nmup_gatherRadius.Location = new System.Drawing.Point(677, 227);
             this.nmup_gatherRadius.Maximum = new decimal(new int[] {
             5,
             0,
@@ -331,11 +332,21 @@
             this.nmup_gatherRadius.TabIndex = 18;
             this.nmup_gatherRadius.ValueChanged += new System.EventHandler(this.nmup_gatherRadius_ValueChanged);
             // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(590, 229);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(78, 13);
+            this.label8.TabIndex = 19;
+            this.label8.Text = "Gather Radius:";
+            // 
             // SettingsWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(851, 273);
+            this.Controls.Add(this.label8);
             this.Controls.Add(this.nmup_gatherRadius);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.btn_Save);
@@ -402,5 +413,6 @@
         private System.Windows.Forms.Button btn_Save;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.NumericUpDown nmup_gatherRadius;
+        private System.Windows.Forms.Label label8;
     }
 }

@@ -34,7 +34,7 @@ namespace DALightmapper
         String drawString;
         Mesh[] meshes;
         Targa texture;
-        Level level;
+        Scene level;
         Patch[] patches;
         Showing currentlyShowing = Showing.Nothing;
         Octree octree;
@@ -490,7 +490,7 @@ namespace DALightmapper
 
             setMeshNum(currentMeshIndex - 1);
 
-            drawString = "File: " + file + "\nModel: " + meshes[currentMeshIndex].getName();
+            drawString = "File: " + file + "\nModel: " + meshes[currentMeshIndex].name;
             updateBitmap(drawString);
 
             refreshView();
@@ -503,7 +503,7 @@ namespace DALightmapper
 
             setMeshNum(currentMeshIndex + 1);
 
-            drawString = "File: " + file + "\nModel: " + meshes[currentMeshIndex].getName();
+            drawString = "File: " + file + "\nModel: " + meshes[currentMeshIndex].name;
             updateBitmap(drawString);
 
             refreshView();
@@ -635,9 +635,35 @@ namespace DALightmapper
             }
             else if (extention == ".lvl")
             {
-                level = new Level(filePath);
+                level = new LevelScene(filePath);
                 currentlyShowing = Showing.Level;
-                level.readObjects();
+                List<Patch> patchList = new List<Patch>();
+                List<Triangle> tris = new List<Triangle>();
+                foreach (ModelInstance m in level.lightmapModels)
+                {
+                    for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                    {
+                        if (m.baseModel.meshes[i].isLightmapped)
+                        {
+                            //Make the lightmap
+                            LightMap temp = new LightMap(m, i);
+                            //For each patch instance in the lightmap
+                            foreach (Patch p in temp.patches)
+                            {
+                                patchList.Add(p);
+                            }
+                        }
+                    }
+                    if (m.baseModel.castsShadows)
+                        tris.AddRange(m.tris);
+                }
+                octree = new Octree(tris);
+                patches = patchList.ToArray();
+            }
+            else if (extention == ".xml")
+            {
+                level = new XMLScene(filePath);
+                currentlyShowing = Showing.Level;
                 List<Patch> patchList = new List<Patch>();
                 List<Triangle> tris = new List<Triangle>();
                 foreach (ModelInstance m in level.lightmapModels)
@@ -664,7 +690,7 @@ namespace DALightmapper
             //If its not the right type of file then print an error
             else
             {
-                drawString = "This is not a valid model (.mmh or .msh), texture (.tga), or level (.lvl) file!";
+                drawString = "This is not a valid model (.mmh or .msh), texture (.tga), level (.lvl), or scene (.xml) file!";
             }
             refreshView();
         }

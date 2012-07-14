@@ -1,9 +1,10 @@
 ﻿using System;
-
+using System.Diagnostics;
 using OpenTK;
 
 namespace Geometry
 {
+    [DebuggerDisplay("Colour = {r},{g},{b},({a})")]
     public class Pixel
     {
         public byte r, g, b, a;
@@ -13,11 +14,11 @@ namespace Geometry
         { }
 
         public Pixel(Vector3 v)
-            : this((byte)v.Z, (byte)v.Y, (byte)v.X)
+            : this((byte)Math.Min(255f,v.Z), (byte)Math.Min(255f,v.Y), (byte)Math.Min(255f,v.X))
         { }
 
         public Pixel(Vector4 v)
-            : this((byte)v.Z, (byte)v.Y, (byte)v.X, (byte)v.W)
+            : this((byte)Math.Min(255f,v.Z), (byte)Math.Min(255f,v.Y), (byte)Math.Min(255f,v.X), (byte)Math.Min(255f,v.W))
         { }
 
         public Pixel(byte blue, byte green, byte red, byte alpha)

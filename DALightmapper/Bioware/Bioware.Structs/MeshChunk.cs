@@ -43,6 +43,7 @@ namespace Bioware.Structs
         public String materialObjectName { get; set; }
 
         public Vector3 chunkOffset { get; set; }
+        public Quaternion chunkRotation { get; set; }
 
         //Already made triangles constructor(terrain meshes)
         public MeshChunk(Triangle[] triangles)
@@ -198,5 +199,6 @@ namespace Bioware.Structs
                 }
             }
         }
+
     }
 }

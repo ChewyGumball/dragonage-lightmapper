@@ -8,9 +8,9 @@ namespace DALightmapper
 {
     public interface Scene
     {
-        public List<ModelInstance> lightmapModels { get; private set; }
-        public List<Light> lights { get; private set; }
+        List<ModelInstance> lightmapModels { get; }
+        List<Light> lights { get; }
 
-        public void exportLightmaps(List<LightMap> lightmaps);
+        void exportLightmaps(List<LightMap> lightmaps);
     }
 }

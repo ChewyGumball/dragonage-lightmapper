@@ -23,6 +23,9 @@ namespace Geometry
             }
         }
 
+        public int ambient { get; set; }
+        public Boolean inShadow { get; set; }
+
         public Patch()
         { }
         public Patch(Vector3 pos, Vector3 norm, Vector3 emm, Vector3 refl)
@@ -32,12 +35,15 @@ namespace Geometry
             //reflectance = refl;
             normal = norm;
             position = pos;
+            //ambient = 0;
+            ambient = 255;
+            inShadow = false;
         }
-        public Patch(Patch p, Vector3 offset, Quaternion rotation)
+        public Patch(Patch p, Matrix4 transform)
             : this( p.position, p.normal, p.emmission, new Vector3()/*p.reflectance*/)
         {
-            position = Vector3.Transform(p.position, rotation) + offset;
-            normal = Vector3.Transform(p.normal, rotation);
+            position = Vector3.Transform(p.position, transform);
+            normal = Vector3.Transform(p.normal, transform) - transform.Row3.Xyz;
         }
     }
 }

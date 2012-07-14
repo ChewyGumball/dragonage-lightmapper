@@ -54,6 +54,7 @@ namespace Bioware.Files
       //  private static readonly int LIGHT_NAME_INDEX = 4;
         private static readonly int LIGHT_COLOUR_INDEX = 5;
         private static readonly int LIGHT_TYPE_INDEX = 6;
+        private static readonly int LIGHT_RADIUS_INDEX = 7;
         private static readonly int LIGHT_COLOUR_MULTIPLIER_INDEX = 8;
         private static readonly int LIGHT_EFFECT_INDEX = 9;
         private static readonly int LIGHT_INANGLE_INDEX = 11;
@@ -86,6 +87,8 @@ namespace Bioware.Files
         private static readonly int PROPERTY_CHILDREN_INDEX = 2;
 
         //Group index values
+        private static readonly int GROUP_POSITION_INDEX = 0;
+        private static readonly int GROUP_ROTATION_INDEX = 1;
         private static readonly int GROUP_LIST_INDEX = 2;
 
         #endregion
@@ -124,7 +127,7 @@ namespace Bioware.Files
 
         public void readObjects()
         {
-            int reference;      //used for storing the reference to things in files
+            int reference;      //used for storing the reference to structs in files
             BinaryReader file = headerFile.openReader();
 
             //If the level is outdoors, read the models and the terrain mesh, otherwise just read in the models
@@ -229,6 +232,7 @@ namespace Bioware.Files
             int type;       //point = 0, ambient = 1, spot = 2                      -The type of the light
             int effect;     //baked = 0, static = 2,  animated = 3, negative = 4;   -How light effects environment
             LightType lightEffect;                                                  //enum for above (used in constructor)
+            float radius;                                                           //radius of point lights
             float intensity = 1;                                                    //intensity of light (colour multiplier)
             Vector3 position;                                                       //position of the light
             Quaternion rotation;                                                    //rotation of the light (only used in spot lights)
@@ -263,6 +267,9 @@ namespace Bioware.Files
                     //get the type
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_TYPE_INDEX].index, SeekOrigin.Begin);
                     type = file.ReadInt32();
+
+                    file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_RADIUS_INDEX].index, SeekOrigin.Begin);
+                    radius = file.ReadSingle();
 
                     //get the multiplier
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_COLOUR_MULTIPLIER_INDEX].index, SeekOrigin.Begin);
@@ -302,7 +309,7 @@ namespace Bioware.Files
                         case LIGHT_SPOT:
                             lights.Add(new SpotLight(position, rotation, colour, intensity, inAngle, outAngle, distance, lightEffect, true)); break;
                         case LIGHT_POINT:
-                            lights.Add(new PointLight(position, colour, intensity, lightEffect, true)); break;
+                            lights.Add(new PointLight(position, colour, intensity, radius, lightEffect, true)); break;
                     }
                 }
                 else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)
@@ -311,12 +318,18 @@ namespace Bioware.Files
                     file.BaseStream.Seek(headerFile.dataOffset + objectList[i], SeekOrigin.Begin);
                     currentPosition = file.BaseStream.Position;
 
+                    file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_POSITION_INDEX].index, SeekOrigin.Begin);
+                    Vector3 groupPosition = new Vector3(file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+
+                    file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_ROTATION_INDEX].index, SeekOrigin.Begin);
+                    Quaternion groupRotation = new Quaternion(file.ReadSingle(), file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+
                     //seek to the list
                     file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_LIST_INDEX].index, SeekOrigin.Begin);
                     int reference = file.ReadInt32();
                     file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
 
-                    lights.AddRange(readLights(new GenericList(file), roomOffset, roomOrientation, roomID));
+                    lights.AddRange(readLights(new GenericList(file), roomOffset + Vector3.Transform(groupPosition, groupRotation * roomOrientation), groupRotation * roomOrientation, roomID));
                 }
             }
             return lights;
@@ -408,7 +421,7 @@ namespace Bioware.Files
                     //get the rotation
                     file.BaseStream.Seek(currentPosition + modelStruct.fields[MODEL_ROTATION_INDEX].index, SeekOrigin.Begin);
                     rotation = new Quaternion(file.ReadSingle(), file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
-                    rotation *= roomOrientation;
+                    rotation = rotation * roomOrientation;
 
                     //get the property List reference
                     file.BaseStream.Seek(currentPosition + modelStruct.fields[MODEL_PROPERTY_INDEX].index + propertyStruct.fields[PROPERTY_CHILDREN_INDEX].index, SeekOrigin.Begin);
@@ -467,12 +480,18 @@ namespace Bioware.Files
                     file.BaseStream.Seek(headerFile.dataOffset + objectList[i], SeekOrigin.Begin);
                     currentPosition = file.BaseStream.Position;
 
+                    file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_POSITION_INDEX].index, SeekOrigin.Begin);
+                    Vector3 groupPosition = new Vector3(file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+
+                    file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_ROTATION_INDEX].index, SeekOrigin.Begin);
+                    Quaternion groupRotation = new Quaternion(file.ReadSingle(), file.ReadSingle(), file.ReadSingle(), file.ReadSingle());
+
                     //seek to the list
                     file.BaseStream.Seek(currentPosition + levelGroupStruct.fields[GROUP_LIST_INDEX].index, SeekOrigin.Begin);
                     reference = file.ReadInt32();
                     file.BaseStream.Seek(headerFile.dataOffset + reference, SeekOrigin.Begin);
 
-                    propModels.AddRange(readPropModels(new GenericList(file), roomOffset, roomOrientation, roomID));
+                    propModels.AddRange(readPropModels(new GenericList(file), roomOffset + groupPosition, groupRotation * roomOrientation, roomID));
                 }
             }
             file.Close();
@@ -490,7 +509,7 @@ namespace Bioware.Files
                 {
                     if (mesh.isLightmapped)
                     {
-                        mesh.generatePatches(64, 64);
+                        mesh.generatePatches(128, 128);
                     }
                 }
             }

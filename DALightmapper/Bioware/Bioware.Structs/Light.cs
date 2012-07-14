@@ -19,7 +19,7 @@ namespace Bioware.Structs
         public Light(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
         {
             position = pos;
-            colour = col;
+            colour = col * 255;
             intensity = intense;
             //By default all lights use 1/d^2 as their falloff. If Settings.useTrueAttenuation = false this vector
             //      will be overwritten when the lights are created

@@ -31,84 +31,22 @@ namespace DALightmapper
             colour = c;
         }
     }
-    public class FinishedLightMappingEventArgs : EventArgs
-    {
-        public String message { get; private set; }
-        public bool successful { get; private set; }
 
-        public FinishedLightMappingEventArgs(String m, bool success)
-        {
-            message = m;
-            successful = success;
-        }
-    }
     public class LightmappingAbortedException : Exception
     {
         public LightmappingAbortedException() : base() { }
+        public LightmappingAbortedException(String message) : base(message) { }
     }
 
     public static class Lightmapper
     {
         public static bool abort { get; set; }
 
-        //Event to signal asynchronous lightmapping has finished
-        public delegate void FinishedLightMappingEventHandler(FinishedLightMappingEventArgs args);
-        public static event FinishedLightMappingEventHandler FinishedLightMapping;
-
         // Runs the light map process
-        public static void runLightmaps(String path)
+        public static List<LightMap> runLightmaps(List<ModelInstance> models, List<Light> lights)
         {
             //Reset abort
-            abort = false;
-
-            Settings.stream.AppendText("Loading level . . . ");
-            //Level level = ResourceManager.readLevel(path);
-            Level level = new Level(path);
-            if (level == null)
-            {
-                FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping, could not find level file " +path+".", false), null, null);
-                return;
-            }
-            Settings.stream.AppendLine("Done");
-
-
-
-            //-- Set up directories for lightmap files --//
-            String uncompressedDirectory;
-            String uncompressedAmbientDirectory;
-            String compressedDirectory;
-            String atlasDirectory;
-
-            if (Settings.allPathsSpecified)
-            {
-                uncompressedDirectory = Settings.uncompressedDirectory;
-                uncompressedAmbientDirectory = Settings.ambientDirectory;
-                compressedDirectory = Settings.compressedDirectory;
-                atlasDirectory = Settings.atlasedDirectory;
-            }
-            else
-            {
-                //Create the directory to store the lightmaps in
-                String lightmapDirectory = Settings.tempDirectory + "\\" + Path.GetFileName(level.name);
-                ResourceManager.createDirectory(lightmapDirectory);
-
-                //Create the subdirectory where we store uncompressed lightmaps
-                uncompressedDirectory = lightmapDirectory + "\\uncompressed";
-                ResourceManager.createDirectory(uncompressedDirectory);
-
-                //Ambient Occlusion directory is the same as the uncompressed directory
-                uncompressedAmbientDirectory = uncompressedDirectory;
-
-                //Create the subdirectory where we store compressed lightmaps
-                compressedDirectory = lightmapDirectory + "\\compressed";
-                ResourceManager.createDirectory(compressedDirectory);
-
-                //Create the subdirectory where we store the atlas textures
-                atlasDirectory = lightmapDirectory + "\\atlas";
-                ResourceManager.createDirectory(atlasDirectory);
-            }
-                        
-
+            abort = false;       
 
             //-- Get the geometry we need for lightmapping --//
 
@@ -119,7 +57,7 @@ namespace DALightmapper
             List<ModelInstance> receivingModels = new List<ModelInstance>();
 
             //Find all the lightmapped models and casting triangles
-            foreach (ModelInstance m in level.lightmapModels)
+            foreach (ModelInstance m in models)
             {
                 if (m.baseModel.isLightmapped)
                     receivingModels.Add(m);
@@ -133,47 +71,44 @@ namespace DALightmapper
 
             //Make the lightmaps
             List<LightMap> maps = makeLightmaps(receivingModels);
+            receivingModels.Clear();
 
             //Make the triangle partitioner
-            Settings.stream.AppendText("Partitioning level . . . ");
-            Partitioner scene = new Octree(castingTriangles);
-            Settings.stream.AppendLine("Done");
+            Settings.stream.WriteText("Partitioning level . . . ");
+            Partitioner partition = new Octree(castingTriangles);
+            castingTriangles.Clear();
+            Settings.stream.WriteLine("Done");
 
             //Shoot the photons
-            Settings.stream.AppendFormatText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
-            List<Photon> photons = firePhotons(level.lights, scene);            
-            Settings.stream.AppendLine("Done");
+            Settings.stream.WriteText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
+            List<Photon> photons = firePhotons(lights, partition);            
+            Settings.stream.WriteLine("Done");
 
             //Make the photon map
-            Settings.stream.AppendFormatText("Making photon map with {0} photons . . . ", photons.Count);
+            Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
             Partitioner photonMap = new Octree(photons);
-            Settings.stream.AppendLine("Done");
+            photons.Clear();
+            Settings.stream.WriteLine("Done");
 
             //Gather the photons for each patch in each map
-            Settings.stream.AppendFormatText("Gathering photons for lightmaps . . . ");
-            gatherPhotons(maps,photonMap);
-            Settings.stream.AppendLine("Done");
+            Settings.stream.WriteText("Gathering photons for lightmaps . . . ");
+            gatherPhotons(maps,photonMap, partition);
+            photonMap.Clear();
+            Settings.stream.WriteLine("Done");
 
+            //Do Ambient Occlusion
+            Settings.stream.WriteText("Calculating ambient occlusion . . . ");
+            //calculateAmbientOcclusion(maps,partition);
+            Settings.stream.WriteLine("Done");
 
+            //Do Shadow Maps
+            Settings.stream.WriteText("Calculating shadows . . . ");
+            //calculateShadows(maps, lights, partition);
+            Settings.stream.WriteLine("Done");
 
-            //-- Create the lightmap files --//
-            Settings.stream.AppendText("Creating light map textures . . . ");
-            outputLightmaps(uncompressedDirectory,uncompressedAmbientDirectory, maps);
-            Settings.stream.AppendLine("Done");
+            partition.Clear();
 
-            Settings.stream.AppendText("Compressing lightmaps . . . ");
-            compressLightMaps(uncompressedDirectory,uncompressedAmbientDirectory, compressedDirectory);
-            Settings.stream.AppendLine("Done");
-
-            Settings.stream.AppendText("Building lightmap atlas . . . ");
-            buildAtlas(compressedDirectory, atlasDirectory);
-            Settings.stream.AppendLine("Done");
-
-
-
-
-            //Fire the event saying lightmapping was finished completely
-            FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Successfully finished light mapping.", true), null, null);
+            return maps;
         }
 
         //Makes lightmaps for the input model instances
@@ -214,7 +149,7 @@ namespace DALightmapper
             opts.MaxDegreeOfParallelism = Settings.maxThreads;
 
             List<Photon> photons = new List<Photon>();
-            double reflectProbability = 0.8;
+            double reflectProbability = 0.3;
 
             foreach (Light l in lights)
             {
@@ -226,35 +161,29 @@ namespace DALightmapper
                         {
                             state.Stop();
                         }
+                        int bounces = 0;
                         Vector3 direction = l.generateRandomDirection();
                         Triangle t = scene.firstIntersection(l.position, l.position + (direction * 1000));
                         if (t != null)
                         {
                             Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
-                            double randomNumber;
-
-                            lock (random)
-                            {
-                                randomNumber = random.NextDouble();
-                            }
-
-                            while (randomNumber > reflectProbability)
+                            
+                            //I don't actually care if its unique between threads, threadsafty on this random number is not that big of a deal
+                            while (random.NextDouble() > reflectProbability)
                             {
                                 direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(t.normal, (float)Math.PI));
                                 t = scene.firstIntersection(intersection, intersection + (direction * 1000));
                                 if (t == null)
                                     break;
                                 intersection = t.lineIntersectionPoint(intersection, intersection + (direction * 1000));
-
-                                lock (random)
-                                {
-                                    randomNumber = random.NextDouble();
-                                }
+                                bounces += 1;
                             }
-
-                            lock (photons)
+                            if (l.influence(intersection) > 0)
                             {
-                                photons.Add(new Photon(intersection, l.colour * l.influence(intersection)));
+                                lock (photons)
+                                {
+                                    photons.Add(new Photon(intersection, l.colour * (float)Math.Pow(Math.E, -bounces) * l.influence(intersection)));
+                                }
                             }
                         }
                         Settings.stream.UpdateProgress();
@@ -262,14 +191,13 @@ namespace DALightmapper
 
                     if (abort)
                     {
-                        FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping while firing photons.", false), null, null);
-                        throw new LightmappingAbortedException();
+                        throw new LightmappingAbortedException("Aborted lightmapping while firing photons.");
                     }
                 }
             }
             return photons;
         }
-        private static void gatherPhotons(List<LightMap> maps, Partitioner photonMap)
+        private static void gatherPhotons(List<LightMap> maps, Partitioner photonMap, Partitioner scene)
         {
             int numPatches = 0;
             foreach (LightMap l in maps)
@@ -292,14 +220,19 @@ namespace DALightmapper
 
                     Patch p = l.patches[i];
                     List<Photon> gather = new List<Photon>();
-                    photonMap.getWithinDistanceSquared(p.position, (float)(Settings.gatherRadius * Settings.gatherRadius), ref gather);
+                    photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
+                    int unobstructedPhotons = 0;
                     foreach (Photon photon in gather)
                     {
-                        p.incidentLight += photon.colour;
+                        if(scene.lineIsUnobstructed(photon.position, p.position))
+                        {
+                            unobstructedPhotons++;
+                            p.incidentLight += photon.colour;
+                        }
                     }
-                    if (gather.Count > 0)
+                    if (unobstructedPhotons > 0)
                     {
-                        p.incidentLight /= gather.Count;
+                        p.incidentLight /= unobstructedPhotons;
                     }
 
                     //p.incidentLight *= 100;
@@ -308,62 +241,111 @@ namespace DALightmapper
 
                 if (abort)
                 {
-                    FinishedLightMapping.BeginInvoke(new FinishedLightMappingEventArgs("Aborted lightmapping while gathering photons.", false), null, null);
-                    throw new LightmappingAbortedException();
+                    throw new LightmappingAbortedException("Aborted lightmapping while gathering photons.");
                 }
             }
         }
 
-        private static void outputLightmaps(String uncompressedPath, String ambientPath, List<LightMap> lightmaps)
+        private static void calculateAmbientOcclusion(List<LightMap> maps, Partitioner scene)
         {
-            Settings.stream.SetProgressBarMaximum(lightmaps.Count);
-            foreach (LightMap l in lightmaps)
+            int numPatches = 0;
+            foreach (LightMap l in maps)
             {
-                /* for reference
-                int[,] boxFilter = {
-                                    {1,1,1},
-                                    {1,1,1},
-                                    {1,1,1}
-                                   };
-                 */
-                int[,] gaussFilter = {
-                                    {1,2,1},
-                                    {2,4,2},
-                                    {1,2,1}
-                                   };
+                numPatches += l.patches.Count;
+            }
+            Settings.stream.SetProgressBarMaximum(numPatches);
 
-                Targa lightMap = l.makeLightMapTexture(uncompressedPath);
-                lightMap.applyFilter(gaussFilter);
-                lightMap.writeToFile();
+            ParallelOptions opts = new ParallelOptions();
+            opts.MaxDegreeOfParallelism = Settings.maxThreads;
 
-                l.makeAmbientOcclutionTexture(ambientPath).writeToFile();
-                l.makeShadowMapTexture(uncompressedPath).writeToFile();
+            Random generator = new Random();
 
-                Settings.stream.UpdateProgress();
+            foreach (LightMap l in maps)
+            {
+                Parallel.For(0, l.patches.Count, opts, delegate(int i, ParallelLoopState state)
+                {
+                    if (abort)
+                    {
+                        state.Stop();
+                    }
+
+                    Random localGenerator;
+                    lock (generator)
+                    {
+                        localGenerator = new Random(generator.Next());
+                    }
+
+                    Patch p = l.patches[i];
+
+                    for (int sample = 0; sample < 64 /*Settings.ambientOcclusionSamples*/; sample++)
+                    {
+                        double randomA = localGenerator.NextDouble();
+                        double randomB = localGenerator.NextDouble();
+
+                        //http://mathworld.wolfram.com/SpherePointPicking.html
+                        double theta = 2 * Math.PI * randomA;
+                        double phi = Math.Acos(2*randomB - 1);
+
+                        Vector3 randomDirection = new Vector3(  Settings.ambientRayLength * (float)(Math.Cos(theta) * Math.Sin(phi)),
+                                                                Settings.ambientRayLength * (float)(Math.Sin(theta) * Math.Sin(phi)),
+                                                                Settings.ambientRayLength * (float)Math.Cos(phi));
+
+                        if (Vector3.Dot(p.normal, randomDirection) < 0)
+                        {
+                            randomDirection = -randomDirection;
+                        }
+
+                        if (scene.lineIsUnobstructed(p.position, p.position + randomDirection))
+                        {
+                            p.ambient += 4;
+                        }
+                    }
+                    Settings.stream.UpdateProgress();
+                });
+
+                if (abort)
+                {
+                    throw new LightmappingAbortedException("Aborted lightmapping while gathering photons.");
+                }
             }
         }
-        private static void compressLightMaps(String uncompressedPath, String ambientPath, String compressedPath)
+
+        private static void calculateShadows(List<LightMap> maps, List<Light> lights, Partitioner scene)
         {
-            String arguments = String.Format("-in_lm \"{0}\" -in_sm \"{0}\" -in_ao \"{1}\" -out \"{2}\"", uncompressedPath, ambientPath, compressedPath);
-            Settings.stream.AppendLine("ARGUMENTS: " + arguments);
-            ProcessStartInfo info = new ProcessStartInfo(Settings.lightmappingToolsDirectory + "\\BakedMapProcessor.exe", arguments);
-            info.UseShellExecute = false;
-            info.CreateNoWindow = true;
-
-            Process.Start(info);
-        }
-        private static void buildAtlas(String compressedPath, String atlasPath)
-        {            
-            String arguments = String.Format("-in \"{0}\" -out \"{1}\" -in_width {2} -in_height {3}", compressedPath, atlasPath, Settings.atlasWidth, Settings.atlasHeight);
-            if (Settings.atlasFile != "")
+            int numPatches = 0;
+            foreach (LightMap l in maps)
             {
-                arguments += " -file " + Settings.atlasFile;
+                numPatches += l.patches.Count;
             }
-            ProcessStartInfo info = new ProcessStartInfo(Settings.lightmappingToolsDirectory + "\\CreateAtlas.exe", arguments);
-            info.UseShellExecute = false;
-            info.CreateNoWindow = true;
+            Settings.stream.SetProgressBarMaximum(numPatches);
 
-            Process.Start(info);
+            ParallelOptions opts = new ParallelOptions();
+            opts.MaxDegreeOfParallelism = Settings.maxThreads;
+
+            foreach (LightMap l in maps)
+            {
+                Parallel.For(0, l.patches.Count, opts, delegate(int i, ParallelLoopState state)
+                {
+                    if (abort)
+                    {
+                        state.Stop();
+                    }
+
+                    foreach (Light light in lights)
+                    {
+                        foreach (Patch p in l.patches)
+                        {
+                            p.inShadow = scene.lineIsUnobstructed(light.position, p.position);
+                        }
+                    }
+                    Settings.stream.UpdateProgress();
+                });
+
+                if (abort)
+                {
+                    throw new LightmappingAbortedException("Aborted lightmapping while gathering photons.");
+                }
+            }
         }
     }
 }

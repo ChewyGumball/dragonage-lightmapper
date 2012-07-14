@@ -7,13 +7,21 @@ namespace Bioware.Structs
 {
     public class PointLight : Light
     {
-        public PointLight(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
+        private float radius;
+        public PointLight(Vector3 pos, Vector3 col, float intense, float r, LightType t, Boolean shoots)
             : base(pos, col, intense, t, shoots)
-        { }
+        {
+            radius = r;
+        }
         public override float influence(Vector3 patch)
         {
             //Find the distance from the light
             float distance = Vector3.Subtract(position, patch).LengthFast;
+           
+            //If the patch is outside the radius of the light, the influence is 0
+            if (distance > radius)
+                return 0;
+
             //Make a vector to use with constant/linear/quadratic attenuation
             Vector3 d = new Vector3(1, distance, (distance * distance));
             //Multiply the intensity by the attenuation
@@ -22,9 +30,16 @@ namespace Bioware.Structs
 
         public override Vector3 generateRandomDirection()
         {
-            Vector3 temp = new Vector3((float)nextGaussian(), (float)nextGaussian(), (float)nextGaussian());
-            temp.Normalize();
-            return temp;
+            //http://mathworld.wolfram.com/SpherePointPicking.html
+            double theta = 2 * Math.PI * nextRandom();
+            double phi = Math.Acos(2 * nextRandom() - 1);
+
+            Vector3 randomDirection = new Vector3((float)(Math.Cos(theta) * Math.Sin(phi)),
+                                                  (float)(Math.Sin(theta) * Math.Sin(phi)),
+                                                  (float)Math.Cos(phi));
+
+            randomDirection.Normalize();
+            return randomDirection;
 
         }
     }

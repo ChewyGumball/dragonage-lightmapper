@@ -28,10 +28,14 @@ namespace DALightmapper
 
         //--Light Mapping Variables--//
         public static int numPhotonsPerLight = 10000;   //Number of photons to shoot per light
-        public static float gatherRadius = 0.2f;         //Radius of sphere to sample photons for a patch
+        public static float gatherRadius = 0.1f;         //Radius of sphere to sample photons for a patch
         public static Boolean useNumBounces = false;
 
         public static int pixelsPerUnit = 10;   //Number of pixels per unit length to use when making lightmap textures
+
+        //--Ambient Occlusion Variables--//
+        public static int ambientSamples = 256;
+        public static float ambientRayLength = 5.0f;
 
         //--Paths to Required Files--// 
         public static String tempDirectory = "";
@@ -40,7 +44,7 @@ namespace DALightmapper
         //--Commandline arguments--// NOT SAVED
         public static Boolean commandline = false;
         public static Boolean showWindow = true;
-        public static List<String> levelFiles = new List<String>();
+        public static List<String> scenes = new List<String>();
 
         public static String compressedDirectory = "";
         public static String atlasedDirectory = "";
@@ -74,7 +78,7 @@ namespace DALightmapper
                 }
                 else
                 {
-                    stream.AppendFormatLine(Verbosity.Warnings, "Could not find directory \"{0}\", it has been removed from the path list.", s);
+                    stream.WriteLine(Verbosity.Warnings, "Could not find directory \"{0}\", it has been removed from the path list.", s);
                 }
             }
 
@@ -86,7 +90,7 @@ namespace DALightmapper
                 }
                 else
                 {
-                    stream.AppendFormatLine(Verbosity.Warnings, "Could not find ERF \"{0}\", It has been removed from the ERF list.", s);
+                    stream.WriteLine(Verbosity.Warnings, "Could not find ERF \"{0}\", It has been removed from the ERF list.", s);
                 }
             }
 
@@ -112,104 +116,84 @@ namespace DALightmapper
 
                 while (currentIndex < arguments.Length)
                 {
+                    string command = arguments[currentIndex];
+                    currentIndex++; //move to the argument
                     try
                     {
-                        switch (arguments[currentIndex])
+                        switch (command)
                         {
                             //--TOOLSET OPTIONS--//
 
-                                //--UNUSED--//
                             case "--inputDir":
-                                currentIndex++;
+                                scenes.Add(arguments[currentIndex] + "\\job_scene.xml");
                                 break;
+                            //Interpreted as number of threads
                             case "--numSubJobs":
-                                currentIndex++;
+                                maxThreads = convertFromString("numSubJobs", arguments[currentIndex], 1, Environment.ProcessorCount, Convert.ToInt32,
+                                                          "You specified " + arguments[currentIndex] + " subjobs, however this machine can only run between 1 and " + Environment.ProcessorCount + " threads at once. Only one job will be done at a time.");
                                 break;
-
-                                //--USED--//
                             case "--outputTGADir":
-                                currentIndex++;
                                 uncompressedDirectory = arguments[currentIndex].TrimEnd('\\', ' ');
                                 atLeastOnePathSepcified = true;
                                 break;
                             case "--outputAoTGADir":
-                                currentIndex++;
                                 ambientDirectory = arguments[currentIndex].TrimEnd('\\', ' ');
                                 atLeastOnePathSepcified = true;
                                 break;
                             case "--combinedDDSDir":
-                                currentIndex++;
                                 combinedDirectory = arguments[currentIndex].TrimEnd('\\', ' ');
                                 atLeastOnePathSepcified = true;
                                 break;
                             case "--atlasedDDSDir":
-                                currentIndex++;
                                 atlasedDirectory = arguments[currentIndex].TrimEnd('\\', ' ');
                                 atLeastOnePathSepcified = true;
                                 break;
                             case "--compressedDDSDir":
-                                currentIndex++;
                                 compressedDirectory = arguments[currentIndex].TrimEnd('\\', ' ');
                                 atLeastOnePathSepcified = true;
                                 break;
                             case "--atlasFile":
-                                currentIndex++;
                                 atlasFile = arguments[currentIndex];
                                 break;
                             case "--in_width":
-                                currentIndex++;
-                                atlasWidth = convertFromString(arguments[currentIndex], 32, Int32.MaxValue, Convert.ToInt32,
-                                                           "Atlas width must be at least 32 and no greater than " + Int32.MaxValue + ", you specified " + arguments[currentIndex] + ". The value of this option will be set to 32.",
-                                                           "The argument to the in_width option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                atlasWidth = convertFromString("in_width", arguments[currentIndex], 32, Int32.MaxValue, Convert.ToInt32);
                                 break;
                             case "--in_height":
-                                currentIndex++;
-                                atlasHeight = convertFromString(arguments[currentIndex], 32, Int32.MaxValue, Convert.ToInt32,
-                                                           "Atlas height must be at least 32 and no greater than " + Int32.MaxValue + ", you specified " + arguments[currentIndex] + ". The value of this option will be set to 32.",
-                                                           "The argument to the in_height option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                atlasHeight = convertFromString("in_height", arguments[currentIndex], 32, Int32.MaxValue, Convert.ToInt32);
                                 break;
 
                             //--NONTOOLSET OPTIONS--//
                             case "-level":
-                                currentIndex++;
-                                levelFiles.Add(arguments[currentIndex]);
+                                scenes.Add(arguments[currentIndex]);
                                 break;
                             case "-noWindow":
-                                stream.AppendLine(Verbosity.Warnings, "-noWindow was specified. It will be ignored because this functionality is not implemented yet.");
+                                stream.WriteLine(Verbosity.Warnings, "-noWindow was specified. It will be ignored because this functionality is not implemented yet.");
                                 //showWindow = false;
+                                currentIndex--; //This command has no argument, so make sure it doesn't skip the next command
                                 break;
                             case "-worldScale":
-                                currentIndex++;
-                                worldScale = convertFromString(arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32,
-                                                          "World scale must be at least 1 and no greater than " + Int32.MaxValue + ", you specified " + arguments[currentIndex] + ". The value of this option will be set to 1.",
-                                                          "The argument to the worldScale option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                worldScale = convertFromString("worldScale", arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32);
                                 break;
                             case "-maxThreads":
-                                currentIndex++;
-                                maxThreads = convertFromString(arguments[currentIndex], 1, Environment.ProcessorCount, Convert.ToInt32,
-                                                          "You specified " + arguments[currentIndex] + " threads should be used, however this machine can only run between 1 and " + Environment.ProcessorCount + " threads at once. Only one thread will be used.",
-                                                          "The argument to the maxThreads option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                maxThreads = convertFromString("maxThreads", arguments[currentIndex], 1, Environment.ProcessorCount, Convert.ToInt32,
+                                                          "You specified " + arguments[currentIndex] + " threads should be used, however this machine can only run between 1 and " + Environment.ProcessorCount + " threads at once. Only one thread will be used.");
                                 break;
                             case "-photonsPerLight":
-                                currentIndex++;
-                                numPhotonsPerLight = convertFromString(arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32,
-                                                                  "Number of photons per light must be at least 1 and no greater than " + Int32.MaxValue + ", you specified " + arguments[currentIndex] + ". Option ignored.",
-                                                                  "The argument to the photonsPerLight option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                numPhotonsPerLight = convertFromString("photonsPerLight", arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32);
                                 break;
                             case "-gatherRadius":
-                                currentIndex++;
-                                gatherRadius = convertFromString(arguments[currentIndex], 0.01f, 0.5f, Convert.ToSingle,
-                                                                 "Gather radius must be at least 0.01 and no greater than 0.5, you specified " + arguments[currentIndex] + ". The value of this option will be set to 1.",
-                                                                 "The argument to the gatherRadius option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                gatherRadius = convertFromString("gatherRadius", arguments[currentIndex], 0.01f, 0.5f, Convert.ToSingle);
                                 break;
                             case "-pixelsPerUnit":
-                                currentIndex++;
-                                pixelsPerUnit = convertFromString(arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32,
-                                                             "Number of pixels per unit must be at least 1 and no greater than " + Int32.MaxValue + ", you specified " + arguments[currentIndex] + ". The value of this option will be set to 1.",
-                                                             "The argument to the pixelsPerUnit option (" + arguments[currentIndex] + ") is not a valid integer.");
+                                pixelsPerUnit = convertFromString("pixelsPerUnit", arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32);
+                                break;
+                            case "-ambientSamples":
+                                ambientSamples = convertFromString("ambientSamples", arguments[currentIndex],1, Int32.MaxValue, Convert.ToInt32);
+                                break;
+                            case "-ambientRayLength":
+                                ambientRayLength = convertFromString("ambientRayLength", arguments[currentIndex], 0.01f, Single.MaxValue, Convert.ToSingle);
                                 break;
                             case "-verbosity":
-                                currentIndex++;
                                 String argument = arguments[currentIndex].ToUpper();
                                 switch (argument)
                                 {
@@ -229,41 +213,39 @@ namespace DALightmapper
                                         verboseStatus = Verbosity.TESTING;
                                         break;
                                     default:
-                                        stream.AppendFormatLine(Verbosity.Warnings, "The argument to the verbosity option ({0}) is not valid.", arguments[currentIndex]);
+                                        stream.WriteLine(Verbosity.Warnings, "The argument to the verbosity option ({0}) is not valid.", arguments[currentIndex]);
                                         break;
                                 }
                                 break;
                             case "-toolsDir":
-                                currentIndex++;
                                 lightmappingToolsDirectory = arguments[currentIndex];
                                 break;
                             case "-outputDir":
-                                currentIndex++;
                                 //outputDirectory = arguments[currentIndex];
                                 break;
                             case "-directory":
-                                currentIndex++;
                                 filePaths.Add(arguments[currentIndex]);
                                 break;
                             case "-erf":
-                                currentIndex++;
                                 erfPaths.Add(arguments[currentIndex]);
                                 break;
                             case "-trueAttenuation":
                                 useTrueAttenuation = true;
+                                currentIndex--; //This command has no argument, so make sure it doesn't skip the next command
                                 break;
                             case "-override":
                                 overridePaths = true;
+                                currentIndex--; //This command has no argument, so make sure it doesn't skip the next command
                                 break;
                             default:
-                                stream.AppendFormatLine(Verbosity.Warnings, "Unknown option {0}.", arguments[currentIndex]);
+                                stream.WriteLine(Verbosity.Warnings, "Unknown option {0}.", arguments[currentIndex]);
                                 break;
                         }
                         currentIndex++;
                     }
                     catch (IndexOutOfRangeException)
                     {
-                        stream.AppendFormatLine(Verbosity.Warnings, "The argument list is improperly formed . . . you may be missing an argument to the last option {0}.", arguments[arguments.Length - 1]);
+                        stream.WriteLine(Verbosity.Warnings, "The argument list is improperly formed . . . you may be missing an argument to the last option {0}.", arguments[arguments.Length - 1]);
                     }
                 }
 
@@ -271,7 +253,7 @@ namespace DALightmapper
 
                 if (!allPathsSpecified && atLeastOnePathSepcified)
                 {
-                    stream.AppendLine("Not all required paths were specified so they will be ignored. -outputTGADir -outputAoTGADir -combinedDDSDir -atlasedDDSDir -compressedDDSDir must all be specified.");
+                    stream.WriteLine("Not all required paths were specified so they will be ignored. -outputTGADir -outputAoTGADir -combinedDDSDir -atlasedDDSDir -compressedDDSDir must all be specified.");
                 }
 
                 if (overridePaths)
@@ -321,6 +303,16 @@ namespace DALightmapper
             Properties.Settings.Default.Save();
         }
 
+        private static T convertFromString<T>(String command, String argument, T lowerBound, T upperBound, Func<String, T> conversionFunction) where T : IComparable
+        {
+            string outOfBoundsMessage = command + " must be at least " + lowerBound + " and no greater than " + upperBound + ", you specified " + argument + ", The value of this option will be set to " + lowerBound + ".";
+            return convertFromString(command, argument, lowerBound, upperBound, conversionFunction, outOfBoundsMessage);
+        }
+        private static T convertFromString<T>(String command, String argument, T lowerBound, T upperBound, Func<String, T> conversionFunction, String outOfBoundsMessage) where T : IComparable
+        {
+            string conversionErrorMessage = "The argument to the " + command + " option (" + argument + ") is not a valid " + typeof(T).ToString() + ".";
+            return convertFromString(argument, lowerBound, upperBound, conversionFunction, outOfBoundsMessage, conversionErrorMessage);
+        }
         private static T convertFromString<T>(String argument, T lowerBound, T upperBound, Func<String, T> conversionFunction, String outOfBoundsMessage, String conversionErrorMessage) where T: IComparable
         {
             T option = lowerBound;
@@ -329,13 +321,13 @@ namespace DALightmapper
                 option = conversionFunction(argument);
                 if (option.CompareTo(lowerBound) < 0 || option.CompareTo(upperBound) > 0)
                 {
-                    stream.AppendLine(Verbosity.Warnings, outOfBoundsMessage);
+                    stream.WriteLine(Verbosity.Warnings, outOfBoundsMessage);
                     option = lowerBound;
                 }
             }
             catch (FormatException)
             {
-                stream.AppendLine(Verbosity.Warnings, conversionErrorMessage);
+                stream.WriteLine(Verbosity.Warnings, conversionErrorMessage);
             }
 
             return option;

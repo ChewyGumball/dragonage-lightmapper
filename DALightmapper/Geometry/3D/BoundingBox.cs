@@ -74,9 +74,9 @@ namespace Geometry
         }
 
         //Bounding box with offset and rotation from another bounding box
-        public BoundingBox(BoundingBox bb, Vector3 offset, Quaternion rotation)
+        public BoundingBox(BoundingBox bb, Matrix4 transform)
         {
-            center = bb.center + offset;
+            center = bb.center + transform.Row3.Xyz;
 
             //make the 8 corners, rotate them, then find the max and min for each axis
 
@@ -96,7 +96,7 @@ namespace Geometry
             Vector3[] rotated = new Vector3[8];
             for (int i = 0; i < rotated.Length; i++)
             {
-                rotated[i] = Vector3.Transform(normal[i], rotation);
+                rotated[i] = Vector3.Transform(normal[i], transform) - transform.Row3.Xyz;
             }
 
             //find the min and max of the rotated corners

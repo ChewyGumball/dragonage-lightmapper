@@ -111,9 +111,13 @@ namespace Geometry
             get { return _mVerts[i]; }
         }
 
-        public Triangle(Triangle t, Vector3 offset)
+        public Triangle(Triangle t, Vector3 offset, Quaternion rotation)
         {
-            _mVerts = new Vector3[3] {t.x + offset, t.y + offset, t.z + offset};
+            Matrix4 transform = new Matrix4(new Vector4(Vector3.Transform(Vector3.UnitX, rotation), 0),
+                                      new Vector4(Vector3.Transform(Vector3.UnitY, rotation), 0),
+                                      new Vector4(Vector3.Transform(Vector3.UnitZ, rotation), 0),
+                                      new Vector4(offset, 1));
+            _mVerts = new Vector3[3] { Vector3.Transform(t.x, transform), Vector3.Transform(t.y, transform), Vector3.Transform(t.z, transform) };
             _tVerts = new Vector2[3] { t.u, t.v, t.w };
             lightMapInverseMatrix = new Vector2[2];
             calculateNormal();
@@ -145,7 +149,7 @@ namespace Geometry
         {
             if (!isLightmapped)
             {
-                return false;
+                //return false;
             }
 
             //Completely above, left, below, or right of the triangle
@@ -222,9 +226,6 @@ namespace Geometry
             Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
 
             List<Vector2> points = new List<Vector2>();
-
-            //if (a.Y == -1f && b.X == 1f && b.Y == 0.9995117f && c.X == 1f && topLeft.X == 0.96875f && topLeft.Y == 0.9375f && bottomRight.X == 1f && bottomRight.Y == 0.90625f)
-            //    System.Console.Write("SHIP");
 
             //A minimum of 3 points and a maximum of 7 points of the 19 tested below should be added to the list
             if (pointIsBetween(a, topLeft, bottomRight))

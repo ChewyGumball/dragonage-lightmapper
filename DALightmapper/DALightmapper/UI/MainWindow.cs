@@ -20,7 +20,6 @@ namespace DALightmapper
         OpenGLPreview oglPreviewWindow;
         SettingsWindow settingsWindow;
 
-        Thread runThread;
         Queue<String> jobs;
 
         public MainWindow()
@@ -31,15 +30,21 @@ namespace DALightmapper
             Settings.stream.attachTextBox(tb_Status);
             Settings.stream.attachProgressBar(pg_Status);
             Settings.initializeSettings(Environment.GetCommandLineArgs());
+
+            foreach (String s in Settings.scenes)
+            {
+                lb_Files.Items.Add(s);
+            }
+
             oglPreviewWindow = new OpenGLPreview();
             settingsWindow = new SettingsWindow();
-            Settings.stream.AppendLine();
-            Settings.stream.AppendLine();
-            Settings.stream.AppendLine("Command line arguments:");
-            foreach(String s in Environment.GetCommandLineArgs())
+            Settings.stream.WriteLine("Command line arguments:");
+            foreach (String s in Environment.GetCommandLineArgs())
             {
-                Settings.stream.AppendLine(s);
+                Settings.stream.WriteText(s + " ");
             }
+            Settings.stream.WriteLine();
+
             try
             {
                 if (!Directory.Exists(Settings.tempDirectory))
@@ -49,19 +54,15 @@ namespace DALightmapper
             }
             catch (UnauthorizedAccessException)
             {
-                Settings.stream.AppendFormatLine("The temp directory (\"{0}\") could not be accessed due to permissions.", Settings.tempDirectory);
+                Settings.stream.WriteLine("The temp directory (\"{0}\") could not be accessed due to permissions.", Settings.tempDirectory);
                 Settings.stream.indent++;
-                Settings.stream.AppendLine("Please change the permissions of the parent directory.");
+                Settings.stream.WriteLine("Please change the permissions of the parent directory.");
                 Settings.stream.indent--;
             }
             catch (Exception e)
             {
-                Settings.stream.AppendFormatLine("There was an error accessing the temp directory (\"{0}\"), {1}", Settings.tempDirectory, e.Message);
+                Settings.stream.WriteLine("There was an error accessing the temp directory (\"{0}\"), {1}", Settings.tempDirectory, e.Message);
             }
-
-            //Plug into thread finish handler for Light Mapping
-            Lightmapper.FinishedLightMapping += new Lightmapper.FinishedLightMappingEventHandler(doneLightMapping);
-        
         }
 
         private void btn_Start_Click(object sender, EventArgs e)
@@ -74,37 +75,26 @@ namespace DALightmapper
 
             if (jobs.Count > 0)
             {
-                btn_Start.Enabled = false;
-                btn_Stop.Enabled = true;
-                btn_Add.Enabled = false;
-                btn_Remove.Enabled = false;
-
-                proccessNextJob();
+                Thread jobThread = new Thread(proccessJobs);
+                jobThread.Start();
             }
             else
             {
-                Settings.stream.AppendLine("There are no jobs to start.");
+                Settings.stream.WriteLine("There are no jobs to start.");
             }
 
         }
 
         //Processes the next job
-        private void proccessNextJob()
+        private void proccessJobs()
         {
-            Settings.stream.AppendLine();
-            if (jobs.Count == 0)
+            toggleButtons(false);
+            while (jobs.Count > 0)
             {
-                Settings.stream.AppendLine("Finished all jobs.");
-                btn_Start.Enabled = true;
-                btn_Stop.Enabled = false;
-                btn_Add.Enabled = true;
-                btn_Remove.Enabled = true; ;
-            }
-            else
-            {
+                Settings.stream.WriteLine();
                 String currentJob = jobs.Dequeue();
 
-                Settings.stream.AppendFormatLine("Starting next job ({0}):",currentJob);
+                Settings.stream.WriteLine("Starting next job ({0}):", currentJob);
 
                 String extention = Path.GetExtension(currentJob);
                 if (extention == ".gff" || extention == ".msh" || extention == ".mmh" || extention == ".tmsh")
@@ -112,31 +102,41 @@ namespace DALightmapper
                     GFF file = ResourceManager.findFile<GFF>(currentJob);
                     if (file != null)
                     {
-                        Settings.stream.AppendLine("This is a GFF file, printing struct definitions:");
-                        Settings.stream.AppendText(ResourceManager.getGFFLayout(file));
+                        Settings.stream.WriteLine("This is a GFF file, printing struct definitions:");
+                        Settings.stream.WriteText(ResourceManager.getGFFLayout(file));
                     }
                     else
                     {
-                        Settings.stream.AppendFormatLine("Couldn't find {0}, skipping this job.", currentJob);
+                        Settings.stream.WriteLine("Couldn't find {0}, skipping this job.", currentJob);
                     }
-                    proccessNextJob();
                 }
                 else
                 {
                     //Run lightmapping!
-                    ThreadStart job = delegate
+                    try
                     {
-                        try
+                        Scene currentScene;
+                        switch (Path.GetExtension(currentJob))
                         {
-                            Lightmapper.runLightmaps(currentJob);
+                            case ".xml": currentScene = new XMLScene(currentJob); break;
+                            case ".lvl": currentScene = new LevelScene(currentJob); break;
+
+                            default: throw new LightmappingAbortedException("The scene \"" + currentJob + "\" is not a valid file format. Valid file formats are .xml and .lvl.");
                         }
-                        catch (LightmappingAbortedException)
-                        { }
-                    };
-                    runThread = new Thread(job);
-                    runThread.Start();
+
+                        List<LightMap> maps = Lightmapper.runLightmaps(currentScene.lightmapModels, currentScene.lights);
+
+                        currentScene.exportLightmaps(maps);
+                    }
+                    catch (LightmappingAbortedException e)
+                    {
+                        Settings.stream.WriteLine("M:" + e.Message);
+                    }
                 }
             }
+            Settings.stream.WriteLine("Finished all jobs.");
+
+            toggleButtons(true);
         }
 
         private void btn_Clear_Click(object sender, EventArgs e)
@@ -147,38 +147,8 @@ namespace DALightmapper
         private void btn_Stop_Click(object sender, EventArgs e)
         {
             Lightmapper.abort = true;
-            btn_Start.Enabled = true;
-            btn_Stop.Enabled = false;
-            btn_Add.Enabled = true;
-            btn_Remove.Enabled = true;
             Settings.stream.SetProgressBarMaximum(1);
-            Settings.stream.AppendLine();
-        }
-        
-        //Forces doneLightMapping to run on the UI thread
-        private delegate void doneLightMappingDelegate(FinishedLightMappingEventArgs e);
-        //Saves the generated lightmaps and proceeds to next job
-        private void doneLightMapping(FinishedLightMappingEventArgs e)
-        {
-            //Ensure this is being run on the UI thread
-            if (this.InvokeRequired)
-            {
-                this.BeginInvoke(new doneLightMappingDelegate(doneLightMapping), e);
-            }
-            else
-            {
-                Settings.stream.AppendLine(e.message);
-
-                if (e.successful)
-                {
-                    //Save lightmaps properly
-                }
-
-                Lightmapper.abort = false;
-                Settings.stream.AppendLine("Procceding to next job.");
-                //process next job
-                proccessNextJob();
-            }
+            Settings.stream.WriteLine();
         }
 
         private void btn_Add_Click(object sender, EventArgs e)
@@ -189,11 +159,11 @@ namespace DALightmapper
             {
                 if (lb_Files.Items.Contains(paths[i]))
                 {
-                    Settings.stream.AppendFormatLine(Verbosity.Low, "Job already exists: {0}", paths[i]);
+                    Settings.stream.WriteLine(Verbosity.Low, "Job already exists: {0}", paths[i]);
                 }
                 else
                 {
-                    Settings.stream.AppendFormatLine(Verbosity.Low, "Adding job to list: {0}", paths[i]);
+                    Settings.stream.WriteLine(Verbosity.Low, "Adding job to list: {0}", paths[i]);
                     lb_Files.Items.Add(paths[i]);
                 }
             }
@@ -204,7 +174,7 @@ namespace DALightmapper
             ListBox.SelectedIndexCollection indices = lb_Files.SelectedIndices;
             while (indices.Count != 0)
             {
-                Settings.stream.AppendFormatLine(Verbosity.Low, "Removing job from list: {0}", lb_Files.Items[indices[0]]);
+                Settings.stream.WriteLine(Verbosity.Low, "Removing job from list: {0}", lb_Files.Items[indices[0]]);
                 lb_Files.Items.RemoveAt(indices[0]);
             }
         }
@@ -229,6 +199,22 @@ namespace DALightmapper
 
                     lb_Files.SelectedIndex = selection;
                 }
+            }
+        }
+
+        private void toggleButtons(bool toggle)
+        {
+            if (btn_Start.InvokeRequired)
+            {
+                Invoke((Action)delegate() { toggleButtons(toggle); });
+            }
+            else
+            {
+
+                btn_Start.Enabled = toggle;
+                btn_Stop.Enabled = !toggle;
+                btn_Add.Enabled = toggle;
+                btn_Remove.Enabled = toggle;
             }
         }
 
@@ -257,7 +243,7 @@ namespace DALightmapper
                 }
                 catch (Exception ex)
                 {
-                    Settings.stream.AppendFormatLine("Could not clean up temporary directory: {0}", ex.Message);
+                    Settings.stream.WriteLine("Could not clean up temporary directory: {0}", ex.Message);
                 }
             }
         }

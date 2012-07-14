@@ -106,50 +106,37 @@ namespace Ben
         //-- Append methods with formatting using the lowest verbosity --// 
         //--    Can't use default parameter for verbosity because of ambiguity between and int type first format parameter --//
         //--    with no verbosity and Verbosity but no parameters --//
-        public void AppendFormatLine(String format, params object[] args)
+        public void WriteLine(String format, params object[] args)
         {
-            AppendFormatText(format + "\n", args);
+            WriteText(format + "\n", args);
         }
-        public void AppendFormatText(String format, params object[] args)
+        public void WriteText(String format, params object[] args)
         {
-            AppendFormatText(Verbosity.Warnings, format, args);
+            WriteText(Verbosity.Warnings, format, args);
         }
 
         //-- Append methods with formatting using the input verbosity --//
-        public void AppendFormatLine(Verbosity verb, String format, params object[] args)
+        public void WriteLine(Verbosity verb, String format, params object[] args)
         {
-            AppendFormatText(verb, format + "\n", args);
+            WriteText(verb, format + "\n", args);
         }
-        public void AppendFormatText(Verbosity verb, String format, params object[] args)
+        public void WriteText(Verbosity verb, String format, params object[] args)
         {
             AppendText(verb, String.Format(format, args));
         }
 
         //-- Append methods without formatting - default verbosity is the lowest --//
-        public void AppendLine(String text)
+        public void WriteLine(Verbosity verb = Verbosity.Warnings)
         {
-            AppendText(text + "\n");
+            WriteText(verb, "\n");
         }
-        public void AppendLine()
-        {
-            AppendText("\n");
-        }
-        public void AppendLine(Verbosity verb)
-        {
-            AppendText(verb, "\n");
-        }
-        public void AppendLine(Verbosity verb, String text)
-        {
-            AppendText(verb, text + "\n");
-        }
-        public void AppendText(String text)
-        {
-            AppendText(Verbosity.Warnings, text);
-        }
-        public void AppendText(Verbosity verb, String text)
+        private void AppendText(Verbosity verb, String text)
         {
             if (outputToConsole && verbosity >= verb)
+            {
                 System.Console.Write(text);
+                System.Console.Out.Flush();
+            }
 
             foreach (TextBox t in textBoxes)
             {
