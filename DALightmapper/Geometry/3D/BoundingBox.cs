@@ -287,8 +287,7 @@ namespace Geometry
 
         public Boolean containsPoint(Vector3 p)
         {
-            return lessThanOrEqual(p, max) && lessThanOrEqual(p, max) &&
-                   greaterThanOrEqual(p, min) && greaterThanOrEqual(p, min);
+            return lessThanOrEqual(p, max) && greaterThanOrEqual(p, min);
         }
 
         public Boolean containsLine(Vector3 start, Vector3 end)

@@ -221,6 +221,7 @@ namespace DALightmapper
                     Patch p = l.patches[i];
                     List<Photon> gather = new List<Photon>();
                     photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
+                    //photonMap.getNearest(p.position, 20, ref gather);
                     int unobstructedPhotons = 0;
                     foreach (Photon photon in gather)
                     {

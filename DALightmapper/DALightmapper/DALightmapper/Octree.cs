@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using OpenTK;
 
@@ -11,20 +12,10 @@ namespace DALightmapper
     {
         public Octree[] children;
         public BoundingBox bounds;
-        public List<Triangle> tris = new List<Triangle>();
-        public List<Triangle> unused = new List<Triangle>();
+        private List<Triangle> tris = new List<Triangle>();
         private List<Photon> points = new List<Photon>();
 
-        public int getUnused()
-        {
-            int childrenUnused = 0;
-            if (children.Length > 0)
-            {
-                foreach (Octree o in children)
-                    childrenUnused += o.getUnused();
-            }
-            return childrenUnused + unused.Count;
-        }
+        public int count { get; private set; }
 
         private static Vector3[] offsets =   {
                                                 new Vector3(-0.5f,-0.5f,-0.5f),
@@ -51,11 +42,13 @@ namespace DALightmapper
             if (triangles.Count <= maxTriangles || maxDepth == 0)
             {
                 tris = triangles;
+                count = tris.Count;
                 children = new Octree[0];
             }
             else
             {
                 children = new Octree[8];
+                count = 0;
                 BoundingBox newBox;
                 List<Triangle> childrenTriangles;
                 List<Triangle> used = new List<Triangle>();
@@ -71,24 +64,10 @@ namespace DALightmapper
                         if (newBox.triangleIntersects(t))
                         {
                             childrenTriangles.Add(t);
-                            //if (!used.Contains(t))
-                            //{
-                              //  used.Add(t);
-                            //}
                         }
                     }
                     children[i] = new Octree(childrenTriangles, maxTriangles, maxDepth - 1, newBox);
-                }
-                unused = new List<Triangle>();
-                //foreach (Triangle t in triangles)
-                //{
-                //    if (!used.Contains(t))
-                //        unused.Add(t);
-                //}
-                if (unused.Count > 0)
-                {
-                    //throw new Exception("SHIT");
-                    System.Console.WriteLine("There were {0} unused triangles.", unused.Count);
+                    count += children[i].count;
                 }
             }
         }
@@ -113,11 +92,13 @@ namespace DALightmapper
             if (p.Count <= maxPoints || maxDepth == 0)
             {
                 points = p;
+                count = points.Count;
                 children = new Octree[0];
             }
             else
             {
                 children = new Octree[8];
+                count = 0;
                 BoundingBox newBox;
                 List<Photon> childrenPoints;
                 Vector3 lengths = (bounds.max - bounds.min) / 2;
@@ -136,6 +117,7 @@ namespace DALightmapper
                         }
                     }
                     children[i] = new Octree(childrenPoints, maxPoints, maxDepth - 1, newBox);
+                    count += children[i].count;
                 }
             }
         }
@@ -147,7 +129,7 @@ namespace DALightmapper
                 return true;
 
             //If we are a leaf check intersection with our triangles
-            if (tris.Count > 0)
+            if (children.Length == 0)
             {
                 foreach (Triangle t in tris)
                 {
@@ -187,7 +169,7 @@ namespace DALightmapper
                 return null;
 
             //If we are a leaf check intersection with our triangles
-            if (tris.Count > 0)
+            if (children.Length == 0)
             {
                 foreach (Triangle t in tris)
                 {
@@ -233,7 +215,7 @@ namespace DALightmapper
         {
             if (bounds.sphereIntersect(point, distance))
             {
-                if (points.Count > 0)
+                if (children.Length == 0)
                 {
                     float distanceSquared = distance * distance;
                     foreach (Photon p in points)
@@ -254,10 +236,45 @@ namespace DALightmapper
                 }
             }
         }
-        void getNearest(Vector3 point, int n, ref List<Photon> photons)
+        public void getNearest(Vector3 point, int n, ref List<Photon> photons)
         {
-            throw new NotImplementedException();
+            //If we are a leaf
+            if (children.Length == 0)
+            {
+                //See if any of our photons are closer than what is already in the list
+                photons.AddRange(points);
+                photons.OrderBy(s => (s.position - point).LengthSquared);
+                if (photons.Count > n)
+                {
+                    photons.RemoveRange(n, photons.Count - n);
+                }
+            }
+            //Else if this is not a leaf 
+            else 
+            {
+                //If the point is in this bounding box then we need to check the child containing one
+                if (bounds.containsPoint(point))
+                {
+                    //If the child node that contains the point has >= n points in it then just use that node, 
+                    //  otherwise need need to query all the children to get the n nearest points
+                    foreach (Octree o in children)
+                    {
+                        if (o.bounds.containsPoint(point) && o.count >= n)
+                        {
+                            o.getNearest(point, n, ref photons);
+                            return;
+                        }
+                    }
+                }
+                
+                //If we got here we need to check all the children because the containing box doesn't have enough points
+                foreach (Octree o in children)
+                {
+                    o.getNearest(point, n, ref photons);
+                }
+            }
         }
+        
         public void Clear()
         {
             foreach (Octree o in children)
@@ -265,8 +282,8 @@ namespace DALightmapper
                 o.Clear();
             }
             tris.Clear();
-            unused.Clear();
             points.Clear();
+            count = 0;
         }
     }
 }

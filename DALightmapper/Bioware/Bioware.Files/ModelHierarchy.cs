@@ -75,6 +75,7 @@ namespace Bioware.Files
             isFXModel = binaryFile.structs[0].fields.Length == 8;
             if (isFXModel)
             {
+                file.Close();
                 return;
             }
 
@@ -107,6 +108,7 @@ namespace Bioware.Files
             if (temp == null)
             {
                 Console.WriteLine("Could not find mesh file \"{0}\".", mshName);
+                file.Close();
                 return;
                 //throw new Exception("COULD NOT FIND MESH FILE, LOOK AT CONSOLE!!!!!!");
             }
@@ -126,6 +128,7 @@ namespace Bioware.Files
                     updateChunk(file, binaryFile.dataOffset + childrenList[i], new Vector3(), new Quaternion());
                 }
             }
+            file.Close();
         }
 
         private void updateChunk(BinaryReader file, long startPosition, Vector3 offset, Quaternion rotation)

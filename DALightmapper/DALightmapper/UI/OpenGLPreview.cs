@@ -394,22 +394,10 @@ namespace DALightmapper
                     GL.Color3(Color.Blue);
                     GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
                     GL.Begin(BeginMode.Triangles);
-                    foreach (Triangle t in current.unused)
-                    {
-                        GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
-                        GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
-                        GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
-                    }
                     GL.End();
                     GL.Color3(Color.White);
                     GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
                     GL.Begin(BeginMode.Triangles);
-                    foreach (Triangle t in current.unused)
-                    {
-                        GL.Vertex3(t.x.X, t.x.Y, t.x.Z);
-                        GL.Vertex3(t.y.X, t.y.Y, t.y.Z);
-                        GL.Vertex3(t.z.X, t.z.Y, t.z.Z);
-                    }
                     GL.End();
                     //GL.Enable(EnableCap.DepthTest);
                 }

@@ -379,7 +379,7 @@ namespace DALightmapper
             String error = p.StandardError.ReadToEnd();
 
             p.WaitForExit();
-
+            p.Close();
             return "OUTPUT: " + output + "\n ERROR: " + error;
         }
     }
