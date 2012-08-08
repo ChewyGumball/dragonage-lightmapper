@@ -7,8 +7,8 @@ namespace Bioware.Structs
 {
     public class AmbientLight : Light
     {
-        public AmbientLight(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
-            : base(pos, col, intense, t, shoots )
+        public AmbientLight(Vector3 pos, Vector3 col, Vector3 shadowCol, float intense, Boolean shadows, Boolean shoots)
+            : base(pos, col, shadowCol, intense, shadows, shoots )
         { }
         public override float influence(Vector3 patch)
         {

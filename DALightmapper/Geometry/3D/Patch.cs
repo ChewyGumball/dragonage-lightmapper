@@ -24,7 +24,7 @@ namespace Geometry
         }
 
         public int ambient { get; set; }
-        public Boolean inShadow { get; set; }
+        public Vector3 shadowColour { get; set; }
 
         public Patch()
         { }
@@ -37,7 +37,7 @@ namespace Geometry
             position = pos;
             //ambient = 0;
             ambient = 255;
-            inShadow = false;
+            shadowColour = new Vector3();
         }
         public Patch(Patch p, Matrix4 transform)
             : this( p.position, p.normal, p.emmission, new Vector3()/*p.reflectance*/)

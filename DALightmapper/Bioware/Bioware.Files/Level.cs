@@ -302,6 +302,7 @@ namespace Bioware.Files
                     distance = file.ReadSingle();
 
                     //add the light to the lights list
+                    /*
                     switch (type)
                     {
                         case LIGHT_AMBIENT:
@@ -311,6 +312,7 @@ namespace Bioware.Files
                         case LIGHT_POINT:
                             lights.Add(new PointLight(position, colour, intensity, radius, lightEffect, true)); break;
                     }
+                     */
                 }
                 else if (headerFile.structs[(int)objectList.type[i].id].type == GFFSTRUCTTYPE.LVL_GROUP)
                 {

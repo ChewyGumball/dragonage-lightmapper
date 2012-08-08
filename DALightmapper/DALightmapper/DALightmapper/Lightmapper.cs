@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using System.Linq;
 
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
@@ -92,7 +93,7 @@ namespace DALightmapper
 
             //Gather the photons for each patch in each map
             Settings.stream.WriteText("Gathering photons for lightmaps . . . ");
-            gatherPhotons(maps,photonMap, partition);
+            gatherPhotons(maps,photonMap, partition, lights);
             photonMap.Clear();
             Settings.stream.WriteLine("Done");
 
@@ -103,7 +104,7 @@ namespace DALightmapper
 
             //Do Shadow Maps
             Settings.stream.WriteText("Calculating shadows . . . ");
-            //calculateShadows(maps, lights, partition);
+            calculateShadows(maps, lights, partition);
             Settings.stream.WriteLine("Done");
 
             partition.Clear();
@@ -153,7 +154,7 @@ namespace DALightmapper
 
             foreach (Light l in lights)
             {
-                if (l.shootsPhotons)
+                if (l.shootsPhotons && l.inLightMap)
                 {
                     Parallel.For(0, Settings.numPhotonsPerLight, opts, delegate(int i, ParallelLoopState state)
                     {
@@ -197,7 +198,7 @@ namespace DALightmapper
             }
             return photons;
         }
-        private static void gatherPhotons(List<LightMap> maps, Partitioner photonMap, Partitioner scene)
+        private static void gatherPhotons(List<LightMap> maps, Partitioner photonMap, Partitioner scene, List<Light> lights)
         {
             int numPatches = 0;
             foreach (LightMap l in maps)
@@ -211,14 +212,13 @@ namespace DALightmapper
 
             foreach (LightMap l in maps)
             {
-                Parallel.For(0, l.patches.Count, opts, delegate(int i, ParallelLoopState state)
+                Parallel.ForEach(l.patches, opts, delegate(Patch p, ParallelLoopState state)
                 {
                     if (abort)
                     {
                         state.Stop();
                     }
 
-                    Patch p = l.patches[i];
                     List<Photon> gather = new List<Photon>();
                     photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
                     //photonMap.getNearest(p.position, 20, ref gather);
@@ -234,6 +234,14 @@ namespace DALightmapper
                     if (unobstructedPhotons > 0)
                     {
                         p.incidentLight /= unobstructedPhotons;
+                    }
+
+                    foreach (Light light in lights)
+                    {
+                        if (!light.shootsPhotons)
+                        {
+                            p.incidentLight += light.colour;
+                        }
                     }
 
                     //p.incidentLight *= 100;
@@ -263,7 +271,7 @@ namespace DALightmapper
 
             foreach (LightMap l in maps)
             {
-                Parallel.For(0, l.patches.Count, opts, delegate(int i, ParallelLoopState state)
+                Parallel.ForEach(l.patches, opts, delegate(Patch p, ParallelLoopState state)
                 {
                     if (abort)
                     {
@@ -275,8 +283,6 @@ namespace DALightmapper
                     {
                         localGenerator = new Random(generator.Next());
                     }
-
-                    Patch p = l.patches[i];
 
                     for (int sample = 0; sample < 64 /*Settings.ambientOcclusionSamples*/; sample++)
                     {
@@ -323,28 +329,30 @@ namespace DALightmapper
             ParallelOptions opts = new ParallelOptions();
             opts.MaxDegreeOfParallelism = Settings.maxThreads;
 
+            IEnumerable<Light> castingLights = from light in lights where light.inShadowMap select light; 
+
             foreach (LightMap l in maps)
             {
-                Parallel.For(0, l.patches.Count, opts, delegate(int i, ParallelLoopState state)
+                Parallel.ForEach(l.patches, opts, delegate(Patch p, ParallelLoopState state)
                 {
                     if (abort)
                     {
                         state.Stop();
                     }
 
-                    foreach (Light light in lights)
+                    foreach (Light light in castingLights)
                     {
-                        foreach (Patch p in l.patches)
-                        {
-                            p.inShadow = scene.lineIsUnobstructed(light.position, p.position);
-                        }
+                            if (scene.lineIsUnobstructed(p.position, light.position))
+                            {
+                                p.shadowColour += light.shadowColour;
+                            }
                     }
                     Settings.stream.UpdateProgress();
                 });
 
                 if (abort)
                 {
-                    throw new LightmappingAbortedException("Aborted lightmapping while gathering photons.");
+                    throw new LightmappingAbortedException("Aborted lightmapping while creating shadows.");
                 }
             }
         }

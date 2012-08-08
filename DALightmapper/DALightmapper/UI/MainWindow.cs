@@ -146,7 +146,7 @@ namespace DALightmapper
 
         private void btn_Stop_Click(object sender, EventArgs e)
         {
-            Lightmapper.abort = true;
+            //Lightmapper.abort = true;
             Settings.stream.SetProgressBarMaximum(1);
             Settings.stream.WriteLine();
         }

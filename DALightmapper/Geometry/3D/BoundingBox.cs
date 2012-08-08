@@ -50,27 +50,36 @@ namespace Geometry
 
         public BoundingBox(List<Vector3> points)
         {
-            float minX = points[0].X;
-            float minY = points[0].Y;
-            float minZ = points[0].Z;
-            float maxX = points[0].X;
-            float maxY = points[0].Y;
-            float maxZ = points[0].Z;
-
-            foreach (Vector3 v in points)
+            if (points.Count > 0)
             {
-                minX = Math.Min(v.X, minX);
-                minY = Math.Min(v.Y, minY);
-                minZ = Math.Min(v.Z, minZ);
+                float minX = points[0].X;
+                float minY = points[0].Y;
+                float minZ = points[0].Z;
+                float maxX = points[0].X;
+                float maxY = points[0].Y;
+                float maxZ = points[0].Z;
 
-                maxX = Math.Max(v.X, maxX);
-                maxY = Math.Max(v.Y, maxY);
-                maxZ = Math.Max(v.Z, maxZ);
+                foreach (Vector3 v in points)
+                {
+                    minX = Math.Min(v.X, minX);
+                    minY = Math.Min(v.Y, minY);
+                    minZ = Math.Min(v.Z, minZ);
+
+                    maxX = Math.Max(v.X, maxX);
+                    maxY = Math.Max(v.Y, maxY);
+                    maxZ = Math.Max(v.Z, maxZ);
+                }
+
+                max = new Vector3(maxX, maxY, maxZ);
+                min = new Vector3(minX, minY, minZ);
+                center = (max + min) / 2;
             }
-
-            max = new Vector3(maxX, maxY, maxZ);
-            min = new Vector3(minX, minY, minZ);
-            center = (max + min) / 2;
+            else
+            {
+                max = new Vector3();
+                min = new Vector3();
+                center = new Vector3();
+            }
         }
 
         //Bounding box with offset and rotation from another bounding box

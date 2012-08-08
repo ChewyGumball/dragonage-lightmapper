@@ -10,21 +10,25 @@ namespace Bioware.Structs
     public abstract class Light
     {
         public float intensity { get; set; } //Intensity of the light
-        public Vector3 colour { get; set; } //Colour of the light (RGB)
+        public Vector3 colour { get; set; } //Colour for the light maps (RGB)
+        public Vector3 shadowColour { get; set; } //The colour for the shadow maps
         public Vector3 position { get; set; }  //Position of the light
-        public LightType type { get; set; } //Type of light (enum)
         public Vector3 attenuation { get; set; } //Attenuation vector (constant,linear,quadratic)
+        public Boolean castsShadows { get; private set; } //Whether this light affects the shadow map
         public Boolean shootsPhotons { get; set; } //Whether to shoot photons from this light or not 
+        public Boolean inLightMap { get; set; }
+        public Boolean inShadowMap { get; set; }
 
-        public Light(Vector3 pos, Vector3 col, float intense, LightType t, Boolean shoots)
+        public Light(Vector3 pos, Vector3 col, Vector3 shadowCol, float intense, Boolean shadows, Boolean shoots)
         {
             position = pos;
             colour = col * 255;
+            shadowColour = shadowCol * 255;
             intensity = intense;
             //By default all lights use 1/d^2 as their falloff. If Settings.useTrueAttenuation = false this vector
             //      will be overwritten when the lights are created
             attenuation = new Vector3(1, 0, 0);
-            type = t;
+            castsShadows = shadows;
             shootsPhotons = shoots;
         }
 

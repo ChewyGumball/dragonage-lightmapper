@@ -101,7 +101,15 @@ namespace DALightmapper
         }
         public Targa makeShadowMapTexture(String directory, String outputName)
         {
-            return new Targa(directory + "\\" + outputName, (short)width, (short)height);
+            Pixel[] pixels = new Pixel[width * height];
+            for (int i = 0; i < width; i++)
+            {
+                for (int j = 0; j < height; j++)
+                {
+                    pixels[(height - j - 1) * width + i] = new Pixel(texels[i, j].shadowValue);
+                }
+            }
+            return new Targa(directory + "\\" + outputName, pixels, (short)width, (short)height, 24);
         }
 
         private static String convertToBase36(uint number)

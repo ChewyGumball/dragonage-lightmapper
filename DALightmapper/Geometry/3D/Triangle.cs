@@ -488,5 +488,10 @@ namespace Geometry
             float t = 1 / detDenom * (bDirection.Y * aTobStart.X - bDirection.X * aTobStart.Y);
             return aStart + t * aDirection;
         }
+
+        private bool pointsStraddleEdge(Vector2 start, Vector2 end, Vector2 topLeft, Vector2 bottomRight)
+        {
+            return true;
+        }
     }
 }

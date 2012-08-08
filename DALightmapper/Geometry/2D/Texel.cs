@@ -44,6 +44,24 @@ namespace Geometry
             }
         }
 
+        public Vector3 shadowValue
+        {
+            get
+            {
+                Vector3 temp = new Vector3();
+                if (patches.Count > 0)
+                {
+                    foreach (Patch p in patches)
+                    {
+                        temp += p.shadowColour;
+                    }
+
+                    temp /= patches.Count;
+                }
+                return temp;
+            }
+        }
+
         public Texel()
         {
             patches = new List<Patch>();

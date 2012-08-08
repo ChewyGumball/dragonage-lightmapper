@@ -116,7 +116,7 @@ namespace DALightmapper
 
             foreach (Light l in lights)
             {
-                Settings.stream.WriteLine("{0}: {1}", l.position, l.intensity);
+                Settings.stream.WriteLine("{0}: {1}x{2}({3})", l.position, l.intensity, l.colour, l.shadowColour);
             }
         }
 
@@ -182,10 +182,12 @@ namespace DALightmapper
 
             XmlNode topNode = sceneSpecification.SelectSingleNode("RenderFarmOutput");
 
+            Boolean shadowMap = false;
+            Boolean lightMap = false;
             switch(topNode.SelectSingleNode("Output").Attributes.GetNamedItem("Type").Value)
             {
-                case "LightMap": jobDictionary = lightmapJobs; break;
-                case "ShadowMap": jobDictionary = shadowmapJobs; break;
+                case "LightMap": jobDictionary = lightmapJobs; lightMap = true; break;
+                case "ShadowMap": jobDictionary = shadowmapJobs; shadowMap = true; break;
                 case "AmbientOcclusion": jobDictionary = ambientJobs; break;
                 default: throw new LightmappingAbortedException("Unknown job type (" + topNode.SelectSingleNode("Output").Attributes.GetNamedItem("Type").Value + ")");
             }
@@ -195,7 +197,7 @@ namespace DALightmapper
                 switch (node.Name)
                 {
                     case "Light":
-                        processLightNode(node);
+                        processLightNode(node, shadowMap, lightMap);
                         break;
                     case "RenderTarget":
                         processRenderTargetNode(node, jobDictionary);
@@ -213,13 +215,12 @@ namespace DALightmapper
             Settings.stream.SetProgressBarMaximum(lightmaps.Count);
             foreach (LightMap l in lightmaps)
             {
-                /* for reference
+                
                 int[,] boxFilter = {
                                     {1,1,1},
                                     {1,1,1},
                                     {1,1,1}
                                    };
-                 */
                 int[,] gaussFilter = {
                                     {0,1,2,1,0},
                                     {1,2,4,2,1},
@@ -230,6 +231,8 @@ namespace DALightmapper
 
                 String lightmapPath = lightmapJobs[l.model.name][l.mesh.name];
                 Targa lightMap = l.makeLightMapTexture(Path.GetDirectoryName(lightmapPath), Path.GetFileName(lightmapPath));
+                lightMap.grow(boxFilter);
+                lightMap.grow(boxFilter);
                 lightMap.applyFilter(gaussFilter);
                 lightMap.writeToFile();
 
@@ -237,11 +240,106 @@ namespace DALightmapper
                 l.makeAmbientOcclusionTexture(Path.GetDirectoryName(ambientPath), Path.GetFileName(ambientPath)).writeToFile();
 
                 String shadowmapPath = shadowmapJobs[l.model.name][l.mesh.name];
-                l.makeShadowMapTexture(Path.GetDirectoryName(shadowmapPath), Path.GetFileName(shadowmapPath)).writeToFile();
+                Targa shadowMap = l.makeShadowMapTexture(Path.GetDirectoryName(shadowmapPath), Path.GetFileName(shadowmapPath));
+                shadowMap.grow(boxFilter);
+                shadowMap.grow(boxFilter);
+                shadowMap.applyFilter(gaussFilter);
+                shadowMap.writeToFile();
 
                 Settings.stream.UpdateProgress();
             }
         }
+
+        private void processLightNode(XmlNode lightNode, Boolean shadowMap, Boolean lightMap)
+        {
+            string type = lightNode.Attributes.GetNamedItem("Type").Value;
+            bool castsShadows = lightNode.Attributes.GetNamedItem("CastShadows").Value == "true";
+
+            float brightness = Convert.ToSingle(lightNode.SelectSingleNode("Brightness").InnerText);
+            Vector3 colour = new Vector3(Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("R").Value),
+                                            Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("G").Value),
+                                            Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("B").Value));
+
+            Vector3 shadowColour = new Vector3(Convert.ToSingle(lightNode.SelectSingleNode("ShadowColour").Attributes.GetNamedItem("R").Value),
+                                            Convert.ToSingle(lightNode.SelectSingleNode("ShadowColour").Attributes.GetNamedItem("G").Value),
+                                            Convert.ToSingle(lightNode.SelectSingleNode("ShadowColour").Attributes.GetNamedItem("B").Value));
+
+            string guid = lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("A").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("B").Value +
+                            lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("C").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("D").Value;
+            Matrix4 transform = xmlToMatrix(lightNode.SelectSingleNode("Transform").Attributes);
+            
+            switch (type)
+            {
+                case "Point":
+                    {
+                        float radius = Convert.ToSingle(lightNode.SelectSingleNode("Radius").InnerText);
+                        if (!lightDictionary.ContainsKey(guid))
+                        {
+                            lightDictionary.Add(guid, new PointLight(transform.Row3.Xyz, colour, shadowColour, brightness, radius, castsShadows, true));
+                        }
+                    }
+                    break;
+                case "Spot":
+                    {
+                        throw new NotImplementedException("SpotLights are not implemented");
+                        //newLight = new SpotLight(transform,,colour,brightness,
+                    }
+                    break;
+                case "Ambient":
+                    {
+                        if (!lightDictionary.ContainsKey(guid))
+                        {
+                            lightDictionary.Add(guid, new AmbientLight(transform.Row3.Xyz, colour, shadowColour, brightness, castsShadows, false));
+                        }
+                    }
+                    break;
+                default: break; //ignore unknown light types
+            }
+
+            if (shadowMap && !lightDictionary[guid].inShadowMap)
+            {
+                lightDictionary[guid].inShadowMap = true;
+            }
+
+            if (lightMap && !lightDictionary[guid].inLightMap)
+            {
+                lightDictionary[guid].inShadowMap = true;
+            }
+        }
+        private void processRenderTargetNode(XmlNode renderTargetNode, Dictionary<String, Dictionary<String, String>> jobDictionary)
+        {
+            string modelName = renderTargetNode.Attributes.GetNamedItem("Model").Value;
+            string partName = renderTargetNode.Attributes.GetNamedItem("Part").Value;
+            int width = Convert.ToInt32(renderTargetNode.Attributes.GetNamedItem("SizeX").Value);
+            int height = Convert.ToInt32(renderTargetNode.Attributes.GetNamedItem("SizeY").Value);
+            string outputName = renderTargetNode.Attributes.GetNamedItem("OutputFile").Value;
+
+            if (modelDictionary.ContainsKey(modelName))
+            {
+                modelDictionary[modelName].baseModel.meshes.First(m => m.name == partName).generatePatches(width, height);
+            }
+
+            if (!jobDictionary.Keys.Contains(modelName))
+            {
+                jobDictionary.Add(modelName,new Dictionary<string,string>());
+            }
+            jobDictionary[modelName].Add(partName, outputName);
+        }
+        private void processRenderOptions(XmlNode options)
+        {
+            XmlNode ambientNode = options.FirstChild;
+            Settings.ambientSamples = Convert.ToInt32(ambientNode.SelectSingleNode("MaxSamples").InnerText);
+            Settings.ambientRayLength = Convert.ToSingle(ambientNode.SelectSingleNode("MaxRayLength").InnerText);
+        }
+
+        private static Matrix4 xmlToMatrix(XmlAttributeCollection matrix)
+        {
+            return new Matrix4(Convert.ToSingle(matrix[0].Value), Convert.ToSingle(matrix[1].Value), Convert.ToSingle(matrix[2].Value), Convert.ToSingle(matrix[3].Value),
+                                Convert.ToSingle(matrix[4].Value), Convert.ToSingle(matrix[5].Value), Convert.ToSingle(matrix[6].Value), Convert.ToSingle(matrix[7].Value),
+                                Convert.ToSingle(matrix[8].Value), Convert.ToSingle(matrix[9].Value), Convert.ToSingle(matrix[10].Value), Convert.ToSingle(matrix[11].Value),
+                                Convert.ToSingle(matrix[12].Value), Convert.ToSingle(matrix[13].Value), Convert.ToSingle(matrix[14].Value), Convert.ToSingle(matrix[15].Value));
+        }
+
         private static void combineLightMaps(String uncompressedPath, String ambientPath, String combinedPath)
         {
             String arguments = String.Format("-in_lm \"{0}\" -in_sm \"{0}\" -in_ao \"{1}\" -out \"{2}\"", uncompressedPath, ambientPath, combinedPath);
@@ -272,7 +370,7 @@ namespace DALightmapper
 
             String output = runProcess(Settings.lightmappingToolsDirectory + "\\TextureProcessor.exe", arguments);
             //Settings.stream.WriteLine(output);
-            
+
             Settings.stream.WriteLine("There are " + Directory.GetFiles(atlasPath, "*.meta").Count() + " meta files");
             foreach (String s in Directory.GetFiles(atlasPath, "*.meta"))
             {
@@ -280,89 +378,6 @@ namespace DALightmapper
                 Settings.stream.WriteLine("Copying {0} to {1}.", s, compressedPath + "\\" + Path.GetFileName(s));
             }
         }
-
-        private void processLightNode(XmlNode lightNode)
-        {
-            string type = lightNode.Attributes.GetNamedItem("Type").Value;
-            bool castsShadows = lightNode.Attributes.GetNamedItem("CastShadows").Value == "true";
-
-            switch (type)
-            {
-                case "Point":
-                    {
-                        float radius = Convert.ToSingle(lightNode.SelectSingleNode("Radius").InnerText);
-                        float brightness = Convert.ToSingle(lightNode.SelectSingleNode("Brightness").InnerText);
-                        Vector3 colour = new Vector3(Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("R").Value),
-                                                        Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("G").Value),
-                                                        Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("B").Value));
-
-                        string guid = lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("A").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("B").Value +
-                                        lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("C").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("D").Value;
-                        Matrix4 transform = xmlToMatrix(lightNode.SelectSingleNode("Transform").Attributes);
-                        if (!lightDictionary.ContainsKey(guid))
-                        {
-                            lightDictionary.Add(guid, new PointLight(transform.Row3.Xyz, colour, brightness, radius, LightType.Baked, true));
-                        }
-                    }
-                    break;
-                case "Spot":
-                    {
-                        throw new NotImplementedException("SpotLights are not implemented");
-                        //newLight = new SpotLight(transform,,colour,brightness,
-                    }
-                    break;
-                case "Ambient":
-                    {
-                        float brightness = Convert.ToSingle(lightNode.SelectSingleNode("Brightness").InnerText);
-                        Vector3 colour = new Vector3(Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("R").Value),
-                                                        Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("G").Value),
-                                                        Convert.ToSingle(lightNode.SelectSingleNode("Colour").Attributes.GetNamedItem("B").Value));
-                        string guid = lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("A").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("B").Value +
-                                        lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("C").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("D").Value;
-                        Matrix4 transform = xmlToMatrix(lightNode.SelectSingleNode("Transform").Attributes);
-                        if (!lightDictionary.ContainsKey(guid))
-                        {
-                            lightDictionary.Add(guid, new AmbientLight(transform.Row3.Xyz, colour, brightness, LightType.Baked, false));
-                        }
-                    }
-                    break;
-                default: break; //ignore unknown light types
-            }
-        }
-        private void processRenderTargetNode(XmlNode renderTargetNode, Dictionary<String, Dictionary<String, String>> jobDictionary)
-        {
-            string modelName = renderTargetNode.Attributes.GetNamedItem("Model").Value;
-            string partName = renderTargetNode.Attributes.GetNamedItem("Part").Value;
-            int width = Convert.ToInt32(renderTargetNode.Attributes.GetNamedItem("SizeX").Value);
-            int height = Convert.ToInt32(renderTargetNode.Attributes.GetNamedItem("SizeY").Value);
-            string outputName = renderTargetNode.Attributes.GetNamedItem("OutputFile").Value;
-
-            if (modelDictionary.ContainsKey(modelName))
-            {
-                modelDictionary[modelName].baseModel.meshes.First(m => m.name == partName).generatePatches(width, height);
-            }
-
-            if (!jobDictionary.Keys.Contains(modelName))
-            {
-                jobDictionary.Add(modelName,new Dictionary<string,string>());
-            }
-            jobDictionary[modelName].Add(partName, outputName);
-        }
-        private void processRenderOptions(XmlNode options)
-        {
-            XmlNode ambientNode = options.FirstChild;
-            Settings.ambientSamples = Convert.ToInt32(ambientNode.SelectSingleNode("MaxSamples").InnerText);
-            Settings.ambientRayLength = Convert.ToSingle(ambientNode.SelectSingleNode("MaxRayLength").InnerText);
-        }
-
-        private Matrix4 xmlToMatrix(XmlAttributeCollection matrix)
-        {
-            return new Matrix4(Convert.ToSingle(matrix[0].Value), Convert.ToSingle(matrix[1].Value), Convert.ToSingle(matrix[2].Value), Convert.ToSingle(matrix[3].Value),
-                                Convert.ToSingle(matrix[4].Value), Convert.ToSingle(matrix[5].Value), Convert.ToSingle(matrix[6].Value), Convert.ToSingle(matrix[7].Value),
-                                Convert.ToSingle(matrix[8].Value), Convert.ToSingle(matrix[9].Value), Convert.ToSingle(matrix[10].Value), Convert.ToSingle(matrix[11].Value),
-                                Convert.ToSingle(matrix[12].Value), Convert.ToSingle(matrix[13].Value), Convert.ToSingle(matrix[14].Value), Convert.ToSingle(matrix[15].Value));
-        }
-
         private static String runProcess(String executable, String arguments)
         {
             Process p = new Process();

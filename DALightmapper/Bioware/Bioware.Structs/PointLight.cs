@@ -8,8 +8,8 @@ namespace Bioware.Structs
     public class PointLight : Light
     {
         private float radius;
-        public PointLight(Vector3 pos, Vector3 col, float intense, float r, LightType t, Boolean shoots)
-            : base(pos, col, intense, t, shoots)
+        public PointLight(Vector3 pos, Vector3 col, Vector3 shadowCol, float intense, float r, Boolean shadows, Boolean shoots)
+            : base(pos, col, shadowCol, intense, shadows, shoots)
         {
             radius = r;
         }

@@ -80,6 +80,55 @@ namespace Geometry
             : this("UNNAMED PIXEL", pix, w, h, bpp)
         { }
 
+        public void grow(int[,] filter)
+        {
+            int filterWidth = filter.GetLength(0);
+            int filterHeight = filter.GetLength(1);
+
+            int halfWidth = filterWidth / 2;
+            int halfHeight = filterHeight / 2;
+            
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    Pixel current = this[x, y];
+                    
+                    if (current.r == 0 && current.g == 0 && current.b == 0)
+                    {
+                        int weight = 0;
+                        int newR = 0;
+                        int newG = 0;
+                        int newB = 0;
+                        
+                        for (int filterX = 0; filterX < filterWidth; filterX++)
+                        {
+                            for (int filterY = 0; filterY < filterHeight; filterY++)
+                            {
+                                int curX = x - halfWidth + filterX;
+                                int curY = y - halfHeight + filterY;
+                                if ((curX >= 0 && curX < width) && (curY >= 0 && curY < height))
+                                {
+                                    Pixel next = this[curX, curY];
+                                    if (next.a > 0 || next.g > 0 || next.b > 0)
+                                    {
+                                        newR += filter[filterX, filterY] * next.r;
+                                        newG += filter[filterX, filterY] * next.g;
+                                        newB += filter[filterX, filterY] * next.b;
+
+                                        weight += filter[filterX, filterY];
+                                    }
+                                }
+                            }
+                        }
+                        if (weight != 0)
+                        {
+                            pixels[y * width + x] = new Pixel((byte)(newB / weight), (byte)(newG / weight), (byte)(newR / weight));
+                        }
+                    }
+                }
+            }
+        }
 
         public void applyFilter(int[,] filter)
         {
@@ -110,13 +159,17 @@ namespace Geometry
                                 newR += filter[filterX, filterY] * this[curX, curY].r;
                                 newG += filter[filterX, filterY] * this[curX, curY].g;
                                 newB += filter[filterX, filterY] * this[curX, curY].b;
-                            }
+                            } 
                             weight += filter[filterX, filterY];
                         }
                     }
                     if (weight != 0)
                     {
                         newPixels[y * width + x] = new Pixel((byte)(newB / weight), (byte)(newG / weight), (byte)(newR / weight));
+                    }
+                    else
+                    {
+                        newPixels[y * width + x] = this[x, y];
                     }
                 }
             }

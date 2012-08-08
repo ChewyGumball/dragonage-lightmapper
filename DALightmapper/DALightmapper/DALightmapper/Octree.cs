@@ -10,8 +10,8 @@ namespace DALightmapper
 {
     public class Octree : Partitioner
     {
-        public Octree[] children;
-        public BoundingBox bounds;
+        public Octree[] children = new Octree[0];
+        public BoundingBox bounds = new BoundingBox(new Vector3(), new Vector3());
         private List<Triangle> tris = new List<Triangle>();
         private List<Photon> points = new List<Photon>();
 
@@ -43,7 +43,6 @@ namespace DALightmapper
             {
                 tris = triangles;
                 count = tris.Count;
-                children = new Octree[0];
             }
             else
             {
@@ -93,7 +92,6 @@ namespace DALightmapper
             {
                 points = p;
                 count = points.Count;
-                children = new Octree[0];
             }
             else
             {
@@ -124,7 +122,13 @@ namespace DALightmapper
 
         public bool lineIsUnobstructed(Vector3 start, Vector3 end)
         {
+            Vector3 direction = end - start;
+            direction.Normalize();
+
+            start = start + (direction * 0.01f);
+            
             //If the line doesn't go through this octree then it is unobstructed
+
             if (!bounds.lineIntersects(start, end))
                 return true;
 
@@ -162,6 +166,11 @@ namespace DALightmapper
 
         public Triangle firstIntersection(Vector3 start, Vector3 end)
         {
+            Vector3 direction = end - start;
+            direction.Normalize();
+
+            start = start + (direction * 0.01f);
+
             Triangle nearest = null;
             Vector3 nearPoint = end;
             //If the line doesn't go through this octree then it is unobstructed
@@ -213,25 +222,28 @@ namespace DALightmapper
 
         public void getWithinDistance(Vector3 point, float distance, ref List<Photon> photons)
         {
-            if (bounds.sphereIntersect(point, distance))
+            if (points.Count > 0)
             {
-                if (children.Length == 0)
+                if (bounds.sphereIntersect(point, distance))
                 {
-                    float distanceSquared = distance * distance;
-                    foreach (Photon p in points)
+                    if (children.Length == 0)
                     {
-                        Vector3 diff = p.position - point;
-                        if(diff.LengthSquared <= distanceSquared)
+                        float distanceSquared = distance * distance;
+                        foreach (Photon p in points)
                         {
-                            photons.Add(p);
+                            Vector3 diff = p.position - point;
+                            if (diff.LengthSquared <= distanceSquared)
+                            {
+                                photons.Add(p);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    foreach (Octree o in children)
+                    else
                     {
-                        o.getWithinDistance(point, distance, ref photons);
+                        foreach (Octree o in children)
+                        {
+                            o.getWithinDistance(point, distance, ref photons);
+                        }
                     }
                 }
             }
