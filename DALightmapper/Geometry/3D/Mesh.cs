@@ -75,26 +75,26 @@ namespace Geometry
 
                 foreach (Triangle t in tris)
                 {
-                    int minX = (int)(t.a.X * width);
-                    int minY = (int)(t.a.Y * height);
+                    int minX = (int)Math.Round(t.a.X * width);
+                    int minY = (int)Math.Round(t.a.Y * height);
                     int maxX = minX;
                     int maxY = minY;
 
-                    int nextX = (int)(t.b.X * width);
-                    int nextY = (int)(t.b.Y * height);
+                    int nextX = (int)Math.Round(t.b.X * width);
+                    int nextY = (int)Math.Round(t.b.Y * height);
 
                     maxX = Math.Max(maxX, nextX);
                     maxY = Math.Max(maxY, nextY);
                     minX = Math.Min(minX, nextX);
                     minY = Math.Min(minY, nextY);
 
-                    nextX = (int)(t.c.X * width);
-                    nextY = (int)(t.c.Y * height);
+                    nextX = (int)Math.Round(t.c.X * width);
+                    nextY = (int)Math.Round(t.c.Y * height);
 
-                    maxX = Math.Max(maxX, nextX);
-                    maxY = Math.Max(maxY, nextY);
-                    minX = Math.Min(minX, nextX);
-                    minY = Math.Min(minY, nextY);
+                    maxX = Math.Min(width, Math.Max(maxX, nextX) + 2);
+                    maxY = Math.Min(height, Math.Max(maxY, nextY) + 2);
+                    minX = Math.Max(0, Math.Min(minX, nextX) - 2);
+                    minY = Math.Max(0, Math.Min(minY, nextY) - 2);
 
                     for (int i = minX; i < maxX; i++)
                     {

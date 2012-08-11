@@ -12,7 +12,7 @@ namespace Geometry
         Vector2[] _tVerts;
         Vector2[] _lVerts;
         Vector3 _normal;
-        
+
         Vector2[] lightMapInverseMatrix;
         float determinant;
 
@@ -130,8 +130,8 @@ namespace Geometry
         }
         public Triangle(Vector3 x, Vector3 y, Vector3 z, Vector2 u, Vector2 v, Vector2 w)
         {
-            _mVerts = new Vector3[3] {x,y,z};
-            _tVerts = new Vector2[3] {u,v,w};
+            _mVerts = new Vector3[3] { x, y, z };
+            _tVerts = new Vector2[3] { u, v, w };
             lightMapInverseMatrix = new Vector2[2];
             calculateNormal();
             isLightmapped = false;
@@ -141,7 +141,7 @@ namespace Geometry
             : this(x, y, z, u, v, w)
         {
             isLightmapped = true;
-            _lVerts = new Vector2[3] {a,b,c};
+            _lVerts = new Vector2[3] { a, b, c };
             calculateInverseMatrix();
         }
 
@@ -151,6 +151,13 @@ namespace Geometry
             {
                 //return false;
             }
+
+            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
+            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
+
+            return (pointsStraddleEdge(a, b, topLeft, bottomRight) || pointsStraddleEdge(a, c, topLeft, bottomRight) || pointsStraddleEdge(b, c, topLeft, bottomRight) ||
+                    pointsStraddleEdge(a, b, bottomLeft, topRight) || pointsStraddleEdge(a, c, bottomLeft, topRight) || pointsStraddleEdge(b, c, bottomLeft, topRight) ||
+                    uvIsOnThisTriangle(topLeft) || uvIsOnThisTriangle(bottomRight) || uvIsOnThisTriangle(bottomLeft) || uvIsOnThisTriangle(topRight));
 
             //Completely above, left, below, or right of the triangle
             if ((a.Y >= topLeft.Y && b.Y >= topLeft.Y && c.Y >= topLeft.Y) ||
@@ -166,9 +173,7 @@ namespace Geometry
                 pointIsBetween(b, topLeft, bottomRight) ||
                 pointIsBetween(c, topLeft, bottomRight))
                 return true;
-            
-            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
-            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
+
 
             //if a corner of the pixel is on the triangle 
             if (uvIsOnThisTriangle(topLeft) ||
@@ -211,7 +216,7 @@ namespace Geometry
             Vector2 convertedCoord = convertToTextureBasis(coord);
             //If the points are >= 0 and add up to <= 1 then its on the triangle.
             //   Remove the = to ignore the edges
-            
+
             //Floating point precision errors can cause problems so extremely close to 1 is good enough here
             bool isOn = ((convertedCoord.X >= 0f) && (convertedCoord.Y >= 0f) && (((float)(convertedCoord.X + convertedCoord.Y - 1)) <= 0.000001f));
             return isOn;
@@ -383,7 +388,7 @@ namespace Geometry
             Vector3 intersection = start + param * (end - start);
 
             return intersection;
-                
+
         }
 
         private bool pointIsBetween(Vector2 a, Vector2 topLeft, Vector2 bottomRight)
@@ -491,7 +496,13 @@ namespace Geometry
 
         private bool pointsStraddleEdge(Vector2 start, Vector2 end, Vector2 topLeft, Vector2 bottomRight)
         {
-            return true;
+            Vector2 direction = end - start;
+            Vector2 perpendicular = new Vector2(-direction.Y, direction.X);
+
+            float firstDot = Vector2.Dot(topLeft - start, perpendicular);
+            float secondDot = Vector2.Dot(bottomRight - start, perpendicular);
+
+            return (Math.Sign(firstDot) != Math.Sign(secondDot)) || firstDot == 0 || secondDot == 0;
         }
     }
 }

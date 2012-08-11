@@ -125,7 +125,7 @@ namespace DALightmapper
             Vector3 direction = end - start;
             direction.Normalize();
 
-            start = start + (direction * 0.01f);
+            //start = start + (direction * 0.01f);
             
             //If the line doesn't go through this octree then it is unobstructed
 
@@ -169,7 +169,7 @@ namespace DALightmapper
             Vector3 direction = end - start;
             direction.Normalize();
 
-            start = start + (direction * 0.01f);
+            //start = start + (direction * 0.01f);
 
             Triangle nearest = null;
             Vector3 nearPoint = end;

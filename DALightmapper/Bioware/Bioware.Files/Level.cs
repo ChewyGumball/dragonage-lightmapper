@@ -231,7 +231,7 @@ namespace Bioware.Files
 
             int type;       //point = 0, ambient = 1, spot = 2                      -The type of the light
             int effect;     //baked = 0, static = 2,  animated = 3, negative = 4;   -How light effects environment
-            LightType lightEffect;                                                  //enum for above (used in constructor)
+            LightType lightEffect;                                                  //enum for above (TODO: used to decide whether it affects shadow map or lightmap)
             float radius;                                                           //radius of point lights
             float intensity = 1;                                                    //intensity of light (colour multiplier)
             Vector3 position;                                                       //position of the light

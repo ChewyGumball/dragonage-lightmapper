@@ -26,10 +26,25 @@ namespace DALightmapper
     {
         public Vector3 position { get; set; }
         public Vector3 colour { get; set; }
-        public Photon(Vector3 p, Vector3 c)
+        public Vector3 shadowColour { get; set; }
+        public bool affectsLightMap { get; set; }
+        public bool affectsShadowMap { get; set; }
+
+        public Photon(Vector3 p, Light l)
         {
             position = p;
-            colour = c;
+            colour = l.colour * l.influence(position);
+            shadowColour = l.shadowColour;
+            affectsLightMap = l.inLightMap;
+            affectsShadowMap = l.inShadowMap;
+        }
+        public Photon(Vector3 p)
+        {
+            position = p;
+            colour = new Vector3();
+            shadowColour = new Vector3();
+            affectsLightMap = false;
+            affectsShadowMap = false;
         }
     }
 
@@ -47,7 +62,7 @@ namespace DALightmapper
         public static List<LightMap> runLightmaps(List<ModelInstance> models, List<Light> lights)
         {
             //Reset abort
-            abort = false;       
+            abort = false;
 
             //-- Get the geometry we need for lightmapping --//
 
@@ -82,29 +97,30 @@ namespace DALightmapper
 
             //Shoot the photons
             Settings.stream.WriteText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
-            List<Photon> photons = firePhotons(lights, partition);            
+            List<Photon> photons = firePhotons(lights, partition);
             Settings.stream.WriteLine("Done");
 
-            //Make the photon map
-            Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
-            Partitioner photonMap = new Octree(photons);
-            photons.Clear();
-            Settings.stream.WriteLine("Done");
+            if (photons.Count > 0)
+            {
+                //Make the photon map
+                Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
+                Partitioner photonMap = new Octree(photons);
+                photons.Clear();
+                Settings.stream.WriteLine("Done");
 
-            //Gather the photons for each patch in each map
-            Settings.stream.WriteText("Gathering photons for lightmaps . . . ");
-            gatherPhotons(maps,photonMap, partition, lights);
-            photonMap.Clear();
-            Settings.stream.WriteLine("Done");
-
+                //Gather the photons for each patch in each map
+                Settings.stream.WriteText("Gathering photons for lightmaps . . . ");
+                gatherPhotons(maps, photonMap, partition, lights);
+                photonMap.Clear();
+                Settings.stream.WriteLine("Done");
+            }
+            else
+            {
+                Settings.stream.WriteText("No lights affect the lightmaps, skipping to ambient occlusion.");
+            }
             //Do Ambient Occlusion
             Settings.stream.WriteText("Calculating ambient occlusion . . . ");
             //calculateAmbientOcclusion(maps,partition);
-            Settings.stream.WriteLine("Done");
-
-            //Do Shadow Maps
-            Settings.stream.WriteText("Calculating shadows . . . ");
-            calculateShadows(maps, lights, partition);
             Settings.stream.WriteLine("Done");
 
             partition.Clear();
@@ -154,7 +170,7 @@ namespace DALightmapper
 
             foreach (Light l in lights)
             {
-                if (l.shootsPhotons && l.inLightMap)
+                if (l.shootsPhotons)
                 {
                     Parallel.For(0, Settings.numPhotonsPerLight, opts, delegate(int i, ParallelLoopState state)
                     {
@@ -168,7 +184,7 @@ namespace DALightmapper
                         if (t != null)
                         {
                             Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
-                            
+
                             //I don't actually care if its unique between threads, threadsafty on this random number is not that big of a deal
                             while (random.NextDouble() > reflectProbability)
                             {
@@ -183,7 +199,7 @@ namespace DALightmapper
                             {
                                 lock (photons)
                                 {
-                                    photons.Add(new Photon(intersection, l.colour * (float)Math.Pow(Math.E, -bounces) * l.influence(intersection)));
+                                    photons.Add(new Photon(intersection, l));
                                 }
                             }
                         }
@@ -222,25 +238,38 @@ namespace DALightmapper
                     List<Photon> gather = new List<Photon>();
                     photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
                     //photonMap.getNearest(p.position, 20, ref gather);
-                    int unobstructedPhotons = 0;
+                    int unobstructedLightPhotons = 0;
+                    int unobstructedShadowPhotons = 0;
                     foreach (Photon photon in gather)
                     {
-                        if(scene.lineIsUnobstructed(photon.position, p.position))
+                        if (scene.lineIsUnobstructed(photon.position, p.position))
                         {
-                            unobstructedPhotons++;
-                            p.incidentLight += photon.colour;
+                            if (photon.affectsLightMap)
+                            {
+                                p.incidentLight += photon.colour;
+                                unobstructedLightPhotons++;
+                            }
+                            if (photon.affectsShadowMap)
+                            {
+                                p.shadowColour += photon.shadowColour;
+                                unobstructedShadowPhotons++;
+                            }
                         }
                     }
-                    if (unobstructedPhotons > 0)
+                    if (unobstructedLightPhotons > 0)
                     {
-                        p.incidentLight /= unobstructedPhotons;
+                        p.incidentLight /= unobstructedLightPhotons;
+                    }
+                    if (unobstructedShadowPhotons > 0)
+                    {
+                        p.shadowColour /= unobstructedShadowPhotons;
                     }
 
                     foreach (Light light in lights)
                     {
                         if (!light.shootsPhotons)
                         {
-                            p.incidentLight += light.colour;
+                            p.incidentLight += light.influence(p.position) * light.colour;
                         }
                     }
 
@@ -291,9 +320,9 @@ namespace DALightmapper
 
                         //http://mathworld.wolfram.com/SpherePointPicking.html
                         double theta = 2 * Math.PI * randomA;
-                        double phi = Math.Acos(2*randomB - 1);
+                        double phi = Math.Acos(2 * randomB - 1);
 
-                        Vector3 randomDirection = new Vector3(  Settings.ambientRayLength * (float)(Math.Cos(theta) * Math.Sin(phi)),
+                        Vector3 randomDirection = new Vector3(Settings.ambientRayLength * (float)(Math.Cos(theta) * Math.Sin(phi)),
                                                                 Settings.ambientRayLength * (float)(Math.Sin(theta) * Math.Sin(phi)),
                                                                 Settings.ambientRayLength * (float)Math.Cos(phi));
 
@@ -313,46 +342,6 @@ namespace DALightmapper
                 if (abort)
                 {
                     throw new LightmappingAbortedException("Aborted lightmapping while gathering photons.");
-                }
-            }
-        }
-
-        private static void calculateShadows(List<LightMap> maps, List<Light> lights, Partitioner scene)
-        {
-            int numPatches = 0;
-            foreach (LightMap l in maps)
-            {
-                numPatches += l.patches.Count;
-            }
-            Settings.stream.SetProgressBarMaximum(numPatches);
-
-            ParallelOptions opts = new ParallelOptions();
-            opts.MaxDegreeOfParallelism = Settings.maxThreads;
-
-            IEnumerable<Light> castingLights = from light in lights where light.inShadowMap select light; 
-
-            foreach (LightMap l in maps)
-            {
-                Parallel.ForEach(l.patches, opts, delegate(Patch p, ParallelLoopState state)
-                {
-                    if (abort)
-                    {
-                        state.Stop();
-                    }
-
-                    foreach (Light light in castingLights)
-                    {
-                            if (scene.lineIsUnobstructed(p.position, light.position))
-                            {
-                                p.shadowColour += light.shadowColour;
-                            }
-                    }
-                    Settings.stream.UpdateProgress();
-                });
-
-                if (abort)
-                {
-                    throw new LightmappingAbortedException("Aborted lightmapping while creating shadows.");
                 }
             }
         }

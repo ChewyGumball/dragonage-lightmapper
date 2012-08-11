@@ -253,47 +253,22 @@ namespace Geometry
 
         public Boolean triangleIntersects(Triangle t)
         {
-            //*
-            Vector3 topB = new Vector3(max.X, min.Y, max.Z);
-            Vector3 bottomA = new Vector3(max.X, max.Y, min.Z);
-            return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z)) || // Triangle vertex is inside box
-                   (lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x)) || // Triangle edge intersects box
-                   (t.lineIntersects(max, topB)) || // Top edges of box intersect triangle
-                   (t.lineIntersects(bottomA, min)) || // Bottom edges of box intersect triangle
-                   (t.lineIntersects(max, bottomA)); //Middle edges of box intersect triangle 
-            //*/
-            /*
             Vector3 topA = max;
-            Vector3 topB = new Vector3(max.X,min.Y,max.Z);
-            Vector3 topC = new Vector3(min.X,min.Y,max.Z);
-            Vector3 topD = new Vector3(min.X,max.Y,max.Z);
+            Vector3 topB = new Vector3(max.X, min.Y, max.Z);
+            Vector3 topC = new Vector3(min.X, min.Y, max.Z);
+            Vector3 topD = new Vector3(min.X, max.Y, max.Z);
 
-            Vector3 bottomA = new Vector3(max.X,max.Y,min.Z);
-            Vector3 bottomB = new Vector3(max.X,min.Y,min.Z);
+            Vector3 bottomA = new Vector3(max.X, max.Y, min.Z);
+            Vector3 bottomB = new Vector3(max.X, min.Y, min.Z);
             Vector3 bottomC = min;
-            Vector3 bottomD = new Vector3(min.X,max.Y,min.Z);
-
+            Vector3 bottomD = new Vector3(min.X, max.Y, min.Z);
             return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z)) || // Triangle vertex is inside box
                    (lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x)) || // Triangle edge intersects box
-                   (t.lineIntersects(topA, topB) || t.lineIntersects(topB, topC) || t.lineIntersects(topC, topD) || t.lineIntersects(topD, topA)) || // Top edges of box intersect triangle
-                   (t.lineIntersects(bottomA, bottomB) || t.lineIntersects(bottomB, bottomC) || t.lineIntersects(bottomC, bottomD) || t.lineIntersects(bottomD, bottomA)) || // Bottom edges of box intersect triangle
-                   (t.lineIntersects(topA, bottomA) || t.lineIntersects(topB, bottomB) || t.lineIntersects(topC, bottomC) || t.lineIntersects(topD, bottomD)); //Middle edges of box intersect triangle 
-            //*/
-
-            /*
-            //instead of generalized triangle line intersection try:
-            // 1. line segment crosses triangle plane (both points arent on the same side)
-            // 2. project triangle and point onto axis plane whose normal is parallel to the segment (make it 2d) (pointInTriangle)
-
-            return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z)) || // Triangle vertex is inside box
-                   (lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x))  || // Triangle edge intersects box
-                   (yParallelSegmentIntersectsTriangle(t,topA,topB) || xParallelSegmentIntersectsTriangle(t,topB,topC) || yParallelSegmentIntersectsTriangle(t,topC,topD) || xParallelSegmentIntersectsTriangle(t,topD,topA)) || // Top edges of box intersect triangle
-                   (yParallelSegmentIntersectsTriangle(t, bottomA, bottomB) || xParallelSegmentIntersectsTriangle(t, bottomB, bottomC) || yParallelSegmentIntersectsTriangle(t, bottomC, bottomD) || xParallelSegmentIntersectsTriangle(t, bottomD, bottomA)) || // Bottom edges of box intersect triangle
-                   (zParallelSegmentIntersectsTriangle(t, topA, bottomA) || zParallelSegmentIntersectsTriangle(t, topB, bottomB) || zParallelSegmentIntersectsTriangle(t, topC, bottomC) || zParallelSegmentIntersectsTriangle(t, topD, bottomD)); //Middle edges of box intersect triangle 
-            //*/
-
+                //Box goes through middle of triangle without touching edges, check for intersection with diagonal of each face
+                   (t.lineIntersects(topA, topC) || t.lineIntersects(topA, bottomB) || t.lineIntersects(topA, bottomD) || 
+                    t.lineIntersects(bottomC, bottomA) || t.lineIntersects(bottomC, topD) || t.lineIntersects(bottomC, topB)); 
         }
-
+        
         public Boolean containsPoint(Vector3 p)
         {
             return lessThanOrEqual(p, max) && greaterThanOrEqual(p, min);
@@ -317,32 +292,6 @@ namespace Geometry
 
         public Boolean boxIntersects(BoundingBox b)
         {
-            /*
-            Vector3 topA = max;
-            Vector3 topB = new Vector3(max.X, min.Y, max.Z);
-            Vector3 topC = new Vector3(min.X, min.Y, max.Z);
-            Vector3 topD = new Vector3(min.X, max.Y, max.Z);
-
-            Vector3 bottomA = new Vector3(max.X, max.Y, min.Z);
-            Vector3 bottomB = new Vector3(max.X, min.Y, min.Z);
-            Vector3 bottomC = min;
-            Vector3 bottomD = new Vector3(min.X, max.Y, min.Z);
-
-            Vector3 otherTopA = b.max;
-            Vector3 otherTopB = new Vector3(b.max.X, b.min.Y, b.max.Z);
-            Vector3 otherTopC = new Vector3(b.min.X, b.min.Y, b.max.Z);
-            Vector3 otherTopD = new Vector3(b.min.X, b.max.Y, b.max.Z);
-
-            Vector3 otherBottomA = new Vector3(b.max.X, b.max.Y, b.min.Z);
-            Vector3 otherBottomB = new Vector3(b.max.X, b.min.Y, b.min.Z);
-            Vector3 otherBottomC = b.min;
-            Vector3 otherBottomD = new Vector3(b.min.X, b.max.Y, b.min.Z);
-
-            return b.containsPoint(topA) || b.containsPoint(topB) || b.containsPoint(topC) || b.containsPoint(topD) ||
-                    b.containsPoint(bottomA) || b.containsPoint(bottomB) || b.containsPoint(bottomC) || b.containsPoint(bottomD) ||
-                    containsPoint(otherTopA) || containsPoint(otherTopB) || b.containsPoint(otherTopC) || b.containsPoint(otherTopD) ||
-                    containsPoint(otherBottomA) || containsPoint(otherBottomB) || b.containsPoint(otherBottomC) || b.containsPoint(otherBottomD);
-             //*/
             return !(min.X > b.max.X || min.Y > b.max.Y || min.Z > b.max.Z || b.min.X > max.X || b.min.Y > max.Y || b.min.Z > max.Z);
         }
 
@@ -353,39 +302,6 @@ namespace Geometry
         private Boolean greaterThanOrEqual(Vector3 a, Vector3 b)
         {
             return a.X >= b.X && a.Y >= b.Y && a.Z >= b.Z;
-        }
-        private Boolean pointInTriangle(float Ax, float Ay, float Bx, float By, float Cx, float Cy, float Px, float Py)
-        {
-            float AyPy = Ay - Py;
-            float AxPx = Ax + Px;
-            float det1 = (Cx * AyPy) - (Cy * AxPx);
-            float det2 = (Bx * AyPy) - (By * AxPx);
-            float max = (Bx * Cy) - (By * Cx);
-
-            return det1 > 0 && det2 > 0 && (det1 - det2) < max;
-
-        }
-        private Boolean segmentCrossTrianglePlane(Triangle t, Vector3 a, Vector3 b)
-        {
-            float dotA = Vector3.Dot(t.normal, a - t.x);
-            float dotB = Vector3.Dot(t.normal, b - t.x);
-
-            //If the dot product is 0 then the point is on the plane, I do not count this as crossing the plane
-            //dot product > 0 means on normal side, < 0 means other side
-            return ((dotA > 0 && dotB < 0) || (dotA < 0 && dotB > 0));
-        }
-
-        private Boolean xParallelSegmentIntersectsTriangle(Triangle t, Vector3 a, Vector3 b)
-        {
-            return segmentCrossTrianglePlane(t, a, b) && pointInTriangle(t.x.Y, t.x.Z, t.y.Y, t.y.Z, t.z.Y, t.z.Z, a.Y, a.Z);
-        }
-        private Boolean yParallelSegmentIntersectsTriangle(Triangle t, Vector3 a, Vector3 b)
-        {
-            return segmentCrossTrianglePlane(t, a, b) && pointInTriangle(t.x.X, t.x.Z, t.y.X, t.y.Z, t.z.X, t.z.Z, a.X, a.Z);
-        }
-        private Boolean zParallelSegmentIntersectsTriangle(Triangle t, Vector3 a, Vector3 b)
-        {
-            return segmentCrossTrianglePlane(t, a, b) && pointInTriangle(t.x.X, t.x.Y, t.y.X, t.y.Y, t.z.X, t.z.Y, a.X, a.Y);
         }
     }
 }

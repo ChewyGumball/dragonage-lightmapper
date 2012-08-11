@@ -116,7 +116,7 @@ namespace DALightmapper
 
             foreach (Light l in lights)
             {
-                Settings.stream.WriteLine("{0}: {1}x{2}({3})", l.position, l.intensity, l.colour, l.shadowColour);
+                Settings.stream.WriteLine("{4}{5}{0}: {1}x{2}({3})", l.position, l.intensity, l.colour, l.shadowColour, l.inLightMap ? "L" : "", l.inShadowMap ? "S" : "");
             }
         }
 
@@ -178,17 +178,19 @@ namespace DALightmapper
             XmlDocument sceneSpecification = new XmlDocument();
             sceneSpecification.LoadXml(sceneXML);
 
-            Dictionary<string, Dictionary<string, string>> jobDictionary;
+            List<string> shadowList = new List<string>();
+            List<string> lightList = new List<string>();
 
+            Dictionary<string, Dictionary<string, string>> jobDictionary;
+            List<string> jobList;
+            
             XmlNode topNode = sceneSpecification.SelectSingleNode("RenderFarmOutput");
 
-            Boolean shadowMap = false;
-            Boolean lightMap = false;
             switch(topNode.SelectSingleNode("Output").Attributes.GetNamedItem("Type").Value)
             {
-                case "LightMap": jobDictionary = lightmapJobs; lightMap = true; break;
-                case "ShadowMap": jobDictionary = shadowmapJobs; shadowMap = true; break;
-                case "AmbientOcclusion": jobDictionary = ambientJobs; break;
+                case "LightMap": jobDictionary = lightmapJobs; jobList = lightList; break;
+                case "ShadowMap": jobDictionary = shadowmapJobs; jobList = shadowList; break;
+                case "AmbientOcclusion": jobDictionary = ambientJobs; jobList = lightList; break;
                 default: throw new LightmappingAbortedException("Unknown job type (" + topNode.SelectSingleNode("Output").Attributes.GetNamedItem("Type").Value + ")");
             }
 
@@ -197,7 +199,7 @@ namespace DALightmapper
                 switch (node.Name)
                 {
                     case "Light":
-                        processLightNode(node, shadowMap, lightMap);
+                        processLightNode(node, jobList);
                         break;
                     case "RenderTarget":
                         processRenderTargetNode(node, jobDictionary);
@@ -207,6 +209,15 @@ namespace DALightmapper
                         break;
                     default: break; //Ignore other nodes
                 }
+            }
+
+            foreach (string s in lightList)
+            {
+                lightDictionary[s].inLightMap = true;
+            }
+            foreach (string s in shadowList)
+            {
+                lightDictionary[s].inShadowMap = true;
             }
         }
 
@@ -218,9 +229,10 @@ namespace DALightmapper
                 
                 int[,] boxFilter = {
                                     {1,1,1},
-                                    {1,1,1},
+                                    {1,0,1},
                                     {1,1,1}
                                    };
+                /*
                 int[,] gaussFilter = {
                                     {0,1,2,1,0},
                                     {1,2,4,2,1},
@@ -228,11 +240,21 @@ namespace DALightmapper
                                     {1,2,4,2,1},
                                     {0,1,2,1,0}
                                    };
+                */
+                int[,] gaussFilter = {
+                                         {1,2,1},
+                                         {2,4,2},
+                                         {1,2,1}
+                                   };
 
                 String lightmapPath = lightmapJobs[l.model.name][l.mesh.name];
                 Targa lightMap = l.makeLightMapTexture(Path.GetDirectoryName(lightmapPath), Path.GetFileName(lightmapPath));
+                /*lightMap.grow(boxFilter);
                 lightMap.grow(boxFilter);
                 lightMap.grow(boxFilter);
+                lightMap.grow(boxFilter);
+                lightMap.grow(boxFilter);
+                lightMap.grow(boxFilter);*/
                 lightMap.applyFilter(gaussFilter);
                 lightMap.writeToFile();
 
@@ -241,16 +263,26 @@ namespace DALightmapper
 
                 String shadowmapPath = shadowmapJobs[l.model.name][l.mesh.name];
                 Targa shadowMap = l.makeShadowMapTexture(Path.GetDirectoryName(shadowmapPath), Path.GetFileName(shadowmapPath));
+                
+                /*
+                shadowMap.grow(boxFilter);
+                shadowMap.grow(boxFilter);
+                shadowMap.grow(boxFilter);
+                shadowMap.grow(boxFilter);
+                shadowMap.grow(boxFilter);
+                shadowMap.grow(boxFilter);
                 shadowMap.grow(boxFilter);
                 shadowMap.grow(boxFilter);
                 shadowMap.applyFilter(gaussFilter);
+                shadowMap.applyFilter(gaussFilter);
+                 //*/
                 shadowMap.writeToFile();
 
                 Settings.stream.UpdateProgress();
             }
         }
 
-        private void processLightNode(XmlNode lightNode, Boolean shadowMap, Boolean lightMap)
+        private void processLightNode(XmlNode lightNode, List<string> lightList)
         {
             string type = lightNode.Attributes.GetNamedItem("Type").Value;
             bool castsShadows = lightNode.Attributes.GetNamedItem("CastShadows").Value == "true";
@@ -275,7 +307,7 @@ namespace DALightmapper
                         float radius = Convert.ToSingle(lightNode.SelectSingleNode("Radius").InnerText);
                         if (!lightDictionary.ContainsKey(guid))
                         {
-                            lightDictionary.Add(guid, new PointLight(transform.Row3.Xyz, colour, shadowColour, brightness, radius, castsShadows, true));
+                            lightDictionary.Add(guid, new PointLight(transform.Row3.Xyz, colour, shadowColour, brightness, radius, true));
                         }
                     }
                     break;
@@ -289,22 +321,14 @@ namespace DALightmapper
                     {
                         if (!lightDictionary.ContainsKey(guid))
                         {
-                            lightDictionary.Add(guid, new AmbientLight(transform.Row3.Xyz, colour, shadowColour, brightness, castsShadows, false));
+                            lightDictionary.Add(guid, new AmbientLight(transform.Row3.Xyz, colour, shadowColour, brightness, false));
                         }
                     }
                     break;
                 default: break; //ignore unknown light types
             }
 
-            if (shadowMap && !lightDictionary[guid].inShadowMap)
-            {
-                lightDictionary[guid].inShadowMap = true;
-            }
-
-            if (lightMap && !lightDictionary[guid].inLightMap)
-            {
-                lightDictionary[guid].inShadowMap = true;
-            }
+            lightList.Add(guid);
         }
         private void processRenderTargetNode(XmlNode renderTargetNode, Dictionary<String, Dictionary<String, String>> jobDictionary)
         {

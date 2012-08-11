@@ -8,15 +8,15 @@ namespace Bioware.Structs
     public class PointLight : Light
     {
         private float radius;
-        public PointLight(Vector3 pos, Vector3 col, Vector3 shadowCol, float intense, float r, Boolean shadows, Boolean shoots)
-            : base(pos, col, shadowCol, intense, shadows, shoots)
+        public PointLight(Vector3 pos, Vector3 col, Vector3 shadowCol, float intense, float r, Boolean shoots)
+            : base(pos, col, shadowCol, intense, shoots)
         {
             radius = r;
         }
         public override float influence(Vector3 patch)
         {
             //Find the distance from the light
-            float distance = Vector3.Subtract(position, patch).LengthFast;
+            float distance = Vector3.Subtract(position, patch).Length;
            
             //If the patch is outside the radius of the light, the influence is 0
             if (distance > radius)

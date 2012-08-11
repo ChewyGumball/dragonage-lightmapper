@@ -87,20 +87,22 @@ namespace Geometry
 
             int halfWidth = filterWidth / 2;
             int halfHeight = filterHeight / 2;
+
+            Pixel[] newPixels = new Pixel[pixels.Length]; 
             
             for (int x = 0; x < width; x++)
             {
                 for (int y = 0; y < height; y++)
                 {
                     Pixel current = this[x, y];
-                    
-                    if (current.r == 0 && current.g == 0 && current.b == 0)
+
+                    if (current.r < 10 && current.g < 10 && current.b < 10)
                     {
                         int weight = 0;
                         int newR = 0;
                         int newG = 0;
                         int newB = 0;
-                        
+
                         for (int filterX = 0; filterX < filterWidth; filterX++)
                         {
                             for (int filterY = 0; filterY < filterHeight; filterY++)
@@ -123,11 +125,21 @@ namespace Geometry
                         }
                         if (weight != 0)
                         {
-                            pixels[y * width + x] = new Pixel((byte)(newB / weight), (byte)(newG / weight), (byte)(newR / weight));
+                            newPixels[y * width + x] = new Pixel((byte)(newB / weight), (byte)(newG / weight), (byte)(newR / weight));
                         }
+                        else
+                        {
+                            newPixels[y * width + x] = this[x, y];
+                        }
+                    }
+                    else
+                    {
+                        newPixels[y * width + x] = this[x, y];
                     }
                 }
             }
+
+            pixels = newPixels;
         }
 
         public void applyFilter(int[,] filter)
@@ -159,8 +171,8 @@ namespace Geometry
                                 newR += filter[filterX, filterY] * this[curX, curY].r;
                                 newG += filter[filterX, filterY] * this[curX, curY].g;
                                 newB += filter[filterX, filterY] * this[curX, curY].b;
+                                weight += filter[filterX, filterY];
                             } 
-                            weight += filter[filterX, filterY];
                         }
                     }
                     if (weight != 0)
