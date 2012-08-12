@@ -78,7 +78,6 @@ namespace DALightmapper
             {
                 points.Add(photon.position);
             }
-
             build(p, 100, 8, new BoundingBox(points));
         }
         public Octree(List<Photon> p, int maxPoints, int maxDepth, BoundingBox box)
@@ -126,7 +125,7 @@ namespace DALightmapper
             direction.Normalize();
 
             //start = start + (direction * 0.01f);
-            
+
             //If the line doesn't go through this octree then it is unobstructed
 
             if (!bounds.lineIntersects(start, end))
@@ -222,28 +221,25 @@ namespace DALightmapper
 
         public void getWithinDistance(Vector3 point, float distance, ref List<Photon> photons)
         {
-            if (points.Count > 0)
+            if (bounds.sphereIntersect(point, distance))
             {
-                if (bounds.sphereIntersect(point, distance))
+                if (children.Length == 0)
                 {
-                    if (children.Length == 0)
+                    float distanceSquared = distance * distance;
+                    foreach (Photon p in points)
                     {
-                        float distanceSquared = distance * distance;
-                        foreach (Photon p in points)
+                        Vector3 diff = p.position - point;
+                        if (diff.LengthSquared <= distanceSquared)
                         {
-                            Vector3 diff = p.position - point;
-                            if (diff.LengthSquared <= distanceSquared)
-                            {
-                                photons.Add(p);
-                            }
+                            photons.Add(p);
                         }
                     }
-                    else
+                }
+                else
+                {
+                    foreach (Octree o in children)
                     {
-                        foreach (Octree o in children)
-                        {
-                            o.getWithinDistance(point, distance, ref photons);
-                        }
+                        o.getWithinDistance(point, distance, ref photons);
                     }
                 }
             }
@@ -262,7 +258,7 @@ namespace DALightmapper
                 }
             }
             //Else if this is not a leaf 
-            else 
+            else
             {
                 //If the point is in this bounding box then we need to check the child containing one
                 if (bounds.containsPoint(point))
@@ -278,7 +274,7 @@ namespace DALightmapper
                         }
                     }
                 }
-                
+
                 //If we got here we need to check all the children because the containing box doesn't have enough points
                 foreach (Octree o in children)
                 {
@@ -286,7 +282,7 @@ namespace DALightmapper
                 }
             }
         }
-        
+
         public void Clear()
         {
             foreach (Octree o in children)

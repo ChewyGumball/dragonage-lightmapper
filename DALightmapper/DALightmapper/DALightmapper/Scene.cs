@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using Bioware.Structs;
 using Bioware.Files;
+using Geometry;
 
 namespace DALightmapper
 {

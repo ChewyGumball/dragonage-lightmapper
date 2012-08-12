@@ -75,33 +75,45 @@ namespace Geometry
 
                 foreach (Triangle t in tris)
                 {
-                    int minX = (int)Math.Round(t.a.X * width);
-                    int minY = (int)Math.Round(t.a.Y * height);
-                    int maxX = minX;
-                    int maxY = minY;
+                    int test = (int)(t.a.X * width);
+                    int minX = (int)Math.Floor(t.a.X * width);
+                    int minY = (int)Math.Floor(t.a.Y * height);
+                    int maxX = (int)Math.Ceiling(t.a.X * width);
+                    int maxY = (int)Math.Ceiling(t.a.Y * height); 
 
-                    int nextX = (int)Math.Round(t.b.X * width);
-                    int nextY = (int)Math.Round(t.b.Y * height);
+                    int nextMinX = (int)Math.Floor(t.b.X * width);
+                    int nextMinY = (int)Math.Floor(t.b.Y * height);
+                    int nextMaxX = (int)Math.Ceiling(t.b.X * width);
+                    int nextMaxY = (int)Math.Ceiling(t.b.Y * height);
 
-                    maxX = Math.Max(maxX, nextX);
-                    maxY = Math.Max(maxY, nextY);
-                    minX = Math.Min(minX, nextX);
-                    minY = Math.Min(minY, nextY);
+                    maxX = Math.Max(maxX, nextMaxX);
+                    maxY = Math.Max(maxY, nextMaxY);
+                    minX = Math.Min(minX, nextMinX);
+                    minY = Math.Min(minY, nextMinY);
 
-                    nextX = (int)Math.Round(t.c.X * width);
-                    nextY = (int)Math.Round(t.c.Y * height);
+                    nextMinX = (int)Math.Floor(t.c.X * width);
+                    nextMinY = (int)Math.Floor(t.c.Y * height);
+                    nextMaxX = (int)Math.Ceiling(t.c.X * width);
+                    nextMaxY = (int)Math.Ceiling(t.c.Y * height);
 
-                    maxX = Math.Min(width, Math.Max(maxX, nextX) + 2);
-                    maxY = Math.Min(height, Math.Max(maxY, nextY) + 2);
-                    minX = Math.Max(0, Math.Min(minX, nextX) - 2);
-                    minY = Math.Max(0, Math.Min(minY, nextY) - 2);
+                    maxX = Math.Max(maxX, nextMaxX) + 1;
+                    maxY = Math.Max(maxY, nextMaxY) + 1;
+                    minX = Math.Min(minX, nextMinX) - 1;
+                    minY = Math.Min(minY, nextMinY) - 1; 
 
+                    /*
+                    maxX = Math.Min(width, maxX + 1);
+                    maxY = Math.Min(height, maxY + 1);
+                    minX = Math.Max(0, minX - 1);
+                    minY = Math.Max(0, minY - 1);
+                    //*/
                     for (int i = minX; i < maxX; i++)
                     {
                         for (int j = minY; j < maxY; j++)
                         {
                             Vector2 topLeft = new Vector2(((float)i) / width, ((float)j + 1) / height);
                             Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)j) / height);
+                            t.uvTo3d(topLeft, bottomRight);
                             if (!t.isDegenerate() && t.isOnUVPixel(topLeft, bottomRight))
                             {
                                 //                              Position                   normal     emmision             reflection     

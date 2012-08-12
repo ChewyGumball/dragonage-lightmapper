@@ -46,9 +46,11 @@
     <Compile Include="2D\Targa.cs" />
     <Compile Include="2D\Texel.cs" />
     <Compile Include="3D\BoundingBox.cs" />
+    <Compile Include="3D\Light.cs" />
     <Compile Include="3D\Mesh.cs" />
     <Compile Include="3D\Model.cs" />
     <Compile Include="3D\Patch.cs" />
+    <Compile Include="3D\Photon.cs" />
     <Compile Include="3D\Triangle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

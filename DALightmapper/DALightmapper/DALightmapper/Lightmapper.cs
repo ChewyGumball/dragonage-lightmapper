@@ -22,32 +22,6 @@ using Geometry;
 
 namespace DALightmapper
 {
-    public class Photon
-    {
-        public Vector3 position { get; set; }
-        public Vector3 colour { get; set; }
-        public Vector3 shadowColour { get; set; }
-        public bool affectsLightMap { get; set; }
-        public bool affectsShadowMap { get; set; }
-
-        public Photon(Vector3 p, Light l)
-        {
-            position = p;
-            colour = l.colour * l.influence(position);
-            shadowColour = l.shadowColour;
-            affectsLightMap = l.inLightMap;
-            affectsShadowMap = l.inShadowMap;
-        }
-        public Photon(Vector3 p)
-        {
-            position = p;
-            colour = new Vector3();
-            shadowColour = new Vector3();
-            affectsLightMap = false;
-            affectsShadowMap = false;
-        }
-    }
-
     public class LightmappingAbortedException : Exception
     {
         public LightmappingAbortedException() : base() { }
@@ -104,14 +78,13 @@ namespace DALightmapper
             {
                 //Make the photon map
                 Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
-                Partitioner photonMap = new Octree(photons);
-                photons.Clear();
+                Octree photonMap = new Octree(photons);
+                Settings.stream.WriteText("{0} photons in the map . . . ", photonMap.count); 
                 Settings.stream.WriteLine("Done");
 
                 //Gather the photons for each patch in each map
                 Settings.stream.WriteText("Gathering photons for lightmaps . . . ");
                 gatherPhotons(maps, photonMap, partition, lights);
-                photonMap.Clear();
                 Settings.stream.WriteLine("Done");
             }
             else
@@ -122,8 +95,6 @@ namespace DALightmapper
             Settings.stream.WriteText("Calculating ambient occlusion . . . ");
             //calculateAmbientOcclusion(maps,partition);
             Settings.stream.WriteLine("Done");
-
-            partition.Clear();
 
             return maps;
         }
@@ -237,39 +208,21 @@ namespace DALightmapper
 
                     List<Photon> gather = new List<Photon>();
                     photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
+                    if(gather.Count > 0)
                     //photonMap.getNearest(p.position, 20, ref gather);
-                    int unobstructedLightPhotons = 0;
-                    int unobstructedShadowPhotons = 0;
                     foreach (Photon photon in gather)
                     {
                         if (scene.lineIsUnobstructed(photon.position, p.position))
                         {
-                            if (photon.affectsLightMap)
-                            {
-                                p.incidentLight += photon.colour;
-                                unobstructedLightPhotons++;
-                            }
-                            if (photon.affectsShadowMap)
-                            {
-                                p.shadowColour += photon.shadowColour;
-                                unobstructedShadowPhotons++;
-                            }
+                            p.absorbPhoton(photon);
                         }
-                    }
-                    if (unobstructedLightPhotons > 0)
-                    {
-                        p.incidentLight /= unobstructedLightPhotons;
-                    }
-                    if (unobstructedShadowPhotons > 0)
-                    {
-                        p.shadowColour /= unobstructedShadowPhotons;
                     }
 
                     foreach (Light light in lights)
                     {
                         if (!light.shootsPhotons)
                         {
-                            p.incidentLight += light.influence(p.position) * light.colour;
+                            p.ambientLight += light.influence(p.position) * light.colour;
                         }
                     }
 
@@ -333,7 +286,7 @@ namespace DALightmapper
 
                         if (scene.lineIsUnobstructed(p.position, p.position + randomDirection))
                         {
-                            p.ambient += 4;
+                            p.ambientOcclusion += 4;
                         }
                     }
                     Settings.stream.UpdateProgress();

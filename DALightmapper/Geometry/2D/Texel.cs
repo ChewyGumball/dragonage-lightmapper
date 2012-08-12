@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using OpenTK;
@@ -8,7 +9,7 @@ namespace Geometry
     [DebuggerDisplay("Count = {patches.Count}")]
     public class Texel
     {
-        public List<Patch> patches {get; private set;}
+        public List<Patch> patches { get; private set; }
         public Vector3 excidentLight
         {
             get
@@ -16,12 +17,16 @@ namespace Geometry
                 Vector3 temp = new Vector3();
                 if (patches.Count > 0)
                 {
-                    foreach (Patch p in patches)
+                    IEnumerable<Patch> lightPatches = patches.TakeWhile(patch => patch.inLightMap);
+                    foreach (Patch p in lightPatches)
                     {
                         temp += p.excidentLight;
                     }
 
-                    temp /= patches.Count;
+                    if (lightPatches.Count() > 0)
+                    {
+                        temp /= lightPatches.Count();
+                    }
                 }
                 return temp;
             }
@@ -35,7 +40,7 @@ namespace Geometry
                 {
                     foreach (Patch p in patches)
                     {
-                        ambient += p.ambient;
+                        ambient += p.ambientOcclusion;
                     }
 
                     ambient /= patches.Count;
@@ -52,12 +57,15 @@ namespace Geometry
                 Vector3 temp = new Vector3();
                 if (patches.Count > 0)
                 {
-                    foreach (Patch p in patches)
+                    IEnumerable<Patch> shadowPatches = patches.TakeWhile(patch => patch.inShadowMap);
+                    foreach (Patch p in shadowPatches)
                     {
-                        temp += p.shadowColour;
+                        temp += p.exidentShadow;
                     }
-
-                    temp /= patches.Count;
+                    if (shadowPatches.Count() > 0)
+                    {
+                        temp /= shadowPatches.Count();
+                    }
                 }
                 return temp;
             }

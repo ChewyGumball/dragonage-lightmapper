@@ -14,17 +14,31 @@ namespace Geometry
         public Vector3 normal { get; private set; }
         public Vector3 position { get; private set; }
 
+        public Vector3 ambientLight { get; set; }
         public Vector3 incidentLight { get; set; }
         public Vector3 excidentLight
         {
             get
             {
-                return emmission + incidentLight;
+                return emmission + (incidentLight / numLightPhotons) + ambientLight;
             }
         }
 
-        public int ambient { get; set; }
-        public Vector3 shadowColour { get; set; }
+        public int ambientOcclusion { get; set; }
+        public Vector3 incidentShadow { get; set; }
+        public Vector3 exidentShadow
+        {
+            get
+            {
+                return incidentShadow;
+            }
+        }
+
+        public bool inLightMap { get; private set; }
+        public bool inShadowMap { get; private set; }
+
+        private int numShadowPhotons = 0;
+        private int numLightPhotons = 0;
 
         public Patch()
         { }
@@ -36,8 +50,8 @@ namespace Geometry
             normal = norm;
             position = pos;
             //ambient = 0;
-            ambient = 255;
-            shadowColour = new Vector3();
+            ambientOcclusion = 255;
+            incidentShadow = new Vector3();
         }
         public Patch(Patch p, Matrix4 transform)
             : this( p.position, p.normal, p.emmission, new Vector3()/*p.reflectance*/)
@@ -46,5 +60,20 @@ namespace Geometry
             normal = Vector3.Transform(p.normal, transform) - transform.Row3.Xyz;
         }
 
+        public void absorbPhoton(Photon p)
+        {
+            if (p.affectsLightMap)
+            {
+                inLightMap = true;
+                incidentLight += p.colour;
+                numLightPhotons++;
+            }
+            if (p.affectsShadowMap)
+            {
+                inShadowMap = true;
+                incidentShadow += p.shadowColour;
+                numShadowPhotons++;
+            }
+        }
     }
 }

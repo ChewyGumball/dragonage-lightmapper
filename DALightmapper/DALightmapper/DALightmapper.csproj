@@ -101,9 +101,7 @@
     <Compile Include="DALightmapper\Lightmapper.cs" />
     <Compile Include="DALightmapper\Octree.cs" />
     <Compile Include="DALightmapper\Partitioner.cs" />
-    <Compile Include="DALightmapper\Patch.cs" />
     <Compile Include="DALightmapper\Scene.cs" />
-    <Compile Include="DALightmapper\Texel.cs" />
     <Compile Include="DALightmapper\XMLScene.cs" />
     <Compile Include="UI\MainWindow.cs">
       <SubType>Form</SubType>

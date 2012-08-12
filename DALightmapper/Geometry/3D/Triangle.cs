@@ -151,14 +151,6 @@ namespace Geometry
             {
                 //return false;
             }
-
-            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
-            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
-
-            return (pointsStraddleEdge(a, b, topLeft, bottomRight) || pointsStraddleEdge(a, c, topLeft, bottomRight) || pointsStraddleEdge(b, c, topLeft, bottomRight) ||
-                    pointsStraddleEdge(a, b, bottomLeft, topRight) || pointsStraddleEdge(a, c, bottomLeft, topRight) || pointsStraddleEdge(b, c, bottomLeft, topRight) ||
-                    uvIsOnThisTriangle(topLeft) || uvIsOnThisTriangle(bottomRight) || uvIsOnThisTriangle(bottomLeft) || uvIsOnThisTriangle(topRight));
-
             //Completely above, left, below, or right of the triangle
             if ((a.Y >= topLeft.Y && b.Y >= topLeft.Y && c.Y >= topLeft.Y) ||
                (a.X <= topLeft.X && b.X <= topLeft.X && c.X <= topLeft.X) ||
@@ -167,7 +159,29 @@ namespace Geometry
             {
                 return false;
             }
+            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
+            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
+            /*
+            bool pa = pointsStraddleEdge(a, b, topLeft, bottomRight);
+            bool pb =pointsStraddleEdge(a, c, topLeft, bottomRight);
+            bool pc = pointsStraddleEdge(b, c, topLeft, bottomRight);
+            bool pd = pointsStraddleEdge(a, b, bottomLeft, topRight);
+            bool pe = pointsStraddleEdge(a, c, bottomLeft, topRight);
+            bool pf = pointsStraddleEdge(b, c, bottomLeft, topRight);
+            bool ua =uvIsOnThisTriangle(topLeft);
+            bool ub = uvIsOnThisTriangle(bottomRight);
+            bool uc = uvIsOnThisTriangle(bottomLeft);
+            bool ud = uvIsOnThisTriangle(topRight);
 
+            if ((pa || pb || pc || pd || pe || pf || ua || ub || uc || ud))
+            {
+                pa = false;
+            }
+            
+            return (pointsStraddleEdge(a, b, topLeft, bottomRight) || pointsStraddleEdge(a, c, topLeft, bottomRight) || pointsStraddleEdge(b, c, topLeft, bottomRight) ||
+                    pointsStraddleEdge(a, b, bottomLeft, topRight) || pointsStraddleEdge(a, c, bottomLeft, topRight) || pointsStraddleEdge(b, c, bottomLeft, topRight) ||
+                    uvIsOnThisTriangle(topLeft) || uvIsOnThisTriangle(bottomRight) || uvIsOnThisTriangle(bottomLeft) || uvIsOnThisTriangle(topRight));
+            //*/
             //if a corner of the triangle is on the pixel
             if (pointIsBetween(a, topLeft, bottomRight) ||
                 pointIsBetween(b, topLeft, bottomRight) ||
@@ -330,7 +344,10 @@ namespace Geometry
             {
                 coord += v;
             }
-            coord /= points.Count;
+            if (points.Count > 0)
+            {
+                coord /= points.Count;
+            }
 
             //Find the coordinates in texture basis coordinates
             Vector2 convertedCoord = convertToTextureBasis(coord);

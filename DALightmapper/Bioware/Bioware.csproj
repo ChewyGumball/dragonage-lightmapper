@@ -51,7 +51,6 @@
     <Compile Include="Bioware.Files\MaterialObject.cs" />
     <Compile Include="Bioware.Files\ModelHierarchy.cs" />
     <Compile Include="Bioware.Structs\AmbientLight.cs" />
-    <Compile Include="Bioware.Structs\Light.cs" />
     <Compile Include="Bioware.Structs\ModelInstance.cs" />
     <Compile Include="Bioware.Files\ModelMesh.cs" />
     <Compile Include="Bioware.Files\TerrainMesh.cs" />

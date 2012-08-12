@@ -213,11 +213,19 @@ namespace DALightmapper
 
             foreach (string s in lightList)
             {
-                lightDictionary[s].inLightMap = true;
+                if (lightDictionary.Keys.Contains(s))
+                {
+                    lightDictionary[s].inLightMap = true;
+                    Settings.stream.WriteLine("{0} is in light map.", s);
+                }
             }
             foreach (string s in shadowList)
             {
-                lightDictionary[s].inShadowMap = true;
+                if (lightDictionary.Keys.Contains(s))
+                {
+                    Settings.stream.WriteLine("{0} is in shadow map.", s);
+                    lightDictionary[s].inShadowMap = true;
+                }
             }
         }
 
@@ -274,8 +282,8 @@ namespace DALightmapper
                 shadowMap.grow(boxFilter);
                 shadowMap.grow(boxFilter);
                 shadowMap.applyFilter(gaussFilter);
-                shadowMap.applyFilter(gaussFilter);
                  //*/
+                shadowMap.applyFilter(gaussFilter);
                 shadowMap.writeToFile();
 
                 Settings.stream.UpdateProgress();

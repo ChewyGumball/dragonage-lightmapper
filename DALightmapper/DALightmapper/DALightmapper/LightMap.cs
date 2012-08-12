@@ -8,7 +8,6 @@ using Bioware.Structs;
 using Bioware.Files;
 
 using Ben;
-
 using Geometry;
 
 namespace DALightmapper

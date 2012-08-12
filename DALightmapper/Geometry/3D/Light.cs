@@ -3,7 +3,7 @@ using System;
 
 //using Geometry;
 
-namespace Bioware.Structs
+namespace Geometry
 {
     public enum LightType { Static, Baked }
 
