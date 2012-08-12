@@ -103,6 +103,12 @@
     <Compile Include="DALightmapper\Partitioner.cs" />
     <Compile Include="DALightmapper\Scene.cs" />
     <Compile Include="DALightmapper\XMLScene.cs" />
+    <Compile Include="UI\LevelEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UI\LevelEditor.Designer.cs">
+      <DependentUpon>LevelEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="UI\MainWindow.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -126,6 +132,9 @@
     <Compile Include="UI\SettingsWindow.Designer.cs">
       <DependentUpon>SettingsWindow.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="UI\LevelEditor.resx">
+      <DependentUpon>LevelEditor.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UI\MainWindow.resx">
       <DependentUpon>MainWindow.cs</DependentUpon>
     </EmbeddedResource>

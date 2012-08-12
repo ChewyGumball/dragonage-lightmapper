@@ -11,7 +11,7 @@ using Bioware.Files;
 using Bioware.IO;
 
 using Geometry;
-
+using Ben;
 using OpenTK;
 
 namespace DALightmapper
@@ -65,35 +65,35 @@ namespace DALightmapper
                 Settings.atlasFile = basePath + "\\job_atlas.xml";
             }
             atlasFile = Settings.atlasFile;
-            Settings.stream.WriteLine("AtlasFile = " + atlasFile);
+            Settings.stream.WriteLine(Verbosity.TESTING, "AtlasFile = " + atlasFile);
 
             if (Settings.uncompressedDirectory == "")
             {
                 Settings.uncompressedDirectory = basePath + "\\TGA";
             }
             uncompressedDirectory = Settings.uncompressedDirectory;
-            Settings.stream.WriteLine("uncompressedDir = " + uncompressedDirectory);
+            Settings.stream.WriteLine(Verbosity.TESTING, "uncompressedDir = " + uncompressedDirectory);
 
             if (Settings.ambientDirectory == "")
             {
                 Settings.ambientDirectory = basePath + "\\..\\CachedScene\\AO";
             }
             uncompressedAmbientDirectory = Settings.ambientDirectory;
-            Settings.stream.WriteLine("uncompressedAmbient = " + uncompressedAmbientDirectory);
+            Settings.stream.WriteLine(Verbosity.TESTING, "uncompressedAmbient = " + uncompressedAmbientDirectory);
 
             if (Settings.combinedDirectory == "")
             {
                 Settings.combinedDirectory = basePath + "\\..\\PreAtlas";
             }
             combinedDirectory = Settings.combinedDirectory;
-            Settings.stream.WriteLine("combined = " + combinedDirectory);
+            Settings.stream.WriteLine(Verbosity.TESTING, "combined = " + combinedDirectory);
 
             if (Settings.compressedDirectory == "")
             {
                 Settings.compressedDirectory = basePath + "\\..\\CombinedMaps";
             }
             compressedDirectory = Settings.compressedDirectory;
-            Settings.stream.WriteLine("compressed = " + compressedDirectory);
+            Settings.stream.WriteLine(Verbosity.TESTING, "compressed = " + compressedDirectory);
 
 
             if (Settings.atlasedDirectory == "")
@@ -101,7 +101,7 @@ namespace DALightmapper
                 Settings.atlasedDirectory = basePath + "\\Atlased";
             }
             atlasDirectory = Settings.atlasedDirectory;
-            Settings.stream.WriteLine("atlassed = " + atlasDirectory);
+            Settings.stream.WriteLine(Verbosity.TESTING, "atlassed = " + atlasDirectory);
 
             lightmapJobs = new Dictionary<string, Dictionary<string, string>>();
             shadowmapJobs = new Dictionary<string, Dictionary<string, string>>();
@@ -114,10 +114,6 @@ namespace DALightmapper
             readScene(basePath);
             readJobs(basePath);
 
-            foreach (Light l in lights)
-            {
-                Settings.stream.WriteLine("{4}{5}{0}: {1}x{2}({3})", l.position, l.intensity, l.colour, l.shadowColour, l.inLightMap ? "L" : "", l.inShadowMap ? "S" : "");
-            }
         }
 
         private void readScene(String path)
@@ -216,14 +212,12 @@ namespace DALightmapper
                 if (lightDictionary.Keys.Contains(s))
                 {
                     lightDictionary[s].inLightMap = true;
-                    Settings.stream.WriteLine("{0} is in light map.", s);
                 }
             }
             foreach (string s in shadowList)
             {
                 if (lightDictionary.Keys.Contains(s))
                 {
-                    Settings.stream.WriteLine("{0} is in shadow map.", s);
                     lightDictionary[s].inShadowMap = true;
                 }
             }
@@ -375,39 +369,39 @@ namespace DALightmapper
         private static void combineLightMaps(String uncompressedPath, String ambientPath, String combinedPath)
         {
             String arguments = String.Format("-in_lm \"{0}\" -in_sm \"{0}\" -in_ao \"{1}\" -out \"{2}\"", uncompressedPath, ambientPath, combinedPath);
-            Settings.stream.WriteLine("BakedMapProcessor " + arguments);
+            Settings.stream.WriteLine(Verbosity.TESTING, "BakedMapProcessor " + arguments);
 
             String output = runProcess(Settings.lightmappingToolsDirectory + "\\BakedMapProcessor.exe", arguments);
-            //Settings.stream.WriteLine(output);
+            Settings.stream.WriteLine(Verbosity.TESTING, output);
         }
         private static void buildAtlas(String combinedPath, String atlasPath, String compressedPath, String atlasFile)
         {
             String arguments = String.Format("-in \"{0}\" -out \"{1}\" -width 1024 -height 1024 -gutter 0 -halftexel -in_width {2} -in_height {3} -file {4}", combinedPath, atlasPath, Settings.atlasWidth, Settings.atlasHeight, atlasFile);
-            Settings.stream.WriteLine("CreateAtlas " + arguments);
+            Settings.stream.WriteLine(Verbosity.TESTING, "CreateAtlas " + arguments);
 
             String output = runProcess(Settings.lightmappingToolsDirectory + "\\CreateAtlas.exe", arguments);
-            //Settings.stream.WriteLine(output);
+            Settings.stream.WriteLine(Verbosity.TESTING, output);
 
-            Settings.stream.WriteLine("There are " + Directory.GetFiles(atlasPath, "*dat.xml").Count() + " dat files");
+            Settings.stream.WriteLine(Verbosity.TESTING, "There are " + Directory.GetFiles(atlasPath, "*dat.xml").Count() + " dat files");
             foreach (String s in Directory.GetFiles(atlasPath, "*dat.xml"))
             {
-                Settings.stream.WriteLine("Copying {0} to {1}\\{2}", s, compressedPath, Path.GetFileName(s));
+                Settings.stream.WriteLine(Verbosity.TESTING, "Copying {0} to {1}\\{2}", s, compressedPath, Path.GetFileName(s));
                 File.Copy(s, compressedPath + "\\" + Path.GetFileName(s), true);
             }
         }
         private static void compressAtlas(String atlasPath, String compressedPath)
         {
             String arguments = String.Format("-dxt5 -nomipmap -input_directory \"{0}\" -output_directory \"{1}\"", atlasPath, compressedPath);
-            Settings.stream.WriteLine("TextureProcessor " + arguments);
+            Settings.stream.WriteLine(Verbosity.TESTING, "TextureProcessor " + arguments);
 
             String output = runProcess(Settings.lightmappingToolsDirectory + "\\TextureProcessor.exe", arguments);
-            //Settings.stream.WriteLine(output);
+            Settings.stream.WriteLine(Verbosity.TESTING, output);
 
-            Settings.stream.WriteLine("There are " + Directory.GetFiles(atlasPath, "*.meta").Count() + " meta files");
+            Settings.stream.WriteLine(Verbosity.TESTING, "There are " + Directory.GetFiles(atlasPath, "*.meta").Count() + " meta files");
             foreach (String s in Directory.GetFiles(atlasPath, "*.meta"))
             {
                 File.Copy(s, compressedPath + "\\" + Path.GetFileName(s), true);
-                Settings.stream.WriteLine("Copying {0} to {1}.", s, compressedPath + "\\" + Path.GetFileName(s));
+                Settings.stream.WriteLine(Verbosity.TESTING, "Copying {0} to {1}.", s, compressedPath + "\\" + Path.GetFileName(s));
             }
         }
         private static String runProcess(String executable, String arguments)

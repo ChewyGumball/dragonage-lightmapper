@@ -78,8 +78,7 @@ namespace DALightmapper
             {
                 //Make the photon map
                 Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
-                Octree photonMap = new Octree(photons);
-                Settings.stream.WriteText("{0} photons in the map . . . ", photonMap.count); 
+                Partitioner photonMap = new Octree(photons);
                 Settings.stream.WriteLine("Done");
 
                 //Gather the photons for each patch in each map

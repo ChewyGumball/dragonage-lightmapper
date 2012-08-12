@@ -24,26 +24,27 @@ namespace DALightmapper
 
         public MainWindow()
         {
-
-
             InitializeComponent();
             Settings.stream.attachTextBox(tb_Status);
             Settings.stream.attachProgressBar(pg_Status);
             Settings.initializeSettings(Environment.GetCommandLineArgs());
 
+            oglPreviewWindow = new OpenGLPreview();
+            settingsWindow = new SettingsWindow();
+
+            Settings.stream.WriteLine(Verbosity.TESTING, "Command line arguments:");
+            foreach (String s in Environment.GetCommandLineArgs())
+            {
+                Settings.stream.WriteText(Verbosity.TESTING, s + " ");
+            }
+            Settings.stream.WriteLine(Verbosity.TESTING);
+
+            Settings.stream.WriteText(Verbosity.Medium, "Adding scenes from the command line . . . ");
             foreach (String s in Settings.scenes)
             {
                 lb_Files.Items.Add(s);
             }
-
-            oglPreviewWindow = new OpenGLPreview();
-            settingsWindow = new SettingsWindow();
-            Settings.stream.WriteLine("Command line arguments:");
-            foreach (String s in Environment.GetCommandLineArgs())
-            {
-                Settings.stream.WriteText(s + " ");
-            }
-            Settings.stream.WriteLine();
+            Settings.stream.WriteLine(Verbosity.Medium, "Done");
 
             try
             {

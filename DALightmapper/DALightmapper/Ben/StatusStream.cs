@@ -170,9 +170,6 @@ namespace Ben
         //-- Clears all output channels of text --//
         public void clear()
         {
-            if (outputToConsole)
-                Console.Clear();
-
             foreach (TextBox t in textBoxes)
             {
                 t.Clear();
