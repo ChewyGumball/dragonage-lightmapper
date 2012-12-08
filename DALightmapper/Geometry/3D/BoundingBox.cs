@@ -142,34 +142,36 @@ namespace Geometry
             min = center - new Vector3(lengthX, lengthY, lengthZ);
         }
 
-        public Boolean lineIntersects(Vector3 start, Vector3 end)
+        public Boolean lineIntersects(Vector3 start, Vector3 direction)
         {
+            if (containsPoint(start))
+            {
+                return true;
+            }
             //   (x1,y1,z1) + t(x2,y2,z2) = (x,y,z)
             //      x1 + tx2 = x
             //      t = (x-x1)/x2
             // if t <= 1 or t >= 0 
             //      if the point is on the bounding box return true
 
-            Vector3 magnitude = end - start;
             Vector3 diffMin = min - start;
             Vector3 diffMax = max - start;
-            float t, u, x, y, z, a, b, c;
-
+           
             //x planes
             //If the magnitude is 0, parallel to the plane, considering this not an intersection
             //      as it will get picked up by the other planes if its on the bounding box
-            if (magnitude.X != 0)
+            if (direction.X != 0)
             {
                 //t is for the min plane, u is for the max plane
-                t = diffMin.X / magnitude.X;
+                float t = diffMin.X / direction.X;
 
                 //This part is the same for both planes, 
                 //  check if the intersection point is between the end points of the line
                 if (t <= 1 && t >= 0)
                 {
                     //Check the intersection point is on the bounding box
-                    y = start.Y + t * magnitude.Y;
-                    z = start.Z + t * magnitude.Z;
+                    float y = start.Y + t * direction.Y;
+                    float z = start.Z + t * direction.Z;
 
                     if ((y >= min.Y && y <= max.Y && z >= min.Z && z <= max.Z))
                     {
@@ -177,11 +179,11 @@ namespace Geometry
                     }
                 }
 
-                u = diffMax.X / magnitude.X;
+                float u = diffMax.X / direction.X;
                 if (u <= 1 && u >= 0)
                 {
-                    b = start.Y + u * magnitude.Y;
-                    c = start.Z + u * magnitude.Z;
+                    float b = start.Y + u * direction.Y;
+                    float c = start.Z + u * direction.Z;
 
                     if (b >= min.Y && b <= max.Y && c >= min.Z && c <= max.Z)
                     {
@@ -191,13 +193,13 @@ namespace Geometry
             }
 
             //y planes
-            if (magnitude.Y != 0)
+            if (direction.Y != 0)
             {
-                t = diffMin.Y / magnitude.Y;
+                float t = diffMin.Y / direction.Y;
                 if (t <= 1 && t >= 0)
                 {
-                    x = start.X + t * magnitude.X;
-                    z = start.Z + t * magnitude.Z;
+                    float x = start.X + t * direction.X;
+                    float z = start.Z + t * direction.Z;
 
                     if (x >= min.X && x <= max.X && z >= min.Z && z <= max.Z)
                     {
@@ -205,11 +207,11 @@ namespace Geometry
                     }
                 }
 
-                u = diffMax.Y / magnitude.Y;
+                float u = diffMax.Y / direction.Y;
                 if (u <= 1 && u >= 0)
                 {
-                    a = start.X + u * magnitude.X;
-                    c = start.Z + u * magnitude.Z;
+                    float a = start.X + u * direction.X;
+                    float c = start.Z + u * direction.Z;
 
                     if (a >= min.X && a <= max.X && c >= min.Z && c <= max.Z)
                     {
@@ -219,13 +221,13 @@ namespace Geometry
             }
 
             //z planes
-            if (magnitude.Z != 0)
+            if (direction.Z != 0)
             {
-                t = diffMin.Z / magnitude.Z;
+                float t = diffMin.Z / direction.Z;
                 if (t <= 1 && t >= 0)
                 {
-                    x = start.X + t * magnitude.X;
-                    y = start.Y + t * magnitude.Y;
+                    float x = start.X + t * direction.X;
+                    float y = start.Y + t * direction.Y;
 
 
                     if (x >= min.X && x <= max.X && y >= min.Y && y <= max.Y) 
@@ -234,11 +236,11 @@ namespace Geometry
                     }
                 }
 
-                u = diffMax.Z / magnitude.Z;
+                float u = diffMax.Z / direction.Z;
                 if (u <= 1 && u >= 0)
                 {
-                    a = start.X + u * magnitude.X;
-                    b = start.Y + u * magnitude.Y;
+                    float a = start.X + u * direction.X;
+                    float b = start.Y + u * direction.Y;
 
                     if (a >= min.X && a <= max.X && b >= min.Y && b <= max.Y)
                     {
@@ -262,11 +264,18 @@ namespace Geometry
             Vector3 bottomB = new Vector3(max.X, min.Y, min.Z);
             Vector3 bottomC = min;
             Vector3 bottomD = new Vector3(min.X, max.Y, min.Z);
-            return (containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z)) || // Triangle vertex is inside box
-                   (lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x)) || // Triangle edge intersects box
+
+            Vector3 throwAway;
+
+            return containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z) || // Triangle vertex is inside box
+                   lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x) || // Triangle edge intersects box
                 //Box goes through middle of triangle without touching edges, check for intersection with diagonal of each face
-                   (t.lineIntersects(topA, topC) || t.lineIntersects(topA, bottomB) || t.lineIntersects(topA, bottomD) || 
-                    t.lineIntersects(bottomC, bottomA) || t.lineIntersects(bottomC, topD) || t.lineIntersects(bottomC, topB)); 
+                   t.intersection(topA, topC - topA, out throwAway) > 0 || 
+                   t.intersection(topA, bottomB - topA, out throwAway) > 0 || 
+                   t.intersection(topA, bottomD - topA, out throwAway) > 0 || 
+                   t.intersection(bottomC, bottomA - bottomC, out throwAway) > 0 ||
+                   t.intersection(bottomC, topD - bottomC, out throwAway) > 0 ||
+                   t.intersection(bottomC, topB - bottomC, out throwAway) > 0; 
         }
         
         public Boolean containsPoint(Vector3 p)

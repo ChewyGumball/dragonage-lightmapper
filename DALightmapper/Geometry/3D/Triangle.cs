@@ -360,52 +360,51 @@ namespace Geometry
             return directionVector + x;
         }
 
-        public bool lineIntersects(Vector3 start, Vector3 end)
+        public float intersection(Vector3 start, Vector3 direction, out Vector3 intersectionPoint)
         {
-            Vector3 edge1 = y - x;
-            Vector3 edge2 = z - x;
-
-            Vector3 direction = end - start;
-
-            Vector3 crossed = Vector3.Cross(direction, edge2);
-
-            float determinant = Vector3.Dot(edge1, crossed);
-
-            if (determinant > 0)
+            //If the ray is parallel to the triangle, the dot product will be 0
+            float distanceDenominator = Vector3.Dot(normal, direction);
+            if (distanceDenominator != 0)
             {
-                Vector3 distance = start - x;
-                float u = Vector3.Dot(distance, crossed);
-                if (u > 0 && u < determinant)
+                Vector3 edge1 = y - x;
+                Vector3 edge2 = z - x;
+
+                float dot00 = Vector3.Dot(edge1, edge1);
+                float dot01 = Vector3.Dot(edge1, edge2);
+                float dot11 = Vector3.Dot(edge2, edge2);
+
+                float baryDenominator = (dot00 * dot11) - (dot01 * dot01);
+
+                //If this is a degenerate triangle this denominator will be 0
+                if (baryDenominator != 0)
                 {
-                    crossed = Vector3.Cross(distance, edge1);
-                    float v = Vector3.Dot(direction, crossed);
-                    if (v > 0 && (u + v) < determinant)
+                    float t = Vector3.Dot(normal, x - start) / distanceDenominator;
+
+                    //If the triangle is in the opposite direction, this value will be negative
+                    //  I don't count the ray starting on the triangle as an intersection with that triangle
+                    //  so only consider positive values
+                    if (t > 0)
                     {
-                        return true;
+                        Vector3 intersection = start + t * direction;
+                        Vector3 pointEdge = intersection - x;
+
+                        float dot02 = Vector3.Dot(edge1, pointEdge);
+                        float dot12 = Vector3.Dot(edge2, pointEdge);
+
+                        float u = (dot11 * dot02 - dot01 * dot12) / baryDenominator;
+                        float v = (dot00 * dot12 - dot01 * dot02) / baryDenominator;
+
+                        if ((u >= 0) && (v >= 0) && (u + v < 1))
+                        {
+                            intersectionPoint = intersection;
+                            return t;
+                        }
                     }
                 }
             }
 
-            return false;
-        }
-
-        public Vector3 lineIntersectionPoint(Vector3 start, Vector3 end)
-        {
-            /*
-            if(!lineIntersects(start,end))
-            {
-                throw new Exception(String.Format("The line from {0} to {1} does not intersect this triangle ({2},{3},{4}).", start, end, x, y, z));
-            }
-            //*/
-            //Find intersection of line and plane containing triangle
-            float denominator = Vector3.Dot(normal, end - start);
-            float numerator = Vector3.Dot(normal, x - start);
-            float param = numerator / denominator;
-
-            Vector3 intersection = start + param * (end - start);
-
-            return intersection;
-
+            intersectionPoint = Vector3.Zero;
+            return -1.0f;
         }
 
         private bool pointIsBetween(Vector2 a, Vector2 topLeft, Vector2 bottomRight)

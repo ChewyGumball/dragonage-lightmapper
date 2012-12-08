@@ -15,11 +15,11 @@ namespace Geometry
         public bool affectsLightMap { get; private set; }
         public bool affectsShadowMap { get; private set; }
 
-        public Photon(Vector3 p, Light l)
+        public Photon(Vector3 p, Light l, float intensity)
         {
             position = p;
-            colour = l.colour * l.influence(position);
-            shadowColour = l.shadowColour * l.influence(position);
+            colour = l.colour * intensity;
+            shadowColour = l.shadowColour * intensity;
             affectsLightMap = l.inLightMap;
             affectsShadowMap = l.inShadowMap;
         }

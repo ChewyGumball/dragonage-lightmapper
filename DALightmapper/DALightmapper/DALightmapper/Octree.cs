@@ -119,104 +119,44 @@ namespace DALightmapper
             }
         }
 
-        public bool lineIsUnobstructed(Vector3 start, Vector3 end)
-        {
-            Vector3 direction = end - start;
-            direction.Normalize();
-
-            //start = start + (direction * 0.01f);
+        public float intersection(Vector3 start, Vector3 direction, out Triangle intersectedTriangle)
+        { 
+            float leastDistance = float.MaxValue;
+            intersectedTriangle = null;
 
             //If the line doesn't go through this octree then it is unobstructed
-
-            if (!bounds.lineIntersects(start, end))
-                return true;
-
-            //If we are a leaf check intersection with our triangles
-            if (children.Length == 0)
+            if (bounds.lineIntersects(start, direction))
             {
-                foreach (Triangle t in tris)
+                if (children.Length == 0)
                 {
-                    if (t.lineIntersects(start, end))
+                    foreach (Triangle t in tris)
                     {
-                        Vector3 intersection = t.lineIntersectionPoint(start, end);
+                        Vector3 throwAway;
+                        float nextDistance = t.intersection(start, direction, out throwAway);
+                        if (nextDistance > 0 && nextDistance < leastDistance)
+                        {
+                            leastDistance = nextDistance;
+                            intersectedTriangle = t;
+                        }
 
-                        //Dont want to count the start or end points because this will be used for sight calculations and the end points
-                        //  are going to be on triangles and thus always intersect with this line segment
-                        if (intersection != start && intersection != end)
-                            return false;
                     }
                 }
-
-                //If no triangles intersect then the line is unobstructed
-                return true;
-            }
-
-            //If we are not a leaf then check our children
-            foreach (Octree o in children)
-            {
-                //If the line is obstructed in a child, return false
-                if (!o.lineIsUnobstructed(start, end))
-                    return false;
-            }
-
-            //The line was not obstructed in any child so return true
-            return true;
-        }
-
-        public Triangle firstIntersection(Vector3 start, Vector3 end)
-        {
-            Vector3 direction = end - start;
-            direction.Normalize();
-
-            //start = start + (direction * 0.01f);
-
-            Triangle nearest = null;
-            Vector3 nearPoint = end;
-            //If the line doesn't go through this octree then it is unobstructed
-            if (!bounds.lineIntersects(start, end))
-                return null;
-
-            //If we are a leaf check intersection with our triangles
-            if (children.Length == 0)
-            {
-                foreach (Triangle t in tris)
-                {
-                    if (t.lineIntersects(start, end))
+                else
+                { 
+                    foreach (Octree o in children)
                     {
-                        Vector3 intersection = t.lineIntersectionPoint(start, end);
-
-                        //Dont want to count the start or end points because this will be used for sight calculations and the end points
-                        //  are going to be on triangles and thus always intersect with this line segment
-                        if (intersection != start && intersection != end)
-                            if ((intersection - start).LengthSquared < (nearPoint - start).LengthSquared)
-                            {
-                                nearPoint = intersection;
-                                nearest = t;
-                            }
-                    }
-                }
-
-                //If no triangles intersect then the line is unobstructed
-                return nearest;
-            }
-
-            //If we are not a leaf then check our children
-            foreach (Octree o in children)
-            {
-                Triangle t = o.firstIntersection(start, end);
-                if (t != null)
-                {
-                    Vector3 intersection = t.lineIntersectionPoint(start, end);
-                    if ((intersection - start).LengthSquared < (nearPoint - start).LengthSquared)
-                    {
-                        nearPoint = intersection;
-                        nearest = t;
-                    }
+                        Triangle nextIntersection;
+                        float nextDistance = o.intersection(start, direction, out nextIntersection);
+                        if (nextDistance > 0 && nextDistance < leastDistance)
+                        {
+                            leastDistance = nextDistance;
+                            intersectedTriangle = nextIntersection;
+                        }
+                    } 
                 }
             }
 
-            //The line was not obstructed in any child so return true
-            return nearest;
+            return leastDistance != float.MaxValue ? leastDistance : -1.0f;
         }
 
         public void getWithinDistance(Vector3 point, float distance, ref List<Photon> photons)

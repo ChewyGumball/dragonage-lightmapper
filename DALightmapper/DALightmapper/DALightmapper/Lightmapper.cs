@@ -148,29 +148,28 @@ namespace DALightmapper
                         {
                             state.Stop();
                         }
-                        int bounces = 0;
                         Vector3 direction = l.generateRandomDirection();
-                        Triangle t = scene.firstIntersection(l.position, l.position + (direction * 1000));
-                        if (t != null)
+                        Triangle intersectedTriangle;
+                        float distance = scene.intersection(l.position, direction, out intersectedTriangle);
+                        if (distance > 0)
                         {
-                            Vector3 intersection = t.lineIntersectionPoint(l.position, l.position + (direction * 1000));
+                            Vector3 intersection = l.position + distance * direction;
+                            float intensity = l.influence(intersection) / Settings.numPhotonsPerLight;
 
                             //I don't actually care if its unique between threads, threadsafty on this random number is not that big of a deal
                             while (random.NextDouble() > reflectProbability)
                             {
-                                direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(t.normal, (float)Math.PI));
-                                t = scene.firstIntersection(intersection, intersection + (direction * 1000));
-                                if (t == null)
-                                    break;
-                                intersection = t.lineIntersectionPoint(intersection, intersection + (direction * 1000));
-                                bounces += 1;
+                                direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(intersectedTriangle.normal, (float)Math.PI));
+                                distance = scene.intersection(intersection, direction, out intersectedTriangle);
+
+                                //If we don't get a valid intersection, we are done bouncing
+                                if (distance <= 0) break;
+
+                                intersection = intersection + distance * direction;
                             }
-                            if (l.influence(intersection) > 0)
+                            lock (photons)
                             {
-                                lock (photons)
-                                {
-                                    photons.Add(new Photon(intersection, l));
-                                }
+                                photons.Add(new Photon(intersection, l, intensity));
                             }
                         }
                         Settings.stream.UpdateProgress();
@@ -207,15 +206,16 @@ namespace DALightmapper
 
                     List<Photon> gather = new List<Photon>();
                     photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
-                    if(gather.Count > 0)
-                    //photonMap.getNearest(p.position, 20, ref gather);
-                    foreach (Photon photon in gather)
-                    {
-                        if (scene.lineIsUnobstructed(photon.position, p.position))
+                    if (gather.Count > 0)
+                        //photonMap.getNearest(p.position, 20, ref gather);
+                        foreach (Photon photon in gather)
                         {
-                            p.absorbPhoton(photon);
+                            Triangle throwAway;
+                            if (scene.intersection(photon.position, p.position - photon.position, out throwAway) < 1.0f)
+                            {
+                                p.absorbPhoton(photon);
+                            }
                         }
-                    }
 
                     foreach (Light light in lights)
                     {
@@ -283,7 +283,8 @@ namespace DALightmapper
                             randomDirection = -randomDirection;
                         }
 
-                        if (scene.lineIsUnobstructed(p.position, p.position + randomDirection))
+                        Triangle throwAway;
+                        if (scene.intersection(p.position, randomDirection, out throwAway) > 0)
                         {
                             p.ambientOcclusion += 4;
                         }
