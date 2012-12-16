@@ -28,7 +28,7 @@ namespace DALightmapper
 
         //--Light Mapping Variables--//
         public static int numPhotonsPerLight = 10000;   //Number of photons to shoot per light
-        public static float gatherRadius = 0.1f;         //Radius of sphere to sample photons for a patch
+        public static int neighbourCount = 20;         //Radius of sphere to sample photons for a patch
         public static Boolean useNumBounces = false;
 
         public static int pixelsPerUnit = 10;   //Number of pixels per unit length to use when making lightmap textures
@@ -95,7 +95,7 @@ namespace DALightmapper
             }
 
             numPhotonsPerLight = Properties.Settings.Default.numPhotons;
-            gatherRadius = Properties.Settings.Default.gatherRadius;
+            neighbourCount = Properties.Settings.Default.neighbourCount;
             verboseStatus = (Verbosity)Properties.Settings.Default.verbosity;
             useTrueAttenuation = Properties.Settings.Default.trueAttenuation;
             cleanUpTempFiles = Properties.Settings.Default.clearTempFiles;
@@ -182,7 +182,7 @@ namespace DALightmapper
                                 numPhotonsPerLight = convertFromString("photonsPerLight", arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32);
                                 break;
                             case "-gatherRadius":
-                                gatherRadius = convertFromString("gatherRadius", arguments[currentIndex], 0.01f, 0.5f, Convert.ToSingle);
+                                neighbourCount = convertFromString("neighbourCount", arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32);
                                 break;
                             case "-pixelsPerUnit":
                                 pixelsPerUnit = convertFromString("pixelsPerUnit", arguments[currentIndex], 1, Int32.MaxValue, Convert.ToInt32);
@@ -294,7 +294,7 @@ namespace DALightmapper
             Properties.Settings.Default.tempDirectory = tempDirectory;
 
             Properties.Settings.Default.numPhotons = numPhotonsPerLight;
-            Properties.Settings.Default.gatherRadius = gatherRadius;
+            Properties.Settings.Default.neighbourCount = neighbourCount;
             Properties.Settings.Default.verbosity = (int)verboseStatus;
             Properties.Settings.Default.trueAttenuation = useTrueAttenuation;
             Properties.Settings.Default.clearTempFiles = cleanUpTempFiles;

@@ -8,47 +8,32 @@ namespace Geometry
 {
     public class Triangle
     {
-        Vector3[] _mVerts;
-        Vector2[] _tVerts;
-        Vector2[] _lVerts;
-        Vector3 _normal;
+        private Vector3[] _mVerts;
+        private Vector2[] _tVerts;
+        private Vector2[] _lVerts;
+        private Vector3 _normal;
 
-        Vector2[] lightMapInverseMatrix;
-        float determinant;
+        private Vector2[] lightMapInverseMatrix;
+        private float determinant;
+        private bool degenerate;
 
-        public bool isDegenerate()
+        public bool isDegenerate
         {
-            return areColinear(c - a, b - a);
-        }
-
+            get { return degenerate; }
+        } 
         public bool isLightmapped { get; private set; }
 
         public Vector3 x
         {
             get { return _mVerts[0]; }
-            set
-            {
-                _mVerts[0] = value;
-                calculateNormal();
-            }
         }
         public Vector3 y
         {
             get { return _mVerts[1]; }
-            set
-            {
-                _mVerts[1] = value;
-                calculateNormal();
-            }
         }
         public Vector3 z
         {
             get { return _mVerts[2]; }
-            set
-            {
-                _mVerts[2] = value;
-                calculateNormal();
-            }
         }
         public Vector3 normal
         {
@@ -57,53 +42,26 @@ namespace Geometry
         public Vector2 u
         {
             get { return _tVerts[0]; }
-            set
-            {
-                _tVerts[0] = value;
-            }
         }
         public Vector2 v
         {
             get { return _tVerts[1]; }
-            set
-            {
-                _tVerts[1] = value;
-            }
         }
         public Vector2 w
         {
             get { return _tVerts[2]; }
-            set
-            {
-                _tVerts[2] = value;
-            }
         }
         public Vector2 a
         {
             get { return _lVerts[0]; }
-            set
-            {
-                _lVerts[0] = value;
-                calculateInverseMatrix();
-            }
         }
         public Vector2 b
         {
             get { return _lVerts[1]; }
-            set
-            {
-                _lVerts[1] = value;
-                calculateInverseMatrix();
-            }
         }
         public Vector2 c
         {
             get { return _lVerts[2]; }
-            set
-            {
-                _lVerts[2] = value;
-                calculateInverseMatrix();
-            }
         }
 
         public Vector3 this[int i]
@@ -118,14 +76,15 @@ namespace Geometry
                                       new Vector4(Vector3.Transform(Vector3.UnitZ, rotation), 0),
                                       new Vector4(offset, 1));
             _mVerts = new Vector3[3] { Vector3.Transform(t.x, transform), Vector3.Transform(t.y, transform), Vector3.Transform(t.z, transform) };
-            _tVerts = new Vector2[3] { t.u, t.v, t.w };
-            lightMapInverseMatrix = new Vector2[2];
             calculateNormal();
+            _tVerts = new Vector2[3] { t.u, t.v, t.w};
+            lightMapInverseMatrix = new Vector2[2];
             if (t.isLightmapped)
             {
                 isLightmapped = true;
                 _lVerts = new Vector2[3] { t.a, t.b, t.c };
                 calculateInverseMatrix();
+                degenerate = areColinear(c - a, b - a);
             }
         }
         public Triangle(Vector3 x, Vector3 y, Vector3 z, Vector2 u, Vector2 v, Vector2 w)
@@ -133,8 +92,9 @@ namespace Geometry
             _mVerts = new Vector3[3] { x, y, z };
             _tVerts = new Vector2[3] { u, v, w };
             lightMapInverseMatrix = new Vector2[2];
-            calculateNormal();
             isLightmapped = false;
+            degenerate = false;
+            calculateNormal();
         }
 
         public Triangle(Vector3 x, Vector3 y, Vector3 z, Vector2 u, Vector2 v, Vector2 w, Vector2 a, Vector2 b, Vector2 c)
@@ -143,81 +103,19 @@ namespace Geometry
             isLightmapped = true;
             _lVerts = new Vector2[3] { a, b, c };
             calculateInverseMatrix();
+            degenerate = areColinear(c - a, b - a);
         }
 
         public bool isOnUVPixel(Vector2 topLeft, Vector2 bottomRight)
         {
-            if (!isLightmapped)
-            {
-                //return false;
-            }
-            //Completely above, left, below, or right of the triangle
-            if ((a.Y >= topLeft.Y && b.Y >= topLeft.Y && c.Y >= topLeft.Y) ||
-               (a.X <= topLeft.X && b.X <= topLeft.X && c.X <= topLeft.X) ||
-               (a.Y <= bottomRight.Y && b.Y <= bottomRight.Y && c.Y <= bottomRight.Y) ||
-               (a.X >= bottomRight.X && b.X >= bottomRight.X && c.X >= bottomRight.X))
-            {
-                return false;
-            }
-            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
-            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
-            /*
-            bool pa = pointsStraddleEdge(a, b, topLeft, bottomRight);
-            bool pb =pointsStraddleEdge(a, c, topLeft, bottomRight);
-            bool pc = pointsStraddleEdge(b, c, topLeft, bottomRight);
-            bool pd = pointsStraddleEdge(a, b, bottomLeft, topRight);
-            bool pe = pointsStraddleEdge(a, c, bottomLeft, topRight);
-            bool pf = pointsStraddleEdge(b, c, bottomLeft, topRight);
-            bool ua =uvIsOnThisTriangle(topLeft);
-            bool ub = uvIsOnThisTriangle(bottomRight);
-            bool uc = uvIsOnThisTriangle(bottomLeft);
-            bool ud = uvIsOnThisTriangle(topRight);
-
-            if ((pa || pb || pc || pd || pe || pf || ua || ub || uc || ud))
-            {
-                pa = false;
-            }
-            
-            return (pointsStraddleEdge(a, b, topLeft, bottomRight) || pointsStraddleEdge(a, c, topLeft, bottomRight) || pointsStraddleEdge(b, c, topLeft, bottomRight) ||
-                    pointsStraddleEdge(a, b, bottomLeft, topRight) || pointsStraddleEdge(a, c, bottomLeft, topRight) || pointsStraddleEdge(b, c, bottomLeft, topRight) ||
-                    uvIsOnThisTriangle(topLeft) || uvIsOnThisTriangle(bottomRight) || uvIsOnThisTriangle(bottomLeft) || uvIsOnThisTriangle(topRight));
-            //*/
-            //if a corner of the triangle is on the pixel
-            if (pointIsBetween(a, topLeft, bottomRight) ||
-                pointIsBetween(b, topLeft, bottomRight) ||
-                pointIsBetween(c, topLeft, bottomRight))
-                return true;
-
-
-            //if a corner of the pixel is on the triangle 
-            if (uvIsOnThisTriangle(topLeft) ||
-                uvIsOnThisTriangle(bottomRight) ||
-                uvIsOnThisTriangle(bottomLeft) ||
-                uvIsOnThisTriangle(topRight))
-                return true;
-
-            //Could still be on the pixel if the triangle intersects with the 2 borders but not the corners
-            // IE:  ___\____/___
-            //     |____\__/____|
-            //           \/
-            //This could be optimized to check only three sides I THINK! but will leave it checking 4 unless a there is a problem
-            if (intersects(a, b, topLeft, topRight) ||
-                intersects(a, b, topLeft, bottomLeft) ||
-                intersects(a, b, topRight, bottomRight) ||
-                intersects(a, b, bottomLeft, bottomRight) ||
-                intersects(a, c, topLeft, topRight) ||
-                intersects(a, c, topLeft, bottomLeft) ||
-                intersects(a, c, topRight, bottomRight) ||
-                intersects(a, c, bottomLeft, bottomRight) ||
-                intersects(c, b, topLeft, topRight) ||
-                intersects(c, b, topLeft, bottomLeft) ||
-                intersects(c, b, topRight, bottomRight) ||
-                intersects(c, b, bottomLeft, bottomRight))
-                return true;
-
-
-            //if none of the above tests pass then this triangle is not on the pixel
-            return false;
+            //Separating axis theorem
+            return  !((bottomRight.X < a.X && bottomRight.X < b.X && bottomRight.X < c.X) ||    //Right of uv
+                      (bottomRight.Y > a.Y && bottomRight.Y > b.Y && bottomRight.Y > c.Y) ||    //Below uv
+                      (topLeft.X > a.X && topLeft.X > b.X && topLeft.X > c.X) ||                //Left of uv
+                      (topLeft.Y < a.Y && topLeft.Y < b.Y && topLeft.Y < c.Y) ||                //Above uv
+                      allOnPositiveSide(b, a, topLeft, bottomRight) ||                          //Triangle edges
+                      allOnPositiveSide(c, b, topLeft, bottomRight) ||
+                      allOnPositiveSide(a, c, topLeft, bottomRight));
         }
 
         public bool uvIsOnThisTriangle(Vector2 coord)
@@ -232,173 +130,59 @@ namespace Geometry
             //   Remove the = to ignore the edges
 
             //Floating point precision errors can cause problems so extremely close to 1 is good enough here
-            bool isOn = ((convertedCoord.X >= 0f) && (convertedCoord.Y >= 0f) && (((float)(convertedCoord.X + convertedCoord.Y - 1)) <= 0.000001f));
-            return isOn;
+            return ((convertedCoord.X >= 0f) && (convertedCoord.Y >= 0f) && (((float)(convertedCoord.X + convertedCoord.Y - 1)) <= 0.000001f));
         }
 
         //Find where the 2d input coordinates are on the 3d plane defined by this triangle
         public Vector3 uvTo3d(Vector2 topLeft, Vector2 bottomRight)
         {
-            Vector2 coord = new Vector2();  //The uv coord of the center of the polygon the pixel overlaps with
+            //Find the center of the box in uv space
+            Vector2 center = convertToTextureBasis((topLeft + bottomRight) / 2);
 
-            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
-            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
-
-            List<Vector2> points = new List<Vector2>();
-
-            //A minimum of 3 points and a maximum of 7 points of the 19 tested below should be added to the list
-            if (pointIsBetween(a, topLeft, bottomRight))
-                points.Add(a);
-            if (pointIsBetween(b, topLeft, bottomRight))
-                points.Add(b);
-            if (pointIsBetween(c, topLeft, bottomRight))
-                points.Add(c);
-
-            if (uvIsOnThisTriangle(topLeft))
-                points.Add(topLeft);
-            if (uvIsOnThisTriangle(bottomRight))
-                points.Add(bottomRight);
-            if (uvIsOnThisTriangle(bottomLeft))
-                points.Add(bottomLeft);
-            if (uvIsOnThisTriangle(topRight))
-                points.Add(topRight);
-
-            if (intersects(a, b, topLeft, topRight))
-                points.Add(intersectionPoint(a, b, topLeft, topRight));
-            if (intersects(a, b, topLeft, bottomLeft))
-                points.Add(intersectionPoint(a, b, topLeft, bottomLeft));
-            if (intersects(a, b, topRight, bottomRight))
-                points.Add(intersectionPoint(a, b, topRight, bottomRight));
-            if (intersects(a, b, bottomLeft, bottomRight))
-                points.Add(intersectionPoint(a, b, bottomLeft, bottomRight));
-
-            if (intersects(a, c, topLeft, topRight))
-                points.Add(intersectionPoint(a, c, topLeft, topRight));
-            if (intersects(a, c, topLeft, bottomLeft))
-                points.Add(intersectionPoint(a, c, topLeft, bottomLeft));
-            if (intersects(a, c, topRight, bottomRight))
-                points.Add(intersectionPoint(a, c, topRight, bottomRight));
-            if (intersects(a, c, bottomLeft, bottomRight))
-                points.Add(intersectionPoint(a, c, bottomLeft, bottomRight));
-
-            if (intersects(c, b, topLeft, topRight))
-                points.Add(intersectionPoint(c, b, topLeft, topRight));
-            if (intersects(c, b, topLeft, bottomLeft))
-                points.Add(intersectionPoint(c, b, topLeft, bottomLeft));
-            if (intersects(c, b, topRight, bottomRight))
-                points.Add(intersectionPoint(c, b, topRight, bottomRight));
-            if (intersects(c, b, bottomLeft, bottomRight))
-                points.Add(intersectionPoint(c, b, bottomLeft, bottomRight));
-
-            /*
-            if (points.Count < 3 || points.Count > 7)
+            //if the length is > 1 then we are outside the triangle
+            if (center.LengthSquared > 1)
             {
-                if (pointIsBetween(a, topLeft, bottomRight))
-                    System.Console.WriteLine("A is on");
-                if (pointIsBetween(b, topLeft, bottomRight))
-                    System.Console.WriteLine("B is on");
-                if (pointIsBetween(c, topLeft, bottomRight))
-                    System.Console.WriteLine("C is on");
-
-                if (uvIsOnThisTriangle(topLeft))
-                    System.Console.WriteLine("topleft is on");
-                if (uvIsOnThisTriangle(bottomRight))
-                    System.Console.WriteLine("bottomRight is on");
-                if (uvIsOnThisTriangle(bottomLeft))
-                    System.Console.WriteLine("bottomleft is on");
-                if (uvIsOnThisTriangle(topRight))
-                    System.Console.WriteLine("topright is on");
-
-                if (intersects(a, b, topLeft, topRight))
-                    System.Console.WriteLine("a b intersects top");
-                if (intersects(a, b, topLeft, bottomLeft))
-                    System.Console.WriteLine("a b intersects left");
-                if (intersects(a, b, topRight, bottomRight))
-                    System.Console.WriteLine("a b intersects right");
-                if (intersects(a, b, bottomLeft, bottomRight))
-                    System.Console.WriteLine("a b intersects bottom");
-
-                if (intersects(a, c, topLeft, topRight))
-                    System.Console.WriteLine("a c intersects top");
-                if (intersects(a, c, topLeft, bottomLeft))
-                    System.Console.WriteLine("a c intersects left");
-                if (intersects(a, c, topRight, bottomRight))
-                    System.Console.WriteLine("a c intersects right");
-                if (intersects(a, c, bottomLeft, bottomRight))
-                    System.Console.WriteLine("a c intersects bottom");
-
-                if (intersects(c, b, topLeft, topRight))
-                    System.Console.WriteLine("c b intersects top");
-                if (intersects(c, b, topLeft, bottomLeft))
-                    System.Console.WriteLine("c b intersects left");
-                if (intersects(c, b, topRight, bottomRight))
-                    System.Console.WriteLine("c b intersects right");
-                if (intersects(c, b, bottomLeft, bottomRight))
-                    System.Console.WriteLine("c b intersects bottom");
-                throw new Exception(String.Format("There are {0} points in the list. a={1} b={2} c={3} topLeft={4} bottomRight={5}", points.Count,a,b,c,topLeft,bottomRight));
-            }
-            //*/
-
-            //Find the middle
-            foreach (Vector2 v in points)
-            {
-                coord += v;
-            }
-            if (points.Count > 0)
-            {
-                coord /= points.Count;
+                center.Normalize();
             }
 
-            //Find the coordinates in texture basis coordinates
-            Vector2 convertedCoord = convertToTextureBasis(coord);
-
-            //Find the direction vector pointing from the origin point to the input point
-            Vector3 directionVector = Vector3.Add(Vector3.Multiply(Vector3.Subtract(y, x), convertedCoord.X),
-                                                    Vector3.Multiply(Vector3.Subtract(z, x), convertedCoord.Y));
-
-            //Add the direction vector to the origin point to get the point we need
-            return directionVector + x;
+            return x + center.X * (y - x) + center.Y * (z - x);
         }
 
         public float intersection(Vector3 start, Vector3 direction, out Vector3 intersectionPoint)
         {
-            //If the ray is parallel to the triangle, the dot product will be 0
+            Vector3 edge1 = y - x;
+            Vector3 edge2 = z - x;
+
+            float dot00 = Vector3.Dot(edge1, edge1);
+            float dot01 = Vector3.Dot(edge1, edge2);
+            float dot11 = Vector3.Dot(edge2, edge2);
+
             float distanceDenominator = Vector3.Dot(normal, direction);
-            if (distanceDenominator != 0)
+            float baryDenominator = (dot00 * dot11) - (dot01 * dot01);
+
+            //If this is a degenerate triangle baryDenominator will be 0
+            //If the ray is parallel to the triangle, the distanceDenominator will be 0
+            if (baryDenominator != 0 && distanceDenominator != 0)
             {
-                Vector3 edge1 = y - x;
-                Vector3 edge2 = z - x;
+                float t = Vector3.Dot(normal, x - start) / distanceDenominator;
 
-                float dot00 = Vector3.Dot(edge1, edge1);
-                float dot01 = Vector3.Dot(edge1, edge2);
-                float dot11 = Vector3.Dot(edge2, edge2);
-
-                float baryDenominator = (dot00 * dot11) - (dot01 * dot01);
-
-                //If this is a degenerate triangle this denominator will be 0
-                if (baryDenominator != 0)
+                //If the triangle is in the opposite direction, this value will be negative
+                //  I don't count the ray starting on the triangle as an intersection with that triangle
+                //  so only consider positive values
+                if (t > 0)
                 {
-                    float t = Vector3.Dot(normal, x - start) / distanceDenominator;
+                    intersectionPoint = start + t * direction;
+                    Vector3 pointEdge = intersectionPoint - x;
 
-                    //If the triangle is in the opposite direction, this value will be negative
-                    //  I don't count the ray starting on the triangle as an intersection with that triangle
-                    //  so only consider positive values
-                    if (t > 0)
+                    float dot02 = Vector3.Dot(edge1, pointEdge);
+                    float dot12 = Vector3.Dot(edge2, pointEdge);
+
+                    float u = (dot11 * dot02 - dot01 * dot12) / baryDenominator;
+                    float v = (dot00 * dot12 - dot01 * dot02) / baryDenominator;
+
+                    if ((u >= 0) && (v >= 0) && (u + v < 1))
                     {
-                        Vector3 intersection = start + t * direction;
-                        Vector3 pointEdge = intersection - x;
-
-                        float dot02 = Vector3.Dot(edge1, pointEdge);
-                        float dot12 = Vector3.Dot(edge2, pointEdge);
-
-                        float u = (dot11 * dot02 - dot01 * dot12) / baryDenominator;
-                        float v = (dot00 * dot12 - dot01 * dot02) / baryDenominator;
-
-                        if ((u >= 0) && (v >= 0) && (u + v < 1))
-                        {
-                            intersectionPoint = intersection;
-                            return t;
-                        }
+                        return t;
                     }
                 }
             }
@@ -447,19 +231,19 @@ namespace Geometry
 
         }
 
-        private void calculateNormal()
+        private bool allOnPositiveSide(Vector2 start, Vector2 end, Vector2 topLeft, Vector2 bottomRight)
         {
-            Vector3 a = Vector3.Subtract(y, x);
-            Vector3 b = Vector3.Subtract(z, x);
-            _normal = Vector3.Cross(a, b);
-            if (_normal.Length == 0)
-                _normal = new Vector3(1, 0, 0);
-            else
-                _normal.Normalize();
-        }
+            Vector2 bottomLeft = new Vector2(topLeft.X, bottomRight.Y);
+            Vector2 topRight = new Vector2(bottomRight.X, topLeft.Y);
 
-        private bool intersects(Vector2 aStart, Vector2 aEnd, Vector2 bStart, Vector2 bEnd)
+            return onPositiveSide(start, end, topLeft) && onPositiveSide(start, end, bottomLeft) &&
+                    onPositiveSide(start, end, topRight) && onPositiveSide(start, end, bottomRight);
+        }
+        private bool onPositiveSide(Vector2 start, Vector2 end, Vector2 p)
         {
+            return (end.X - start.X) * (p.Y - start.Y) - (end.Y - start.Y) * (p.X - start.X) > 0;
+
+            /*
             Vector2 aDirection = aEnd - aStart;
             Vector2 bDirection = bEnd - bStart;
             Vector2 aTobStart = bStart - aStart;
@@ -477,8 +261,8 @@ namespace Geometry
 
             //Do not count the end points 
             return t > 0f && t < 1f && u > 0f && u < 1f;
+            //*/
         }
-
         private bool areColinear(Vector2 a, Vector2 b)
         {
 
@@ -498,27 +282,15 @@ namespace Geometry
             return (a.X / b.X == a.Y / b.Y);
         }
 
-        private Vector2 intersectionPoint(Vector2 aStart, Vector2 aEnd, Vector2 bStart, Vector2 bEnd)
+        private void calculateNormal()
         {
-            Vector2 aDirection = aEnd - aStart;
-            Vector2 bDirection = bEnd - bStart;
-            Vector2 aTobStart = bStart - aStart;
-
-            float detDenom = aDirection.X * bDirection.Y - aDirection.Y * bDirection.X;
-
-            float t = 1 / detDenom * (bDirection.Y * aTobStart.X - bDirection.X * aTobStart.Y);
-            return aStart + t * aDirection;
-        }
-
-        private bool pointsStraddleEdge(Vector2 start, Vector2 end, Vector2 topLeft, Vector2 bottomRight)
-        {
-            Vector2 direction = end - start;
-            Vector2 perpendicular = new Vector2(-direction.Y, direction.X);
-
-            float firstDot = Vector2.Dot(topLeft - start, perpendicular);
-            float secondDot = Vector2.Dot(bottomRight - start, perpendicular);
-
-            return (Math.Sign(firstDot) != Math.Sign(secondDot)) || firstDot == 0 || secondDot == 0;
+            Vector3 first = Vector3.Subtract(y, x);
+            Vector3 second = Vector3.Subtract(z, x);
+            _normal = Vector3.Cross(first, second);
+            if (_normal.Length == 0)
+                _normal = new Vector3(1, 0, 0);
+            else
+                _normal.Normalize();
         }
     }
 }

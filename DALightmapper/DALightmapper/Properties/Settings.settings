@@ -36,8 +36,8 @@
     <Setting Name="maxThreads" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">2</Value>
     </Setting>
-    <Setting Name="gatherRadius" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">0.2</Value>
+    <Setting Name="neighbourCount" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">20</Value>
     </Setting>
   </Settings>
 </SettingsFile>

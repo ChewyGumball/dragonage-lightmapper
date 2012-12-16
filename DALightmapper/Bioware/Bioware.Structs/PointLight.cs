@@ -13,12 +13,9 @@ namespace Bioware.Structs
         {
             radius = r;
         }
-        public override float influence(Vector3 patch)
+        public override float influence(float distance)
         {
-            //Find the distance from the light
-            float distance = Vector3.Subtract(position, patch).Length;
-           
-            //If the patch is outside the radius of the light, the influence is 0
+            //If the distance is outside the radius of the light, the influence is 0
             if (distance > radius)
                 return 0;
 

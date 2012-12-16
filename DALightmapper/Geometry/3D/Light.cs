@@ -34,7 +34,7 @@ namespace Geometry
 
         //Returns a float value representing the amount of light this light would have on 
         //      input point ignoring obstructions
-        public abstract float influence(Vector3 patch);
+        public abstract float influence(float distance);
 
         //Returns a random vector along which a photon from this light could travel
         public abstract Vector3 generateRandomDirection();

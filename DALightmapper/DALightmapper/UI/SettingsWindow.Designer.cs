@@ -54,12 +54,12 @@
             this.label7 = new System.Windows.Forms.Label();
             this.btn_Save = new System.Windows.Forms.Button();
             this.label6 = new System.Windows.Forms.Label();
-            this.nmup_gatherRadius = new System.Windows.Forms.NumericUpDown();
+            this.nmup_neighbourCount = new System.Windows.Forms.NumericUpDown();
             this.label8 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nmup_gatherRadius)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmup_neighbourCount)).BeginInit();
             this.SuspendLayout();
             // 
             // lb_filePaths
@@ -203,6 +203,7 @@
             this.nmup_numPhotons.Name = "nmup_numPhotons";
             this.nmup_numPhotons.Size = new System.Drawing.Size(79, 20);
             this.nmup_numPhotons.TabIndex = 1;
+            this.nmup_numPhotons.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.nmup_numPhotons.Value = new decimal(new int[] {
             10000,
             0,
@@ -278,6 +279,7 @@
             this.nmup_Cores.Name = "nmup_Cores";
             this.nmup_Cores.Size = new System.Drawing.Size(38, 20);
             this.nmup_Cores.TabIndex = 14;
+            this.nmup_Cores.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.nmup_Cores.Value = new decimal(new int[] {
             1,
             0,
@@ -313,24 +315,29 @@
             this.label6.TabIndex = 17;
             this.label6.Text = "# of photons per light:";
             // 
-            // nmup_gatherRadius
+            // nmup_neighbourCount
             // 
-            this.nmup_gatherRadius.DecimalPlaces = 2;
-            this.nmup_gatherRadius.Increment = new decimal(new int[] {
+            this.nmup_neighbourCount.Location = new System.Drawing.Point(677, 227);
+            this.nmup_neighbourCount.Maximum = new decimal(new int[] {
+            99999999,
+            0,
+            0,
+            0});
+            this.nmup_neighbourCount.Minimum = new decimal(new int[] {
             1,
             0,
             0,
-            131072});
-            this.nmup_gatherRadius.Location = new System.Drawing.Point(677, 227);
-            this.nmup_gatherRadius.Maximum = new decimal(new int[] {
-            5,
+            0});
+            this.nmup_neighbourCount.Name = "nmup_neighbourCount";
+            this.nmup_neighbourCount.Size = new System.Drawing.Size(52, 20);
+            this.nmup_neighbourCount.TabIndex = 18;
+            this.nmup_neighbourCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.nmup_neighbourCount.Value = new decimal(new int[] {
+            1,
             0,
             0,
-            65536});
-            this.nmup_gatherRadius.Name = "nmup_gatherRadius";
-            this.nmup_gatherRadius.Size = new System.Drawing.Size(52, 20);
-            this.nmup_gatherRadius.TabIndex = 18;
-            this.nmup_gatherRadius.ValueChanged += new System.EventHandler(this.nmup_gatherRadius_ValueChanged);
+            0});
+            this.nmup_neighbourCount.ValueChanged += new System.EventHandler(this.nmup_gatherRadius_ValueChanged);
             // 
             // label8
             // 
@@ -347,7 +354,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(851, 273);
             this.Controls.Add(this.label8);
-            this.Controls.Add(this.nmup_gatherRadius);
+            this.Controls.Add(this.nmup_neighbourCount);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.btn_Save);
             this.Controls.Add(this.label7);
@@ -378,7 +385,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.nmup_numPhotons)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trb_Verbosity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nmup_Cores)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nmup_gatherRadius)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nmup_neighbourCount)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -412,7 +419,7 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Button btn_Save;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.NumericUpDown nmup_gatherRadius;
+        private System.Windows.Forms.NumericUpDown nmup_neighbourCount;
         private System.Windows.Forms.Label label8;
     }
 }

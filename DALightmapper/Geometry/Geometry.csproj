@@ -29,6 +29,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="OpenTK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL" />
@@ -52,6 +53,10 @@
     <Compile Include="3D\Patch.cs" />
     <Compile Include="3D\Photon.cs" />
     <Compile Include="3D\Triangle.cs" />
+    <Compile Include="Partitioners\KDTree.cs" />
+    <Compile Include="Partitioners\Octree.cs" />
+    <Compile Include="Partitioners\PhotonPartitioner.cs" />
+    <Compile Include="Partitioners\TrianglePartitioner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />

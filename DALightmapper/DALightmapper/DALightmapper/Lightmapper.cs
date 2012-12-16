@@ -65,7 +65,7 @@ namespace DALightmapper
 
             //Make the triangle partitioner
             Settings.stream.WriteText("Partitioning level . . . ");
-            Partitioner partition = new Octree(castingTriangles);
+            TrianglePartitioner partition = new Octree(castingTriangles);
             castingTriangles.Clear();
             Settings.stream.WriteLine("Done");
 
@@ -78,7 +78,7 @@ namespace DALightmapper
             {
                 //Make the photon map
                 Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
-                Partitioner photonMap = new Octree(photons);
+                PhotonPartitioner photonMap = new KDTree(photons);
                 Settings.stream.WriteLine("Done");
 
                 //Gather the photons for each patch in each map
@@ -119,7 +119,7 @@ namespace DALightmapper
             return lightmapList;
         }
 
-        private static List<Photon> firePhotons(List<Light> lights, Partitioner scene)
+        private static List<Photon> firePhotons(List<Light> lights, TrianglePartitioner scene)
         {
             Random random = new Random();
             int numPhotons = 0;
@@ -148,28 +148,32 @@ namespace DALightmapper
                         {
                             state.Stop();
                         }
+                        List<Photon> newPhotons = new List<Photon>();
                         Vector3 direction = l.generateRandomDirection();
                         Triangle intersectedTriangle;
                         float distance = scene.intersection(l.position, direction, out intersectedTriangle);
                         if (distance > 0)
                         {
-                            Vector3 intersection = l.position + distance * direction;
-                            float intensity = l.influence(intersection) / Settings.numPhotonsPerLight;
+                            Vector3 intersection = l.position + (distance * direction);
+                            newPhotons.Add(new Photon(intersection, direction, l, 1.0f));
+                            float totalDistance = distance;
 
                             //I don't actually care if its unique between threads, threadsafty on this random number is not that big of a deal
                             while (random.NextDouble() > reflectProbability)
                             {
                                 direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(intersectedTriangle.normal, (float)Math.PI));
                                 distance = scene.intersection(intersection, direction, out intersectedTriangle);
-
                                 //If we don't get a valid intersection, we are done bouncing
                                 if (distance <= 0) break;
 
-                                intersection = intersection + distance * direction;
+                                intersection = intersection + (distance * direction);
+                                totalDistance += distance;
+                                newPhotons.Add(new Photon(intersection, direction, l, 1.0f /*l.influence(totalDistance) / Settings.numPhotonsPerLight*/));
                             }
+
                             lock (photons)
                             {
-                                photons.Add(new Photon(intersection, l, intensity));
+                                photons.AddRange(newPhotons);
                             }
                         }
                         Settings.stream.UpdateProgress();
@@ -183,7 +187,7 @@ namespace DALightmapper
             }
             return photons;
         }
-        private static void gatherPhotons(List<LightMap> maps, Partitioner photonMap, Partitioner scene, List<Light> lights)
+        private static void gatherPhotons(List<LightMap> maps, PhotonPartitioner photonMap, TrianglePartitioner scene, List<Light> lights)
         {
             int numPatches = 0;
             foreach (LightMap l in maps)
@@ -204,10 +208,9 @@ namespace DALightmapper
                         state.Stop();
                     }
 
-                    List<Photon> gather = new List<Photon>();
-                    photonMap.getWithinDistance(p.position, Settings.gatherRadius, ref gather);
+                    List<Photon> gather = photonMap.nearest(Settings.neighbourCount, p.position);
                     if (gather.Count > 0)
-                        //photonMap.getNearest(p.position, 20, ref gather);
+                    {
                         foreach (Photon photon in gather)
                         {
                             Triangle throwAway;
@@ -216,12 +219,13 @@ namespace DALightmapper
                                 p.absorbPhoton(photon);
                             }
                         }
+                    }
 
                     foreach (Light light in lights)
                     {
                         if (!light.shootsPhotons)
                         {
-                            p.ambientLight += light.influence(p.position) * light.colour;
+                            p.ambientLight += light.influence((p.position - light.position).Length) * light.colour;
                         }
                     }
 
@@ -236,7 +240,7 @@ namespace DALightmapper
             }
         }
 
-        private static void calculateAmbientOcclusion(List<LightMap> maps, Partitioner scene)
+        private static void calculateAmbientOcclusion(List<LightMap> maps, TrianglePartitioner scene)
         {
             int numPatches = 0;
             foreach (LightMap l in maps)

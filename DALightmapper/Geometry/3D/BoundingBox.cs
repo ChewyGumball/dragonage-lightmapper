@@ -8,9 +8,11 @@ namespace Geometry
 {
     public class BoundingBox
     {
-        public Vector3 max { get; set;}
-        public Vector3 min { get; set; }
-        public Vector3 center { get; set; }
+        public Vector3 max { get; private set; }
+        public Vector3 min { get; private set; }
+        public Vector3 center { get; private set; }
+
+        private Vector3 topB, topC, topD, bottomA, bottomB, bottomD;
 
         //bounding box at the origin
         public BoundingBox(Vector3 maximum, Vector3 minimum)
@@ -18,6 +20,7 @@ namespace Geometry
             max = maximum;
             min = minimum;
             center = new Vector3();
+            calculateOtherPoints();
         }
 
         public BoundingBox(List<Triangle> triangles)
@@ -29,7 +32,7 @@ namespace Geometry
             float maxY = triangles[0].x.Y;
             float maxZ = triangles[0].x.Z;
 
-            foreach(Triangle t in triangles)
+            foreach (Triangle t in triangles)
             {
                 for (int i = 0; i < 3; i++)
                 {
@@ -46,6 +49,7 @@ namespace Geometry
             max = new Vector3(maxX, maxY, maxZ);
             min = new Vector3(minX, minY, minZ);
             center = (max + min) / 2;
+            calculateOtherPoints();
         }
 
         public BoundingBox(List<Vector3> points)
@@ -80,6 +84,7 @@ namespace Geometry
                 min = new Vector3();
                 center = new Vector3();
             }
+            calculateOtherPoints();
         }
 
         //Bounding box with offset and rotation from another bounding box
@@ -133,6 +138,7 @@ namespace Geometry
 
             max = new Vector3(maxX, maxY, maxZ);
             min = new Vector3(minX, minY, minZ);
+            calculateOtherPoints();
         }
 
         public BoundingBox(Vector3 c, float lengthX, float lengthY, float lengthZ)
@@ -140,6 +146,7 @@ namespace Geometry
             center = c;
             max = center + new Vector3(lengthX, lengthY, lengthZ);
             min = center - new Vector3(lengthX, lengthY, lengthZ);
+            calculateOtherPoints();
         }
 
         public Boolean lineIntersects(Vector3 start, Vector3 direction)
@@ -156,7 +163,7 @@ namespace Geometry
 
             Vector3 diffMin = min - start;
             Vector3 diffMax = max - start;
-           
+
             //x planes
             //If the magnitude is 0, parallel to the plane, considering this not an intersection
             //      as it will get picked up by the other planes if its on the bounding box
@@ -230,7 +237,7 @@ namespace Geometry
                     float y = start.Y + t * direction.Y;
 
 
-                    if (x >= min.X && x <= max.X && y >= min.Y && y <= max.Y) 
+                    if (x >= min.X && x <= max.X && y >= min.Y && y <= max.Y)
                     {
                         return true;
                     }
@@ -255,50 +262,52 @@ namespace Geometry
 
         public Boolean triangleIntersects(Triangle t)
         {
-            Vector3 topA = max;
-            Vector3 topB = new Vector3(max.X, min.Y, max.Z);
-            Vector3 topC = new Vector3(min.X, min.Y, max.Z);
-            Vector3 topD = new Vector3(min.X, max.Y, max.Z);
-
-            Vector3 bottomA = new Vector3(max.X, max.Y, min.Z);
-            Vector3 bottomB = new Vector3(max.X, min.Y, min.Z);
-            Vector3 bottomC = min;
-            Vector3 bottomD = new Vector3(min.X, max.Y, min.Z);
-
-            Vector3 throwAway;
-
-            return containsPoint(t.x) || containsPoint(t.y) || containsPoint(t.z) || // Triangle vertex is inside box
-                   lineIntersects(t.x, t.y) || lineIntersects(t.y, t.z) || lineIntersects(t.z, t.x) || // Triangle edge intersects box
-                //Box goes through middle of triangle without touching edges, check for intersection with diagonal of each face
-                   t.intersection(topA, topC - topA, out throwAway) > 0 || 
-                   t.intersection(topA, bottomB - topA, out throwAway) > 0 || 
-                   t.intersection(topA, bottomD - topA, out throwAway) > 0 || 
-                   t.intersection(bottomC, bottomA - bottomC, out throwAway) > 0 ||
-                   t.intersection(bottomC, topD - bottomC, out throwAway) > 0 ||
-                   t.intersection(bottomC, topB - bottomC, out throwAway) > 0; 
+            //Separating axis theorem
+            return !((t.x.X > max.X && t.y.X > max.X && t.z.X > max.X) ||   //Max X plane
+                     (t.x.Y > max.Y && t.y.Y > max.Y && t.z.Y > max.Y) ||   //Max Y plane
+                     (t.x.Z > max.Z && t.y.Z > max.Z && t.z.Z > max.Z) ||   //Max Z plane
+                     (t.x.X < min.X && t.y.X < min.X && t.z.X < min.X) ||   //Min X plane
+                     (t.x.Y < min.Y && t.y.Y < min.Y && t.z.Y < min.Y) ||   //Min Y plane
+                     (t.x.Z < min.Z && t.y.Z < min.Z && t.z.Z < min.Z) ||   //Min Z plane
+                      allOnSameSideOfTriangle(t));                          //Triangle plane
         }
-        
+
+        private bool allOnSameSideOfTriangle(Triangle t)
+        {
+            bool topAPositive = Vector3.Dot(t.normal, max - t.x) > 0;
+            bool topBPositive = Vector3.Dot(t.normal, topB - t.x) > 0;
+            bool topCPositive = Vector3.Dot(t.normal, topC - t.x) > 0;
+            bool topDPositive = Vector3.Dot(t.normal, topD - t.x) > 0;
+            bool bottomAPositive = Vector3.Dot(t.normal, bottomA - t.x) > 0;
+            bool bottomBPositive = Vector3.Dot(t.normal, bottomB - t.x) > 0;
+            bool bottomCPositive = Vector3.Dot(t.normal, min - t.x) > 0;
+            bool bottomDPositive = Vector3.Dot(t.normal, bottomD - t.x) > 0;
+
+            bool allPositive = topAPositive && topBPositive && topCPositive && topDPositive &&
+                               bottomAPositive && bottomBPositive && bottomCPositive && bottomDPositive;
+            bool allNegative = !(topAPositive || topBPositive || topCPositive || topDPositive ||
+                                 bottomAPositive || bottomBPositive || bottomCPositive || bottomDPositive);
+
+            return allPositive || allNegative;
+        }
+
         public Boolean containsPoint(Vector3 p)
         {
             return lessThanOrEqual(p, max) && greaterThanOrEqual(p, min);
         }
-
         public Boolean containsLine(Vector3 start, Vector3 end)
         {
             return containsPoint(start) && containsPoint(end);
         }
-
         public Boolean containsTriangle(Triangle t)
         {
             return containsPoint(t.x) && containsPoint(t.y) && containsPoint(t.z);
         }
-        
         public Boolean sphereIntersect(Vector3 point, float distance)
         {
-            return !(min.X > (point.X + distance) || min.Y > (point.Y + distance) || min.Z > (point.Z + distance) || 
+            return !(min.X > (point.X + distance) || min.Y > (point.Y + distance) || min.Z > (point.Z + distance) ||
                     (point.X - distance) > max.X || (point.Y - distance) > max.Y || (point.Z - distance) > max.Z);
         }
-
         public Boolean boxIntersects(BoundingBox b)
         {
             return !(min.X > b.max.X || min.Y > b.max.Y || min.Z > b.max.Z || b.min.X > max.X || b.min.Y > max.Y || b.min.Z > max.Z);
@@ -311,6 +320,15 @@ namespace Geometry
         private Boolean greaterThanOrEqual(Vector3 a, Vector3 b)
         {
             return a.X >= b.X && a.Y >= b.Y && a.Z >= b.Z;
+        }
+        private void calculateOtherPoints()
+        {
+            topB = new Vector3(max.X, min.Y, max.Z);
+            topC = new Vector3(min.X, min.Y, max.Z);
+            topD = new Vector3(min.X, max.Y, max.Z); 
+            bottomA = new Vector3(max.X, max.Y, min.Z);
+            bottomB = new Vector3(max.X, min.Y, min.Z);
+            bottomD = new Vector3(min.X, max.Y, min.Z);
         }
     }
 }

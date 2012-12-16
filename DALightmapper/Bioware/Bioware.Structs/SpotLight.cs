@@ -24,28 +24,12 @@ namespace Bioware.Structs
             distance = dis;
         }
 
-        public override float influence(Vector3 patch)
+        public override float influence(float distance)
         {
-            //Find vector from light to point
-            Vector3 lightToPoint = Vector3.Subtract(patch, position);
-            //Find the angle between direction vector and above vector, only positive angle needed
-            float angle = Math.Abs(Vector3.Dot(direction, lightToPoint) / lightToPoint.LengthFast);
-            //When outside the outside cone, no influence
-            if (angle > outerAngle)
-                return 0;
-
-            //Find the distance from edge of full intensity boundary
-            float dis = lightToPoint.LengthFast - distance;
-            //If the distance is less than the full intensity boundary, make it 1 so its actually full intensity
-            if (dis < 1)
-                dis = 1;
-
             //Make a vector to use with constant/linear/quadratic attenuation
-            Vector3 reach = new Vector3(1, 1 / dis, 1 / (dis * dis));
-
-            //When inside the inner cone, full intensity * attenuation.
-            //When between inner cone and outter cone, linear falloff*intensity*attenuation
-            return (1 - (angle - innerAngle) / (outerAngle - innerAngle)) * intensity * Vector3.Dot(reach, attenuation);
+            Vector3 d = new Vector3(1, distance, (distance * distance));
+            //Multiply the intensity by the attenuation
+            return intensity / Vector3.Dot(d, attenuation);
         }
 
         public override Vector3 generateRandomDirection()

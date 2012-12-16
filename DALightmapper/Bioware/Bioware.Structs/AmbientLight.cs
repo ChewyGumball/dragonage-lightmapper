@@ -10,7 +10,7 @@ namespace Bioware.Structs
         public AmbientLight(Vector3 pos, Vector3 col, Vector3 shadowCol, float intense, Boolean shoots)
             : base(pos, col, shadowCol, intense, shoots )
         { }
-        public override float influence(Vector3 patch)
+        public override float influence(float distance)
         {
             //Same intensity no matter where point is
             return intensity;

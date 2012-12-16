@@ -42,7 +42,7 @@ namespace DALightmapper
 
             nmup_numPhotons.Value = Settings.numPhotonsPerLight;
             nmup_Cores.Value = Settings.maxThreads;
-            nmup_gatherRadius.Value = (decimal)Settings.gatherRadius;
+            nmup_neighbourCount.Value = (decimal)Settings.neighbourCount;
 
         }
 
@@ -151,7 +151,7 @@ namespace DALightmapper
 
         private void nmup_gatherRadius_ValueChanged(object sender, EventArgs e)
         {
-            Settings.gatherRadius = (float)nmup_gatherRadius.Value;
+            Settings.neighbourCount = (int)nmup_neighbourCount.Value;
         }
     }
 }

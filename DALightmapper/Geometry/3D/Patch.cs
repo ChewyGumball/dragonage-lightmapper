@@ -20,7 +20,7 @@ namespace Geometry
         {
             get
             {
-                return emmission + (incidentLight / numLightPhotons) + ambientLight;
+                return emmission + incidentLight + ambientLight;
             }
         }
 
@@ -36,9 +36,6 @@ namespace Geometry
 
         public bool inLightMap { get; private set; }
         public bool inShadowMap { get; private set; }
-
-        private int numShadowPhotons = 0;
-        private int numLightPhotons = 0;
 
         public Patch()
         { }
@@ -65,14 +62,12 @@ namespace Geometry
             if (p.affectsLightMap)
             {
                 inLightMap = true;
-                incidentLight += p.colour;
-                numLightPhotons++;
+                incidentLight += p.colour; // (p.position - position).LengthSquared;
             }
             if (p.affectsShadowMap)
             {
                 inShadowMap = true;
-                incidentShadow += p.shadowColour;
-                numShadowPhotons++;
+                incidentShadow += p.shadowColour; // (p.position - position).LengthSquared;
             }
         }
     }
