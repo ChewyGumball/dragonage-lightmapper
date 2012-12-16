@@ -18,14 +18,18 @@ namespace Bioware.Structs
         public String layoutName { get; private set; }
         public BoundingBox[] bounds { get; private set; }
 
+        public Mesh[] meshes
+        {
+            get { return baseModel.meshes; }
+        }
         public List<Triangle> tris
         {
             get
             {
                 List<Triangle> triangles = new List<Triangle>();
-                for (int i = 0; i < baseModel.meshes.Length; i++)
+                for (int i = 0; i < meshes.Length; i++)
                 {
-                    for (int j = 0; j < baseModel.meshes[i].tris.Length; j++)
+                    for (int j = 0; j < meshes[i].tris.Length; j++)
                     {
                         triangles.Add(getTri(i, j));
                     }
@@ -56,21 +60,16 @@ namespace Bioware.Structs
             roomID = rID;
             layoutName = lName;
             //Need to make bounding boxes
-            bounds = new BoundingBox[baseModel.meshes.Length];
+            bounds = new BoundingBox[meshes.Length];
             for (int i = 0; i < bounds.Length; i++)
             {
-                bounds[i] = new BoundingBox(baseModel.meshes[i].bounds, transform);
+                bounds[i] = new BoundingBox(meshes[i].bounds, transform);
             }
-        }
-
-        public int getNumMeshes()
-        {
-            return baseModel.meshes.Length;
         }
 
         private Triangle getTri(int meshIndex, int triIndex)
         {
-            Triangle oldTri = baseModel.meshes[meshIndex].tris[triIndex];
+            Triangle oldTri = meshes[meshIndex].tris[triIndex];
             return new Triangle((Vector3.Transform(oldTri.x, transform)),
                                 (Vector3.Transform(oldTri.y, transform)),
                                 (Vector3.Transform(oldTri.z, transform)),

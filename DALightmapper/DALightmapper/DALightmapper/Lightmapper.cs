@@ -61,12 +61,10 @@ namespace DALightmapper
 
             //Make the lightmaps
             List<LightMap> maps = makeLightmaps(receivingModels);
-            receivingModels.Clear();
 
             //Make the triangle partitioner
             Settings.stream.WriteText("Partitioning level . . . ");
             TrianglePartitioner partition = new Octree(castingTriangles);
-            castingTriangles.Clear();
             Settings.stream.WriteLine("Done");
 
             //Shoot the photons
@@ -102,16 +100,13 @@ namespace DALightmapper
         private static List<LightMap> makeLightmaps(List<ModelInstance> models)
         {
             List<LightMap> lightmapList = new List<LightMap>();
-            //Make lightmaps
-            foreach (ModelInstance m in models)
+            foreach (ModelInstance model in models)
             {
-                //for each mesh in the model instance
-                for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                foreach (Mesh mesh in model.meshes)
                 {
-                    if (m.baseModel.meshes[i].isLightmapped)
+                    if (mesh.isLightmapped)
                     {
-                        //Add the lightmap to the list of lightmaps
-                        lightmapList.Add(new LightMap(m, i));
+                        lightmapList.Add(new LightMap(model, mesh));
                     }
                 }
             }
@@ -209,15 +204,12 @@ namespace DALightmapper
                     }
 
                     List<Photon> gather = photonMap.nearest(Settings.neighbourCount, p.position);
-                    if (gather.Count > 0)
+                    foreach (Photon photon in gather)
                     {
-                        foreach (Photon photon in gather)
+                        Triangle throwAway;
+                        if (scene.intersection(photon.position, p.position - photon.position, out throwAway) < 1.0f)
                         {
-                            Triangle throwAway;
-                            if (scene.intersection(photon.position, p.position - photon.position, out throwAway) < 1.0f)
-                            {
-                                p.absorbPhoton(photon);
-                            }
+                            p.absorbPhoton(photon);
                         }
                     }
 

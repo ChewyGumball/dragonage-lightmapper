@@ -14,18 +14,18 @@ namespace DATool
     {
         #region PIXEL FORMAT FLAGS
 
-        private readonly static uint ALPHAPIXELS_FLAG = 0x1;
-        private readonly static uint ALPHA_FLAG = 0x2;
-        private readonly static uint FOURCC_FLAG = 0x4;
-        private readonly static uint RGB_FLAG = 0x40;
-        private readonly static uint YUV_FLAG = 0x200;
-        private readonly static uint LUMINANCE_FLAG = 0x20000;
+        private const uint ALPHAPIXELS_FLAG = 0x1;
+        private const uint ALPHA_FLAG = 0x2;
+        private const uint FOURCC_FLAG = 0x4;
+        private const uint RGB_FLAG = 0x40;
+        private const uint YUV_FLAG = 0x200;
+        private const uint LUMINANCE_FLAG = 0x20000;
 
         #endregion
 
         #region HEADER FLAGS
 
-        private readonly static uint MIPMAPS = 0x20000;
+        private const uint MIPMAPS = 0x20000;
 
         #endregion
 

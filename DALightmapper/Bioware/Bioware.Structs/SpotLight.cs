@@ -15,10 +15,10 @@ namespace Bioware.Structs
         private static Vector3[] axes = { new Vector3(1,0,0), new Vector3(0,1,0), new Vector3(0,0,1) };
 
 
-        public SpotLight(Vector3 pos, Quaternion rot, Vector3 col, Vector3 shadowCol, float intense, float inAngle, float outAngle, float dis, Boolean shoots)
+        public SpotLight(Vector3 pos, Vector3 lookAt, Vector3 col, Vector3 shadowCol, float intense, float inAngle, float outAngle, float dis, Boolean shoots)
             : base(pos, col, shadowCol, intense, shoots)
         {
-            direction = rot.ToAxisAngle().Xyz;
+            direction = lookAt - pos;
             innerAngle = inAngle;
             outerAngle = outAngle;
             distance = dis;

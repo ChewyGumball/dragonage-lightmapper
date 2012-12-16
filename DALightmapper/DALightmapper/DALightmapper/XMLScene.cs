@@ -109,8 +109,8 @@ namespace DALightmapper
 
             modelDictionary = new Dictionary<string, ModelInstance>();
             lightDictionary = new Dictionary<string, Light>();
-            
-            
+
+
             readScene(basePath);
             readJobs(basePath);
 
@@ -179,10 +179,10 @@ namespace DALightmapper
 
             Dictionary<string, Dictionary<string, string>> jobDictionary;
             List<string> jobList;
-            
+
             XmlNode topNode = sceneSpecification.SelectSingleNode("RenderFarmOutput");
 
-            switch(topNode.SelectSingleNode("Output").Attributes.GetNamedItem("Type").Value)
+            switch (topNode.SelectSingleNode("Output").Attributes.GetNamedItem("Type").Value)
             {
                 case "LightMap": jobDictionary = lightmapJobs; jobList = lightList; break;
                 case "ShadowMap": jobDictionary = shadowmapJobs; jobList = shadowList; break;
@@ -228,7 +228,7 @@ namespace DALightmapper
             Settings.stream.SetProgressBarMaximum(lightmaps.Count);
             foreach (LightMap l in lightmaps)
             {
-                
+
                 int[,] boxFilter = {
                                     {1,1,1},
                                     {1,0,1},
@@ -265,7 +265,7 @@ namespace DALightmapper
 
                 String shadowmapPath = shadowmapJobs[l.model.name][l.mesh.name];
                 Targa shadowMap = l.makeShadowMapTexture(Path.GetDirectoryName(shadowmapPath), Path.GetFileName(shadowmapPath));
-                
+
                 /*
                 shadowMap.grow(boxFilter);
                 shadowMap.grow(boxFilter);
@@ -301,33 +301,35 @@ namespace DALightmapper
             string guid = lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("A").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("B").Value +
                             lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("C").Value + lightNode.SelectSingleNode("GUID").Attributes.GetNamedItem("D").Value;
             Matrix4 transform = xmlToMatrix(lightNode.SelectSingleNode("Transform").Attributes);
-            
-            switch (type)
+
+            if (!lightDictionary.ContainsKey(guid))
             {
-                case "Point":
-                    {
-                        float radius = Convert.ToSingle(lightNode.SelectSingleNode("Radius").InnerText);
-                        if (!lightDictionary.ContainsKey(guid))
+                switch (type)
+                {
+                    case "Point":
                         {
+                            float radius = Convert.ToSingle(lightNode.SelectSingleNode("Radius").InnerText);
+
                             lightDictionary.Add(guid, new PointLight(transform.Row3.Xyz, colour, shadowColour, brightness, radius, true));
                         }
-                    }
-                    break;
-                case "Spot":
-                    {
-                        throw new NotImplementedException("SpotLights are not implemented");
-                        //newLight = new SpotLight(transform,,colour,brightness,
-                    }
-                    break;
-                case "Ambient":
-                    {
-                        if (!lightDictionary.ContainsKey(guid))
+                        break;
+                    case "Spot":
+                        {
+                            float radius = Convert.ToSingle(lightNode.SelectSingleNode("Radius").InnerText);
+                            float innerAngle = Convert.ToSingle(lightNode.SelectSingleNode("InnerRadius").InnerText);
+                            float outerAngle = Convert.ToSingle(lightNode.SelectSingleNode("OuterRadius").InnerText);
+                            Vector3 lookAt = Vector3.Transform(new Vector3(radius, 0, 0), transform);
+
+                            lightDictionary.Add(guid, new SpotLight(transform.Row3.Xyz, lookAt, colour, shadowColour, brightness, innerAngle, outerAngle, radius, true));
+                        }
+                        break;
+                    case "Ambient":
                         {
                             lightDictionary.Add(guid, new AmbientLight(transform.Row3.Xyz, colour, shadowColour, brightness, false));
                         }
-                    }
-                    break;
-                default: break; //ignore unknown light types
+                        break;
+                    default: break; //ignore unknown light types
+                }
             }
 
             lightList.Add(guid);
@@ -342,12 +344,12 @@ namespace DALightmapper
 
             if (modelDictionary.ContainsKey(modelName))
             {
-                modelDictionary[modelName].baseModel.meshes.First(m => m.name == partName).generatePatches(width, height);
+                modelDictionary[modelName].meshes.First(m => m.name == partName).generatePatches(width, height);
             }
 
             if (!jobDictionary.Keys.Contains(modelName))
             {
-                jobDictionary.Add(modelName,new Dictionary<string,string>());
+                jobDictionary.Add(modelName, new Dictionary<string, string>());
             }
             jobDictionary[modelName].Add(partName, outputName);
         }

@@ -629,12 +629,12 @@ namespace DALightmapper
                 List<Triangle> tris = new List<Triangle>();
                 foreach (ModelInstance m in level.lightmapModels)
                 {
-                    for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                    for (int i = 0; i < m.meshes.Length; i++)
                     {
-                        if (m.baseModel.meshes[i].isLightmapped)
+                        if (m.meshes[i].isLightmapped)
                         {
                             //Make the lightmap
-                            LightMap temp = new LightMap(m, i);
+                            LightMap temp = new LightMap(m, m.meshes[i]);
                             //For each patch instance in the lightmap
                             foreach (Patch p in temp.patches)
                             {
@@ -656,12 +656,12 @@ namespace DALightmapper
                 List<Triangle> tris = new List<Triangle>();
                 foreach (ModelInstance m in level.lightmapModels)
                 {
-                    for (int i = 0; i < m.baseModel.meshes.Length; i++)
+                    for (int i = 0; i < m.meshes.Length; i++)
                     {
-                        if (m.baseModel.meshes[i].isLightmapped)
+                        if (m.meshes[i].isLightmapped)
                         {
                             //Make the lightmap
-                            LightMap temp = new LightMap(m, i);
+                            LightMap temp = new LightMap(m, m.meshes[i]);
                             //For each patch instance in the lightmap
                             foreach (Patch p in temp.patches)
                             {

@@ -231,7 +231,7 @@ namespace Bioware.Files
 
             int type;       //point = 0, ambient = 1, spot = 2                      -The type of the light
             int effect;     //baked = 0, static = 2,  animated = 3, negative = 4;   -How light effects environment
-            LightType lightEffect;                                                  //enum for above (TODO: used to decide whether it affects shadow map or lightmap)
+            //LightType lightEffect;                                                  //enum for above (TODO: used to decide whether it affects shadow map or lightmap)
             float radius;                                                           //radius of point lights
             float intensity = 1;                                                    //intensity of light (colour multiplier)
             Vector3 position;                                                       //position of the light
@@ -281,6 +281,7 @@ namespace Bioware.Files
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_EFFECT_INDEX].index, SeekOrigin.Begin);
                     effect = file.ReadByte();
 
+                    /*
                     //set the lightEffect variable for easy constructing
                     if (effect == LIGHT_BAKED)
                         lightEffect = LightType.Baked;
@@ -288,6 +289,7 @@ namespace Bioware.Files
                         lightEffect = LightType.Static;
                     else
                         continue;
+                    */
 
                     //get the in angle
                     file.BaseStream.Seek(currentPosition + lightStruct.fields[LIGHT_INANGLE_INDEX].index, SeekOrigin.Begin);

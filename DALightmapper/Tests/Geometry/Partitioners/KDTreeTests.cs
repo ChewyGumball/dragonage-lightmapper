@@ -25,7 +25,7 @@ namespace Tests.Geometry.Partitioners
             List<Photon> list = new List<Photon>(number);
             for (int i = 0; i < number; i++)
             {
-                list.Add(new Photon(new Vector3(randomFloat(), randomFloat(), randomFloat()), l, 4.0f));
+                list.Add(new Photon(new Vector3(randomFloat(), randomFloat(), randomFloat()), Vector3.UnitX, l, 4.0f));
             }
             return list;
         }

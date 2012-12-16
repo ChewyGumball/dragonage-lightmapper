@@ -20,20 +20,18 @@ namespace DALightmapper
         public ModelInstance model { get; private set; }
         public Mesh mesh { get; private set; }
 
-        private int index;
         public Texel[,] texels { get; set; }
 
         String name;
-        public LightMap(ModelInstance mi, int meshIndex, String lightmapName)
-            : this(mi, meshIndex)
+        public LightMap(ModelInstance mi, Mesh m, String lightmapName)
+            : this(mi, m)
         {
             name = lightmapName;
         }
-        public LightMap(ModelInstance mi, int meshIndex)
+        public LightMap(ModelInstance mi, Mesh m)
         {
-            index = meshIndex;
             model = mi;
-            mesh = mi.baseModel.meshes[meshIndex];
+            mesh = m;
 
             width = mesh.texels.GetLength(0);
             height = mesh.texels.GetLength(1);
@@ -55,7 +53,7 @@ namespace DALightmapper
                 }
             }
 
-            name = "lm" + model.layoutName + "_" + convertToBase36(model.id) + "_0" + model.baseModel.meshes[index].id;
+            name = "lm" + model.layoutName + "_" + convertToBase36(model.id) + "_0" + mesh.id;
         }
 
         public Targa makeLightMapTexture(String directory)
