@@ -8,7 +8,7 @@ namespace Geometry
     {
         public Octree[] children = new Octree[0];
         public BoundingBox bounds = new BoundingBox(new Vector3(), new Vector3());
-        private List<Triangle> tris = new List<Triangle>();
+        private Triangle[] tris;
 
         public int count { get; private set; }
 
@@ -33,10 +33,11 @@ namespace Geometry
         private void build(List<Triangle> triangles, int maxTriangles, int maxDepth, BoundingBox box)
         {
             bounds = box;
+
             if (triangles.Count <= maxTriangles || maxDepth == 0)
             {
-                tris = triangles;
-                count = tris.Count;
+                tris = triangles.ToArray();
+                count = tris.Length;
             }
             else
             {
@@ -59,6 +60,7 @@ namespace Geometry
                             childrenTriangles.Add(t);
                         }
                     }
+                    
                     children[i] = new Octree(childrenTriangles, maxTriangles, maxDepth - 1, newBox);
                     count += children[i].count;
                 }
@@ -84,7 +86,6 @@ namespace Geometry
                             leastDistance = nextDistance;
                             intersectedTriangle = t;
                         }
-
                     }
                 }
                 else
@@ -111,7 +112,7 @@ namespace Geometry
             {
                 o.Clear();
             }
-            tris.Clear();
+            tris = new Triangle[0];
             count = 0;
         }
     }

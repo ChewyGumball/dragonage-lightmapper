@@ -150,8 +150,10 @@ namespace Geometry
 
         public float intersection(Vector3 start, Vector3 direction, out Vector3 intersectionPoint)
         {
-            Vector3 edge1 = y - x;
-            Vector3 edge2 = z - x;
+            Vector3 xTemp = x; //for some reason access to x in this function do not get optimized, this removes the function call overhead
+
+            Vector3 edge1 = y - xTemp;
+            Vector3 edge2 = z - xTemp;
 
             float dot00 = Vector3.Dot(edge1, edge1);
             float dot01 = Vector3.Dot(edge1, edge2);
@@ -164,7 +166,7 @@ namespace Geometry
             //If the ray is parallel to the triangle, the distanceDenominator will be 0
             if (baryDenominator != 0 && distanceDenominator != 0)
             {
-                float t = Vector3.Dot(normal, x - start) / distanceDenominator;
+                float t = Vector3.Dot(normal, xTemp - start) / distanceDenominator;
 
                 //If the triangle is in the opposite direction, this value will be negative
                 //  I don't count the ray starting on the triangle as an intersection with that triangle
@@ -172,7 +174,7 @@ namespace Geometry
                 if (t > 0)
                 {
                     intersectionPoint = start + t * direction;
-                    Vector3 pointEdge = intersectionPoint - x;
+                    Vector3 pointEdge = intersectionPoint - xTemp;
 
                     float dot02 = Vector3.Dot(edge1, pointEdge);
                     float dot12 = Vector3.Dot(edge2, pointEdge);

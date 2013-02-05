@@ -93,7 +93,7 @@ namespace Ben
             {
                 //If this thread is not the textbox's thread, invoke the update method
                 if (p.InvokeRequired)
-                    p.Invoke(new UpdateProgressDelegate(this.UpdateProgressInvoker), delta, p);
+                    p.BeginInvoke(new UpdateProgressDelegate(this.UpdateProgressInvoker), delta, p);
                 else
                     UpdateProgressInvoker(delta, p);
             }

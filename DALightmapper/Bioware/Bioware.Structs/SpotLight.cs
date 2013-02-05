@@ -2,6 +2,7 @@
 using System;
 
 using Geometry;
+using System.Collections.Generic;
 
 namespace Bioware.Structs
 {

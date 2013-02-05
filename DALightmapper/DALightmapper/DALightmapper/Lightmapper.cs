@@ -132,12 +132,96 @@ namespace DALightmapper
 
             List<Photon> photons = new List<Photon>();
             double reflectProbability = 0.3;
-
-            foreach (Light l in lights)
+            /*
+            foreach(Light l in lights)
             {
                 if (l.shootsPhotons)
                 {
-                    Parallel.For(0, Settings.numPhotonsPerLight, opts, delegate(int i, ParallelLoopState state)
+                    for (int i = 0; i < Settings.numPhotonsPerLight; i++)
+                    {
+                        Vector3 direction = l.generateRandomDirection();
+                        Triangle intersectedTriangle;
+                        float distance = scene.intersection(l.position, direction, out intersectedTriangle);
+                        if (distance > 0)
+                        {
+                            Vector3 intersection = l.position + (distance * direction);
+                            photons.Add(new Photon(intersection, direction, l, 1.0f));
+                            float totalDistance = distance;
+
+                            //I don't actually care if its unique between threads, threadsafty on this random number is not that big of a deal
+                            while (random.NextDouble() > reflectProbability)
+                            {
+                                direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(intersectedTriangle.normal, (float)Math.PI));
+                                distance = scene.intersection(intersection, direction, out intersectedTriangle);
+                                //If we don't get a valid intersection, we are done bouncing
+                                if (distance <= 0) break;
+
+                                intersection = intersection + (distance * direction);
+                                totalDistance += distance;
+                                photons.Add(new Photon(intersection, direction, l, 1.0f));
+                            }
+
+                        }
+                        Settings.stream.UpdateProgress();
+                    }
+                }
+            }
+            //*/
+            //*
+            Parallel.ForEach(lights, delegate(Light l, ParallelLoopState state)
+            {
+                if (l.shootsPhotons)
+                {
+                    List<Photon> newPhotons = new List<Photon>();
+                    for(int i = 0; i < Settings.numPhotonsPerLight; i++)
+                    {
+                        Vector3 direction = l.generateRandomDirection();
+                        Triangle intersectedTriangle;
+                        float distance = scene.intersection(l.position, direction, out intersectedTriangle);
+                        if (distance > 0)
+                        {
+                            Vector3 intersection = l.position + (distance * direction);
+                            newPhotons.Add(new Photon(intersection, direction, l, 1.0f));
+                            float totalDistance = distance;
+
+                            //I don't actually care if its unique between threads, threadsafty on this random number is not that big of a deal
+                            while (random.NextDouble() > reflectProbability)
+                            {
+                                direction = (-2 * Vector3.Dot(direction, intersectedTriangle.normal) * intersectedTriangle.normal) + direction;
+                                //direction = Vector3.Transform(direction * -1, Matrix4.CreateFromAxisAngle(intersectedTriangle.normal, (float)Math.PI));
+                                distance = scene.intersection(intersection, direction, out intersectedTriangle);
+                                //If we don't get a valid intersection, we are done bouncing
+                                if (distance <= 0) break;
+
+                                intersection = intersection + (distance * direction);
+                                totalDistance += distance;
+                                newPhotons.Add(new Photon(intersection, direction, l, 1.0f));
+                            }
+
+                        }
+                        if ((i + 1) % 20 == 0)
+                        {
+                            if (abort)
+                            {
+                                state.Stop();
+                                return;
+                            }
+                            Settings.stream.UpdateProgress(20);
+                        }
+                    }
+                    lock (photons)
+                    {
+                        photons.AddRange(newPhotons);
+                    }
+                }
+            });
+            //*/
+            /*
+            foreach(Light l in lights)
+            {
+                if (l.shootsPhotons)
+                {
+                    Parallel.For(0, Settings.numPhotonsPerLight, delegate(int i, ParallelLoopState state)
                     {
                         if (abort)
                         {
@@ -163,23 +247,25 @@ namespace DALightmapper
 
                                 intersection = intersection + (distance * direction);
                                 totalDistance += distance;
-                                newPhotons.Add(new Photon(intersection, direction, l, 1.0f /*l.influence(totalDistance) / Settings.numPhotonsPerLight*/));
+                                newPhotons.Add(new Photon(intersection, direction, l, 1.0f));
                             }
 
-                            lock (photons)
-                            {
-                                photons.AddRange(newPhotons);
-                            }
                         }
                         Settings.stream.UpdateProgress();
+                        lock (photons)
+                        {
+                            photons.AddRange(newPhotons);
+                        }
                     });
-
-                    if (abort)
-                    {
-                        throw new LightmappingAbortedException("Aborted lightmapping while firing photons.");
-                    }
                 }
             }
+            //*/
+
+            if (abort)
+            {
+                throw new LightmappingAbortedException("Aborted lightmapping while firing photons.");
+            }
+
             return photons;
         }
         private static void gatherPhotons(List<LightMap> maps, PhotonPartitioner photonMap, TrianglePartitioner scene, List<Light> lights)

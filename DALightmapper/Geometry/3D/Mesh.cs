@@ -113,7 +113,6 @@ namespace Geometry
                         {
                             Vector2 topLeft = new Vector2(((float)i) / width, ((float)j + 1) / height);
                             Vector2 bottomRight = new Vector2(((float)(i + 1)) / width, ((float)j) / height);
-                            t.uvTo3d(topLeft, bottomRight);
                             if (!t.isDegenerate && t.isOnUVPixel(topLeft, bottomRight))
                             {
                                 //                              Position                   normal     emmision             reflection     
