@@ -43,6 +43,10 @@ namespace Bioware.IO
         {
             filePathList.Remove(path);
         }
+        public static void removeERF(String path)
+        {
+            erfFileList.Remove(getERF(path));
+        }
         public static void removeERF(ERF erf)
         {
             erfFileList.Remove(erf);

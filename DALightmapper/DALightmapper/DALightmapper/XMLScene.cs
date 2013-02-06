@@ -149,6 +149,7 @@ namespace DALightmapper
                     Matrix4 transform = xmlToMatrix(instance.SelectSingleNode("Transform").Attributes);
                     modelDictionary.Add(instanceName, new ModelInstance(instanceName, modelMesh, transform));
                 }
+                ResourceManager.removeFilePath(pathName);
             }
         }
         private void readJobs(string basePath)

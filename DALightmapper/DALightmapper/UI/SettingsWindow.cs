@@ -104,6 +104,7 @@ namespace DALightmapper
             ListBox.SelectedIndexCollection indices = lb_filePaths.SelectedIndices;
             while (indices.Count != 0)
             {
+                ResourceManager.removeFilePath(lb_filePaths.Items[indices[0]].ToString());
                 lb_filePaths.Items.RemoveAt(indices[0]);
             }
         }
@@ -113,6 +114,7 @@ namespace DALightmapper
             ListBox.SelectedIndexCollection indices = lb_erfFiles.SelectedIndices;
             while (indices.Count != 0)
             {
+                ResourceManager.removeERF(lb_erfFiles.Items[indices[0]].ToString());
                 lb_erfFiles.Items.RemoveAt(indices[0]);
             }
         }

@@ -54,35 +54,47 @@ namespace DALightmapper
                 if (m.baseModel.castsShadows)
                     castingTriangles.AddRange(m.tris);
             }
-
+            Stopwatch watch;
 
 
             //-- Do the lightmapping --//
 
             //Make the lightmaps
+            Settings.stream.WriteText("Creating maps . . . ");
+            watch = Stopwatch.StartNew();
             List<LightMap> maps = makeLightmaps(receivingModels);
+            watch.Stop();
+            Settings.stream.WriteLine("Done ({0}ms)", watch.ElapsedMilliseconds);
 
             //Make the triangle partitioner
             Settings.stream.WriteText("Partitioning level . . . ");
+            watch = Stopwatch.StartNew();
             TrianglePartitioner partition = new Octree(castingTriangles);
-            Settings.stream.WriteLine("Done");
+            watch.Stop();
+            Settings.stream.WriteLine("Done ({0}ms)", watch.ElapsedMilliseconds);
 
             //Shoot the photons
             Settings.stream.WriteText("Firing photons with {0} threads, {1} photons per light . . . ", Settings.maxThreads, Settings.numPhotonsPerLight);
+            watch = Stopwatch.StartNew();
             List<Photon> photons = firePhotons(lights, partition);
-            Settings.stream.WriteLine("Done");
+            watch.Stop();
+            Settings.stream.WriteLine("Done ({0}ms)", watch.ElapsedMilliseconds);
 
             if (photons.Count > 0)
             {
                 //Make the photon map
                 Settings.stream.WriteText("Making photon map with {0} photons . . . ", photons.Count);
+                watch = Stopwatch.StartNew();
                 PhotonPartitioner photonMap = new KDTree(photons);
-                Settings.stream.WriteLine("Done");
+                watch.Stop();
+                Settings.stream.WriteLine("Done ({0}ms)", watch.ElapsedMilliseconds);
 
                 //Gather the photons for each patch in each map
                 Settings.stream.WriteText("Gathering photons for lightmaps . . . ");
+                watch = Stopwatch.StartNew();
                 gatherPhotons(maps, photonMap, partition, lights);
-                Settings.stream.WriteLine("Done");
+                watch.Stop();
+                Settings.stream.WriteLine("Done ({0}ms)", watch.ElapsedMilliseconds);
             }
             else
             {

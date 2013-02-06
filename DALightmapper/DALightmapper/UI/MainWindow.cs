@@ -13,6 +13,8 @@ using Ben;
 using Bioware.Files;
 using Bioware.IO;
 
+using System.Diagnostics;
+
 namespace DALightmapper
 {
     public partial class MainWindow : Form
@@ -117,6 +119,8 @@ namespace DALightmapper
                     try
                     {
                         Scene currentScene;
+                        Settings.stream.WriteText("Loading . . . ");
+                        Stopwatch watch = Stopwatch.StartNew();
                         switch (Path.GetExtension(currentJob))
                         {
                             case ".xml": currentScene = new XMLScene(currentJob); break;
@@ -124,7 +128,8 @@ namespace DALightmapper
 
                             default: throw new LightmappingAbortedException("The scene \"" + currentJob + "\" is not a valid file format. Valid file formats are .xml and .lvl.");
                         }
-
+                        watch.Stop();
+                        Settings.stream.WriteLine("Done ({0}ms)", watch.ElapsedMilliseconds);
                         List<LightMap> maps = Lightmapper.runLightmaps(currentScene.lightmapModels, currentScene.lights);
 
                         currentScene.exportLightmaps(maps);
